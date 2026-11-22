@@ -94,6 +94,7 @@ export const api = {
   setCable:     (id, body) => put(`/api/ports/${id}/cable`, body),
   cables:       params => get('/api/cables', params),
   updateCable:  (id, body) => put(`/api/cables/${id}`, body),
+  cableHistory: params => get('/api/cable-history', params),
 
   // Assistenten
   deviceWizard:     b => post('/api/wizards/device', b),
