@@ -68,6 +68,8 @@ export const api = {
 
   // Übersicht
   stats: () => get('/api/stats'),
+  capacity:        params => get('/api/capacity', params),
+  capacitySummary: () => get('/api/capacity/summary'),
 
   // Standorte und Locations
   sites:          () => get('/api/sites'),

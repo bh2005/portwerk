@@ -5,7 +5,11 @@ import json
 
 from fastapi import APIRouter, Depends
 
-from .. import access, db
+from typing import Optional
+
+from fastapi import Query
+
+from .. import access, capacity, db
 from ..auth import Principal, current_principal
 
 router = APIRouter(prefix="/api", tags=["übersicht"])
@@ -14,6 +18,19 @@ router = APIRouter(prefix="/api", tags=["übersicht"])
 def _where(*parts: str) -> str:
     parts = [p for p in parts if p]
     return (" WHERE " + " AND ".join(parts)) if parts else ""
+
+
+@router.get("/capacity")
+def capacity_report(site_id: Optional[int] = None, warn: float = Query(10.0, ge=0, le=100), me: Principal = Depends(current_principal)):
+    """Kapazität: freie/belegte/verplante/reservierte Ports je Kategorie und freie HE je Rack, als Baum je Standort; Engpässe unter ``warn`` % frei."""
+    return capacity.report(me, site_id, warn)
+
+
+@router.get("/capacity/summary")
+def capacity_summary(warn: float = Query(10.0, ge=0, le=100), me: Principal = Depends(current_principal)):
+    """Kurzfassung für die Übersicht: Anzahl Engpässe und die drei knappsten."""
+    r = capacity.report(me, None, warn)
+    return {"warn": warn, "alerts": len(r["alerts"]), "worst": r["alerts"][:3]}
 
 
 @router.get("/stats")
