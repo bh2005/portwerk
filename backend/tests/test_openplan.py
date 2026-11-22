@@ -117,9 +117,12 @@ def lab(client, admin):
     ports = []
     for h in ("sw-a", "sw-b"):
         d = client.post("/api/devices", headers=admin, json={"hostname": h, "location_id": rack}).json()
-        ports.append([client.post(f"/api/devices/{d['id']}/ports", headers=admin, json={"name": f"P{i}"}).json()["id"] for i in range(1, 9)])
+        ports.append([client.post(f"/api/devices/{d['id']}/ports", headers=admin, json={"name": f"P{i}"}).json()["id"] for i in range(1, 13)])
+    used = [0]                                                     # jeder Auftrag eigene Ports (sonst Rückfrage „verplant“)
+
     def order(title, n=4, **kw):
-        pairs = [{"port_a_id": ports[0][i], "port_b_id": ports[1][i], "cable_label": f"K{i}"} for i in range(n)]
+        pairs = [{"port_a_id": ports[0][i], "port_b_id": ports[1][i], "cable_label": f"K{i}"} for i in range(used[0], used[0] + n)]
+        used[0] += n
         wo = client.post("/api/wizards/bulk-cables", headers=admin, json={"pairs": pairs, "mode": "workorder", "workorder_title": title}).json()["workorder"]
         return wo
     return {"site": s, "site2": s2, "rack": rack, "ports": ports, "order": order}

@@ -15,7 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .. import access, audit, cablelog, db, openplan
+from .. import access, audit, cablelog, db, openplan, reservations
 from . import wan
 from ..auth import Principal, current_principal
 from .catalog import check_cable_type
@@ -235,6 +235,9 @@ def retire_device(did: int, by: str = "", workorder_id: Optional[int] = None) ->
 
 def _resolve_item_conflicts(me: Principal, w: dict, body) -> None:
     """Neue Verbindung auf belegtem Port: Rückfrage (409) – mit ``remove_old`` wird der Rückbau automatisch als Auftrag angelegt."""
+    if body.action in ("connect", "move"):
+        reservations.check([body.port_a_id, body.port_b_id] if body.action == "connect" else [body.port_b_id],
+                           use_reserved=body.use_reserved, by=me.name, workorder_id=w["id"])
     if body.action == "connect":
         conflicts = port_conflicts([body.port_a_id, body.port_b_id], ignore_pair=(body.port_a_id, body.port_b_id))
     elif body.action == "move":
@@ -586,6 +589,8 @@ def transition(wid: int, action: str, body: Optional[TransitionIn] = None, me: P
 
     if action == "confirm":
         _apply_workorder(w, me)
+        used = db.rows("SELECT port_a_id, port_b_id FROM workitems WHERE workorder_id = ? AND action IN ('connect', 'move')", (wid,))
+        reservations.release_for_workorder(wid, [p for r in used for p in (r["port_a_id"], r["port_b_id"])], me.name)
         audit.log(me.name, "workorder.confirm", "workorder", wid, w["number"])
 
     db.execute("UPDATE workorders SET status = ?, updated_at = ? WHERE id = ?", (new_status, time.time(), wid))

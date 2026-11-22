@@ -11,7 +11,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import access, audit, cablelog, db
+from .. import access, audit, cablelog, db, reservations
 from ..access import require_writer
 from ..auth import Principal, current_principal
 from ..schemas import CONTAINER_KINDS, DEVICE_TYPES, PASSIVE_TYPES, BulkCablesIn, BulkParseIn, CableWizardIn, PortListSpec, DeviceIn, DeviceWizardIn, PortGroup, SiteWizardIn
@@ -306,7 +306,9 @@ def device_wizard(body: DeviceWizardIn, me: Principal = Depends(current_principa
         else:
             access.require_write(me, target["site_id"])
         link_rows.append((up, target))
-    # Logikprüfung 2: Zielports belegt? (alle Verbindungen zusammen, eine Rückfrage)
+    # Logikprüfung 2: Zielports reserviert/verplant, dann belegt? (alle Verbindungen zusammen, je eine Rückfrage)
+    reservations.check([t["id"] for _, t in link_rows], use_reserved=body.use_reserved, by=me.name,
+                       workorder_id=body.workorder_id if wo_mode else None, dry_run=body.dry_run)
     cable_conflicts = workorders.port_conflicts([t["id"] for _, t in link_rows]) if link_rows else []
     unresolved = [c for c in cable_conflicts if not c["removal_order"]]
     if unresolved and not body.remove_old:
@@ -478,7 +480,9 @@ def cable_wizard(body: CableWizardIn, me: Principal = Depends(current_principal)
               (a["id"], b["id"], b["id"], a["id"])):
         raise HTTPException(409, "Diese beiden Ports sind bereits miteinander verbunden")
 
-    # Logikprüfung: belegte Ports
+    # Logikprüfung: reservierte/verplante, dann belegte Ports
+    reservations.check([a["id"], b["id"]], use_reserved=body.use_reserved, by=me.name,
+                       workorder_id=body.workorder_id if wo_mode else None, dry_run=body.dry_run)
     conflicts = workorders.port_conflicts([a["id"], b["id"]])
     unresolved = [c for c in conflicts if not c["removal_order"]]
     if unresolved and not body.remove_old:
@@ -604,11 +608,12 @@ def port_list(spec: PortListSpec, me: Principal = Depends(current_principal)):
                                    EXISTS(SELECT 1 FROM cables c WHERE c.port_a_id = p.id OR c.port_b_id = p.id) AS busy
                             FROM ports p JOIN devices d ON d.id = p.device_id WHERE d.id IN ({','.join('?' * len(part))})""", tuple(part))
     out, paths = [], {}
+    res, plan = reservations.active(r["id"] for r in rows), reservations.planned(r["id"] for r in rows)
     for r in rows:
         back = r["name"].lower().endswith("-back")
         if (spec.side == "front" and back) or (spec.side == "back" and not back):
             continue
-        if spec.only_free and r["busy"]:
+        if spec.only_free and (r["busy"] or r["id"] in res or r["id"] in plan):    # frei = nicht verbunden, nicht reserviert, nicht verplant
             continue
         if spec.medium and r["medium"] != spec.medium:
             continue
@@ -617,7 +622,9 @@ def port_list(spec: PortListSpec, me: Principal = Depends(current_principal)):
         if r["location_id"] not in paths:
             paths[r["location_id"]] = masterdata.location_path(r["location_id"])
         out.append({"id": r["id"], "name": r["name"], "medium": r["medium"], "device_id": r["device_id"], "hostname": r["hostname"],
-                    "type": r["type"], "busy": bool(r["busy"]), "side": "back" if back else "front", "location_path": paths[r["location_id"]]})
+                    "type": r["type"], "busy": bool(r["busy"]), "side": "back" if back else "front", "location_path": paths[r["location_id"]],
+                    "reserved": res[r["id"]]["purpose"] if r["id"] in res else None,
+                    "planned": plan[r["id"]]["number"] if r["id"] in plan else None})
     out.sort(key=lambda x: masterdata._natural_key(f"{x['hostname']} {x['name']}"))
     return {"total": len(out), "truncated": len(out) > MAX_PORT_LIST, "ports": out[:MAX_PORT_LIST]}
 
@@ -713,7 +720,9 @@ def bulk_cables(body: BulkCablesIn, me: Principal = Depends(current_principal)):
     if not pairs:
         raise HTTPException(409, "Alle Verbindungen bestehen bereits")
 
-    # Logikprüfung: belegte Ports (eine Rückfrage für alle)
+    # Logikprüfung: reservierte/verplante, dann belegte Ports (je eine Rückfrage für alle)
+    reservations.check([x for p in pairs for x in (p.port_a_id, p.port_b_id)], use_reserved=body.use_reserved, by=me.name,
+                       workorder_id=body.workorder_id if wo_mode else None, dry_run=body.dry_run)
     conflicts = workorders.port_conflicts([x for p in pairs for x in (p.port_a_id, p.port_b_id)])
     unresolved = [c for c in conflicts if not c["removal_order"]]
     if unresolved and not body.remove_old:

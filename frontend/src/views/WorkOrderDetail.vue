@@ -518,7 +518,7 @@ async function saveEdit() {
 function openAddItem() {
   editingItemId.value = null
   api.wanLinks().then(l => { wanChoices.value = l.filter(x => x.status !== 'terminated') }).catch(() => {})
-  itemForm.value = { action:'connect', device_id: null, wan_link_id: null, remove_old: false, port_a_id: null, port_b_id: null, old_port_b_id: null,
+  itemForm.value = { action:'connect', device_id: null, wan_link_id: null, remove_old: false, use_reserved: false, port_a_id: null, port_b_id: null, old_port_b_id: null,
     cable_label:'', cable_type:'Cat6', fiber_count: null, length_m: null, color:'', note:'', idx: wo.value.items.length }
   dialogErr.value = ''
   itemDialog.value = true
@@ -538,7 +538,12 @@ async function saveItem() {
     itemDialog.value = false
   } catch (e) {
     const c = conflictOf(e)
-    if (c && !itemForm.value.remove_old && confirm(`${c.message}`)) {          // „Alten Patch zurückbauen?“ -> Ja: Rückbau-Auftrag wird automatisch angelegt
+    if (c && c.code === 'port_reserved' && !itemForm.value.use_reserved && confirm(c.message)) {   // reserviert/verplant -> trotzdem verwenden
+      itemForm.value.use_reserved = true
+      saving.value = false
+      return saveItem().then(() => load())
+    }
+    if (c && c.code === 'port_busy' && !itemForm.value.remove_old && confirm(`${c.message}`)) {   // „Alten Patch zurückbauen?“ -> Rückbau-Auftrag
       itemForm.value.remove_old = true
       saving.value = false
       return saveItem().then(() => load())
