@@ -27,7 +27,7 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
 
 ## Neue Feature-Ideen
 
-- **Kabeletiketten mit QR-Code**
+- **Kabeletiketten mit QR-Code** ✔ *(umgesetzt: Band 12/19/24 mm, A4-Bögen; QR mit Kabelnummer, Scan-Ziel /q/k/…)*
   Druckbares Etikett je Verbindung (Formate für Brother-/Dymo-Bänder). Der QR-Code führt zur Port-Detailseite, damit der
   Techniker vor Ort mit dem Handy scannen kann.
 - **Mobile Techniker-Ansicht**
@@ -50,4 +50,4 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
 1. ~~Verbindungs-Historie~~ ✔
 2. ~~Vier-Augen-Prinzip~~ ✔
 3. ~~Backup/Restore~~ ✔
-4. Kabeletiketten mit QR-Code
+4. ~~Kabeletiketten mit QR-Code~~ ✔

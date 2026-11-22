@@ -16,6 +16,8 @@ import Catalog from './views/Catalog.vue'
 import WorkOrderList from './views/WorkOrderList.vue'
 import WorkOrderDetail from './views/WorkOrderDetail.vue'
 import PatchList from './views/PatchList.vue'
+import LabelPrint from './views/LabelPrint.vue'
+import CableLookup from './views/CableLookup.vue'
 import { isLoggedIn, isAdmin, canAdministerUsers } from './api.js'
 import { helpContext } from './content/helpContext.js'
 import './style.css'
@@ -36,6 +38,9 @@ const router = createRouter({
     { path: '/workorders',    component: WorkOrderList },
     { path: '/workorders/:id', component: WorkOrderDetail },
     { path: '/patchlist',   component: PatchList },
+    { path: '/labels',      component: LabelPrint },
+    { path: '/q/k/:label',  component: CableLookup },          // Ziel der QR-Codes auf Kabeletiketten
+    { path: '/q/c/:id',     component: CableLookup },
     { path: '/import',      component: ImportView, meta: { admin: true } },
     { path: '/admin',       component: Admin, meta: { userAdmin: true } },
     { path: '/handbuch',    component: Help },
