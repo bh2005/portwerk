@@ -1,53 +1,34 @@
 # Portwerk – Ideen und offene Punkte
 
-Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktuellen Code.
+Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept.md) mit dem Code (22.11.2026); die Punkte sind seitdem großteils umgesetzt.
 
-## Lücken gegenüber dem Konzept
+## Offen
 
-1. **Verbindungs-Historie** ✔ *(umgesetzt: Tabelle `cable_history`, API `/api/cable-history`, Anzeige auf der Geräteseite)*
-   Die Tabelle `links` hat kein `valid_from`/`valid_to`; getrennte Verbindungen werden gelöscht. Die Frage „Was steckte am 3. März
-   an Gi1/0/12?“ lässt sich nur über das Audit-Log beantworten. Betrifft das Datenmodell und wird mit wachsendem Bestand teurer –
-   daher zuerst angehen.
-2. **Vier-Augen-Prinzip** ✔ *(umgesetzt: immer; Administratoren können mit Begründung übersteuern)*
-   Die Rolle `freigeber` genügt; niemand wird daran gehindert, den eigenen Auftrag freizugeben (offener Punkt 5 im Konzept:
-   immer, je Auftrag oder ab Priorität?).
-3. **Arbeitsanweisung als PDF** ✔ *(umgesetzt: Auftrag und Patchliste, E-Mail-Anhang, QR-Code zum Auftrag)*
-   Im Konzept vorgesehen (Druck/CSV/PDF), PDF ist nicht umgesetzt.
-4. **Backup/Restore** ✔ *(umgesetzt: Verwaltung → Sicherung, ZIP mit DB + TLS, täglich automatisch, Wiederherstellung mit Prüfung)*
-   Fehlt in der Oberfläche. Bei SQLite im Volume für den Betrieb wichtig (z. B. Download einer konsistenten Sicherung per
-   `VACUUM INTO`, Einspielen mit Prüfung der Schema-Version).
-5. **Etappe 4 (Ausbau)**
-   - Webhooks nach außen (bisher nur der eingehende OpenPlan-Webhook)
-   - Geräte aus OpenPlan als Importquelle (Richtung 3)
-   - Beschriftungsetiketten
-   - Abweichungsbericht Soll/Ist als eigener Bericht
-6. **Dokumentation/Technik**
-   - Konzept nennt TypeScript und PWA – das Frontend ist reines JavaScript ohne Manifest.
-   - README-Status („Etappe 1“) und Konzept („Konzeptphase, noch kein Code“) sind veraltet.
-
-## Neue Feature-Ideen
-
-- **Kabeletiketten mit QR-Code** ✔ *(umgesetzt: Band 12/19/24 mm, A4-Bögen; QR mit Kabelnummer, Scan-Ziel /q/k/…)*
-  Druckbares Etikett je Verbindung (Formate für Brother-/Dymo-Bänder). Der QR-Code führt zur Port-Detailseite, damit der
-  Techniker vor Ort mit dem Handy scannen kann.
-- **Mobile Techniker-Ansicht** ✔ *(umgesetzt: /m, Abhaken mit großen Knöpfen, Scannen, Einstieg über PDF-QR und Login am Handy)*
-  Schlanke Seite „Mein Auftrag“ zum Abhaken der Positionen am Rack – große Schaltflächen, auch mit Handschuhen bedienbar.
-- **Pfad-Tracer als Grafik** ✔ *(umgesetzt: „Pfad“ am Port und nach dem Scan, beide Richtungen, LLDP-Abgleich der Enden)*
-  Die Kette Switch → Patchfeld → Dose → Endgerät gezeichnet statt als Liste, mit Soll/Ist-Status je Station.
-- **Port-Reservierung** ✔ *(umgesetzt: Reservierungen mit Zweck/Frist, „verplant“ durch offene Aufträge, Rückfrage beim Verplanen)*
-  Ports für geplante Aufträge oder Projekte vormerken, damit sie nicht doppelt verplant werden; fließt in die Konfliktprüfung ein.
-- **Kapazitätsplanung** ✔ *(umgesetzt: Ports je Kategorie und HE je Rack mit Engpässen, Kachel auf der Übersicht)*
-  Freie Ports und Höheneinheiten je Rack bzw. Etage, Warnung bei weniger als 10 % frei.
-- **Zeitreise-Ansicht** ✔ *(umgesetzt: Stand am, Vergleich neu/entfernt/umgesteckt, Pfad zu einem Zeitpunkt)*
-  Bestand zu einem beliebigen Datum anzeigen und zwei Zeitpunkte als Diff vergleichen.
-- **Automatischer LLDP-Abgleich nach „Ausgeführt“** ✔ *(umgesetzt: Prüfung je Position nach jedem Checkmk-Import, Vorschlag zur Bestätigung)*
-  Abgleich im Checkmk-Takt, Auftrag wird automatisch zur Bestätigung vorgeschlagen.
 - **VLAN/Portprofil als Attribut**
   Nur dokumentieren, nicht konfigurieren – damit Patchaufträge auch Anweisungen wie „Port auf VLAN 20“ tragen können.
+- **Webhooks nach außen** (Konzept, Etappe 4)
+  Bisher gibt es nur den eingehenden OpenPlan-Webhook. Ereignisse wie „Auftrag bestätigt“ oder „LLDP-Abweichung“ an andere Systeme melden
+  (signiert, mit Wiederholung) – nach dem Muster von OpenPlan.
+- **Geräte aus OpenPlan als Importquelle** (Konzept, Abschnitt 6, Richtung 3)
+  Neue Geräte aus Geräte-Rollouts (Hostname, Standort, Typ) übernehmen, damit ein geplanter Switch ohne Doppelerfassung im Bestand erscheint.
+- **Historie für Geräte-Orte und Patchfeld-Paare**
+  Historisiert sind nur Verbindungen; Zeitreise und „Pfad am Datum“ zeigen Orte und Durchschleifungen mit dem heutigen Stand.
+- **Benachrichtigung „zur Bestätigung vorgeschlagen“**
+  Wenn die LLDP-Prüfung einen ausgeführten Auftrag als stimmig meldet, die Freigeber per E-Mail informieren (bisher Karte auf der Übersicht).
 
-## Vorgeschlagene Reihenfolge
+## Umgesetzt
 
-1. ~~Verbindungs-Historie~~ ✔
-2. ~~Vier-Augen-Prinzip~~ ✔
-3. ~~Backup/Restore~~ ✔
-4. ~~Kabeletiketten mit QR-Code~~ ✔
+| Thema | PR |
+|---|---|
+| Verbindungs-Historie (`cable_history`, „Stand am“ auf der Geräteseite) | #1 |
+| Vier-Augen-Prinzip (immer, Admin-Ausnahme mit Begründung) | #1 |
+| Sicherung und Wiederherstellung (ZIP mit DB und TLS, täglich automatisch) | #2 |
+| Kabeletiketten mit QR-Code (Band 12/19/24 mm, A4-Bögen, Scan-Ziel `/q/k/…`) | #3 |
+| Arbeitsanweisung als PDF (Auftrag, Patchliste, E-Mail-Anhang) | #4 |
+| Port-Reservierungen und Schutz vor doppelter Verplanung | #5 |
+| Mobile Techniker-Ansicht (`/m`) | #6 |
+| Pfad-Tracer als Grafik (beide Richtungen, LLDP-Abgleich der Enden) | #7 |
+| Kapazitätsplanung (Ports je Kategorie, HE je Rack, Engpässe) | #8 |
+| Zeitreise (Stand am, Vergleich, Pfad zu einem Zeitpunkt); Zeitzonen-Fehler bei „Stand am“ behoben | #9 |
+| LLDP-Prüfung ausgeführter Aufträge, Vorschlag zur Bestätigung | #10 |
+| README und Konzept auf den aktuellen Stand gebracht | #11 |
