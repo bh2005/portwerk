@@ -30,7 +30,7 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
 - **Kabeletiketten mit QR-Code** ✔ *(umgesetzt: Band 12/19/24 mm, A4-Bögen; QR mit Kabelnummer, Scan-Ziel /q/k/…)*
   Druckbares Etikett je Verbindung (Formate für Brother-/Dymo-Bänder). Der QR-Code führt zur Port-Detailseite, damit der
   Techniker vor Ort mit dem Handy scannen kann.
-- **Mobile Techniker-Ansicht**
+- **Mobile Techniker-Ansicht** ✔ *(umgesetzt: /m, Abhaken mit großen Knöpfen, Scannen, Einstieg über PDF-QR und Login am Handy)*
   Schlanke Seite „Mein Auftrag“ zum Abhaken der Positionen am Rack – große Schaltflächen, auch mit Handschuhen bedienbar.
 - **Pfad-Tracer als Grafik**
   Die Kette Switch → Patchfeld → Dose → Endgerät gezeichnet statt als Liste, mit Soll/Ist-Status je Station.

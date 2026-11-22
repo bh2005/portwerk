@@ -19,6 +19,8 @@ import PatchList from './views/PatchList.vue'
 import LabelPrint from './views/LabelPrint.vue'
 import CableLookup from './views/CableLookup.vue'
 import Reservations from './views/Reservations.vue'
+import MobileHome from './views/mobile/MobileHome.vue'
+import MobileOrder from './views/mobile/MobileOrder.vue'
 import { isLoggedIn, isAdmin, canAdministerUsers } from './api.js'
 import { helpContext } from './content/helpContext.js'
 import './style.css'
@@ -41,8 +43,10 @@ const router = createRouter({
     { path: '/patchlist',   component: PatchList },
     { path: '/labels',      component: LabelPrint },
     { path: '/reservations', component: Reservations },
-    { path: '/q/k/:label',  component: CableLookup },          // Ziel der QR-Codes auf Kabeletiketten
-    { path: '/q/c/:id',     component: CableLookup },
+    { path: '/q/k/:label',  component: CableLookup, meta: { bare: true } },   // Ziel der QR-Codes auf Kabeletiketten (meist am Handy)
+    { path: '/q/c/:id',     component: CableLookup, meta: { bare: true } },
+    { path: '/m',           component: MobileHome, meta: { bare: true } },    // Techniker-Ansicht fürs Handy
+    { path: '/m/wo/:id',    component: MobileOrder, meta: { bare: true } },
     { path: '/import',      component: ImportView, meta: { admin: true } },
     { path: '/admin',       component: Admin, meta: { userAdmin: true } },
     { path: '/handbuch',    component: Help },

@@ -17,7 +17,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { api, setToken, setUser, errText } from '../api.js'
+import { api, setToken, setUser, errText, hasRole } from '../api.js'
 import { inp, lbl, card, btnPrimary } from '../ui.js'
 
 const router = useRouter(), route = useRoute()
@@ -29,7 +29,8 @@ async function submit() {
     const r = await api.login(username.value, password.value)
     setToken(r.token); setUser(r.user)
     const to = String(route.query.redirect || '')
-    router.push(to.startsWith('/') && !to.startsWith('//') ? to : '/dashboard')
+    const phone = window.matchMedia?.('(max-width: 640px)').matches && hasRole('techniker')     // Techniker am Handy: mobile Ansicht
+    router.push(to.startsWith('/') && !to.startsWith('//') ? to : phone ? '/m' : '/dashboard')
   } catch (e) { error.value = errText(e, 'Anmeldung fehlgeschlagen') }
   finally { busy.value = false }
 }

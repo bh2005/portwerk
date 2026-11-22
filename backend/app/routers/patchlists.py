@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import io
 import time
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -46,6 +47,13 @@ def _end(o: dict, which: str) -> tuple[str, str]:
     return "", ""
 
 
+def _unit(port: Optional[dict]) -> Optional[int]:
+    if not port:
+        return None
+    r = db.row("SELECT rack_position FROM devices WHERE id = ?", (port["device_id"],))
+    return r["rack_position"] if r else None
+
+
 def build(ids: list[int], group: str, only_open: bool, me: Principal) -> dict:
     if group not in ("location", "order", "none"):
         raise HTTPException(400, "group: location, order oder none")
@@ -72,6 +80,8 @@ def build(ids: list[int], group: str, only_open: bool, me: Principal) -> dict:
                 "id": it["id"], "workorder_id": w["id"], "order": w["number"], "order_status": w["status"], "action": o["action"],
                 "action_label": o["action_label"], "a": a, "a_location": a_loc, "b": b, "b_location": b_loc,
                 "old_b": (f"{o['old_port_b']['device_hostname']}:{o['old_port_b']['name']}" if o.get("old_port_b") else ""),
+                "a_unit": _unit(o["port_a"]), "b_unit": _unit(o["port_b"]),                # Höheneinheit im Rack (Suche vor Ort)
+                "a_device_id": o["port_a"]["device_id"] if o["port_a"] else None, "b_device_id": o["port_b"]["device_id"] if o["port_b"] else None,
                 "cable_label": it["cable_label"], "cable_type": it["cable_type"] if it["cable_type"] != "other" else "", "length_m": it["length_m"],
                 "color": it["color"], "note": it["note"], "item_status": it["item_status"], "deviation_note": it["deviation_note"],
                 "executed_by": it["executed_by"], "executed_at": it["executed_at"], "idx": it["idx"],
