@@ -30,7 +30,8 @@ SYSTEM = "portwerk"                    # Name der externen Referenz in OpenPlan
 SYNC_IN_BACKGROUND = True                       # Tests schalten das ab (synchroner Abgleich)
 
 DEFAULTS = {"enabled": False, "base_url": "", "token": "", "default_project_id": "", "ca_pem": "", "verify_tls": True,
-            "auto_sync": True, "own_url": "", "webhook_secret": "", "account": ""}
+            "auto_sync": True, "own_url": "", "webhook_secret": "", "account": "", "link_url": ""}
+URL_KEYS = ("base_url", "own_url", "link_url")
 
 
 class OpenPlanError(Exception):
@@ -54,6 +55,12 @@ def public() -> dict:
     return out
 
 
+def link_base(cfg: Optional[dict] = None) -> str:
+    """Adresse von OpenPlan für Links im Browser: eigene Einstellung, sonst die API-Adresse (die z. B. im Docker-Netz anders lauten kann)."""
+    cfg = cfg or settings()
+    return (cfg.get("link_url") or cfg.get("base_url") or "").rstrip("/")
+
+
 def own_url(cfg: Optional[dict] = None) -> str:
     """Öffentliche Adresse dieser Anwendung (für Links in OpenPlan): eigene Einstellung, sonst die der E-Mail-Einstellungen."""
     cfg = cfg or settings()
@@ -71,6 +78,8 @@ def validate(v: dict) -> None:
         raise HTTPException(422, "Standard-Projekt: numerische Projekt-ID")
     if v["own_url"] and not re.match(r"^https?://[^\s]+$", v["own_url"]):
         raise HTTPException(422, "Eigene Adresse muss mit http:// oder https:// beginnen")
+    if v.get("link_url") and not re.match(r"^https?://[^\s]+$", v["link_url"]):
+        raise HTTPException(422, "OpenPlan-Adresse für Links muss mit http:// oder https:// beginnen")
     pem = (v.get("ca_pem") or "").strip()
     if pem and not (pem.startswith("-----BEGIN CERTIFICATE-----") and pem.endswith("-----END CERTIFICATE-----")):
         raise HTTPException(422, "CA-Zertifikat muss im PEM-Format vorliegen")
@@ -83,7 +92,7 @@ def save(patch: dict) -> dict:
             continue
         if k in ("token", "webhook_secret") and val == "":
             continue
-        cur[k] = val.strip().rstrip("/") if isinstance(val, str) and k in ("base_url", "own_url") else (val.strip() if isinstance(val, str) and k != "ca_pem" else val)
+        cur[k] = val.strip().rstrip("/") if isinstance(val, str) and k in URL_KEYS else (val.strip() if isinstance(val, str) and k != "ca_pem" else val)
     if patch.get("clear_token"):
         cur["token"] = ""
     if patch.get("clear_webhook_secret"):
@@ -156,7 +165,7 @@ def order_link(cfg: dict, wid: int) -> str:
 
 
 def task_url(cfg: dict, pid, tid) -> str:
-    return f"{cfg['base_url'].rstrip('/')}/project/{pid}?task={tid}" if cfg.get("base_url") else ""
+    return f"{link_base(cfg)}/project/{pid}?task={tid}" if link_base(cfg) else ""
 
 
 def is_linked(w: dict) -> bool:

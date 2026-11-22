@@ -58,7 +58,7 @@ def test_connection(me: Principal = Depends(require_admin)):
 def status(_: Principal = Depends(current_principal)):
     """Für die Oberfläche: ist die Anbindung eingerichtet und aktiv?"""
     c = openplan.settings()
-    return {"enabled": bool(c["enabled"]), "default_project_id": c["default_project_id"], "base_url": c["base_url"] if c["enabled"] else ""}
+    return {"enabled": bool(c["enabled"]), "default_project_id": c["default_project_id"], "base_url": openplan.link_base(c) if c["enabled"] else ""}
 
 
 @router.get("/api/openplan/projects")
@@ -205,10 +205,12 @@ def create_project(body: OpenPlanProjectIn, me: Principal = Depends(current_prin
     proj = openplan.call("POST", "/api/projects/wizard", {"kind": body.kind, "name": body.name.strip(), "description": body.description, "start_date": body.start_date,
                                                           "members": [m for m in members if m["user_id"] != me_id]}, cfg)
     pid = proj["project"]["id"]
-    out = {"project_id": pid, "name": proj["project"]["name"], "url": f"{cfg['base_url'].rstrip('/')}/project/{pid}", "tasks": len(proj.get("tasks", [])),
+    out = {"project_id": pid, "name": proj["project"]["name"], "url": f"{openplan.link_base(cfg)}/project/{pid}", "tasks": len(proj.get("tasks", [])),
            "created": [], "skipped_linked": [], "errors": []}
     if body.workorder_ids:
-        parent = next((t["id"] for t in proj.get("tasks", []) if t.get("summary") and "portwerk" in t["name"].lower()), None)
+        tasks = proj.get("tasks", [])                                                 # Abschnitt „Patchaufträge (aus Portwerk)“: bevorzugt Sammelvorgang
+        parent = next((t["id"] for t in tasks if t.get("summary") and "portwerk" in t["name"].lower()),
+                      next((t["id"] for t in tasks if "portwerk" in t["name"].lower() and not t.get("parent_id")), None))
         out.update(_bulk_create(cfg, me, pid, parent, body.workorder_ids))
     audit.log(me.name, "openplan.create_project", "settings", "openplan", f"{body.name} ({body.kind}) -> Projekt {pid}, {len(out['created'])} Aufträge")
     return out

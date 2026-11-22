@@ -429,6 +429,7 @@ class OpenPlanSettingsIn(BaseModel):
     verify_tls: Optional[bool] = None
     auto_sync: Optional[bool] = None
     own_url: Optional[str] = Field(None, max_length=300)
+    link_url: Optional[str] = Field(None, max_length=300)              # OpenPlan-Adresse für Links im Browser (leer = base_url)
     webhook_secret: Optional[str] = Field(None, max_length=200)
     clear_webhook_secret: bool = False
 

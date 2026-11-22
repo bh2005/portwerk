@@ -1,4 +1,7 @@
-"""OpenPlan-Anbindung gegen eine simulierte OpenPlan-API (Verhalten nach docs/integration-api.md von OpenPlan)."""
+"""OpenPlan-Anbindung gegen eine simulierte OpenPlan-API (Verhalten nach docs/integration-api.md von OpenPlan, Stand 0.14.0).
+
+Die Simulation prüft dieselben Grenzen wie OpenPlan (Projektarten des Assistenten, erlaubte Referenzsysteme) – damit fallen
+Vertragslücken in den Tests auf und nicht erst im Zusammenspiel mit dem echten OpenPlan."""
 import hashlib
 import hmac
 import json
@@ -7,6 +10,10 @@ import time
 import pytest
 
 from conftest import login
+
+
+WIZARD_KINDS = ("empty", "network", "migration", "release", "patchpanel")          # OpenPlan backend/schemas.py: WizardIn.kind
+REF_SYSTEMS = ("servicenow", "awx", "checkmk", "jira", "autopatch", "portwerk")     # OpenPlan backend/webhooks.py: TaskEventIn.system
 
 
 class FakeOpenPlan:
@@ -23,8 +30,8 @@ class FakeOpenPlan:
         self.projects[pid] = name
         self.add_task(pid, "Planung", summary=True)
         if with_section:
-            sec = self.add_task(pid, "Patchaufträge (aus Portwerk)", summary=True)
-            self.add_task(pid, "Platzhalter", parent=sec)
+            sec = self.add_task(pid, "Patchaufträge (aus Portwerk)", summary=True)          # Sammelvorgang = hat Kinder (wie in OpenPlan)
+            self.add_task(pid, "Alle Patchaufträge bestätigt", parent=sec)
         self.add_task(pid, "Einzelaufgabe")
 
     def add_task(self, pid, name, parent=None, summary=False):
@@ -75,6 +82,8 @@ class FakeOpenPlan:
                 t["status"] = "done" if t["percent"] >= 100 else ("in_progress" if t["percent"] > 0 and t["status"] in ("open", "done") else t["status"])
             if body.get("note") is not None:
                 t["note"] = body["note"]
+            if body.get("system") and body["system"] not in REF_SYSTEMS:
+                raise OpenPlanError(422, f"OpenPlan antwortet 422: Input should be {', '.join(REF_SYSTEMS)}")
             if body.get("system"):
                 self.refs[(tid, body["system"])] = (body["ref"], body.get("url", ""))
             after = (t["status"], t["percent"], t["note"], self.refs.get((tid, body.get("system"))))
@@ -83,6 +92,8 @@ class FakeOpenPlan:
             tid, system = int(path.split("/")[3]), path.split("/")[5]
             return {"ok": True, "removed": self.refs.pop((tid, system), None) is not None}
         if (method, path) == ("POST", "/api/projects/wizard"):
+            if body["kind"] not in WIZARD_KINDS:
+                raise OpenPlanError(422, f"OpenPlan antwortet 422: Input should be {', '.join(WIZARD_KINDS)}")
             pid = max(self.projects) + 1
             self.add_project(pid, body["name"], with_section=body["kind"] == "patchpanel")
             self.wizard_body = body
@@ -304,6 +315,38 @@ def test_create_project_from_template_with_orders_and_members(client, admin, op,
     assert client.post("/api/openplan/projects", headers=admin, json={**body, "kind": "unbekannt"}).status_code == 400
     assert client.post("/api/openplan/projects", headers=admin, json={**body, "start_date": "morgen"}).status_code == 422
     assert client.post("/api/openplan/projects", headers=admin, json={**body, "workorder_ids": [99999]}).status_code == 404                    # Rechte/Existenz vorab geprüft
+
+
+def test_link_url_for_browser_links(client, admin, op, lab):
+    """API über das Docker-Netz, Links im Browser über die öffentliche Adresse."""
+    enable(client, admin, base_url="http://openplan:8080", link_url="https://openplan.example.test/")
+    assert client.get("/api/admin/openplan", headers=admin).json()["link_url"] == "https://openplan.example.test"
+    a = lab["order"]("Links")
+    r = client.post(f"/api/workorders/{a['id']}/openplan/create", headers=admin, json={"project_id": 1})
+    assert r.status_code == 200, r.text
+    assert r.json()["openplan"]["link"].startswith("https://openplan.example.test/project/1?task=")
+    d = client.post("/api/openplan/projects", headers=admin, json={"name": "P", "start_date": "2026-12-01"}).json()
+    assert d["url"] == f"https://openplan.example.test/project/{d['project_id']}"
+    assert client.get("/api/openplan/status", headers=admin).json()["base_url"] == "https://openplan.example.test"
+    assert client.put("/api/admin/openplan", headers=admin, json={"link_url": "ftp://x"}).status_code == 422
+
+
+def test_section_is_found_by_name_and_unknown_systems_are_rejected(client, admin, op, lab):
+    enable(client, admin)
+    orig = op.add_project
+
+    def flat(pid, name, with_section=False):                                     # Abschnitt ohne Kinder (kein Sammelvorgang)
+        orig(pid, name)
+        if with_section:
+            op.add_task(pid, "Patchaufträge (aus Portwerk)")
+    op.add_project = flat
+    a = lab["order"]("Flach")
+    d = client.post("/api/openplan/projects", headers=admin, json={"name": "Flach", "start_date": "2026-12-01", "workorder_ids": [a["id"]]}).json()
+    sec = next(t["id"] for t in op.tasks.values() if t["project_id"] == d["project_id"] and t["name"].startswith("Patchaufträge"))
+    assert any(t["parent_id"] == sec for t in op.tasks.values())                 # trotzdem unter dem Abschnitt
+    from app.openplan import OpenPlanError
+    with pytest.raises(OpenPlanError):
+        op("POST", f"/api/tasks/{sec}/events", {"system": "unbekannt", "ref": "x"})
 
 
 # ── Webhook von OpenPlan ──────────────────────────────────────────────────────
