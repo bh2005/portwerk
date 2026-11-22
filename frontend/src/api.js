@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { withOffset } from './ui.js'
 
 const TOKEN_KEY = 'opp_auth_token'
 const USER_KEY  = 'opp_user'
@@ -96,8 +97,10 @@ export const api = {
   setCable:     (id, body) => put(`/api/ports/${id}/cable`, body),
   cables:       params => get('/api/cables', params),
   updateCable:  (id, body) => put(`/api/cables/${id}`, body),
-  cableHistory: params => get('/api/cable-history', params),
-  portPath:     id => get(`/api/ports/${id}/path`),
+  cableHistory: params => get('/api/cable-history', { ...params, at: withOffset(params?.at) }),
+  portPath:     (id, at) => get(`/api/ports/${id}/path`, at ? { at: withOffset(at) } : undefined),
+  historySnapshot: params => get('/api/cable-history/snapshot', { ...params, at: withOffset(params.at) }),
+  historyDiff:     params => get('/api/cable-history/diff', { ...params, from: withOffset(params.from), to: withOffset(params.to) }),
   reservations:        params => get('/api/reservations', params),
   reservePorts:        body => post('/api/reservations', body),
   updateReservation:   (id, body) => put(`/api/reservations/${id}`, body),

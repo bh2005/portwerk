@@ -38,7 +38,7 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
   Ports für geplante Aufträge oder Projekte vormerken, damit sie nicht doppelt verplant werden; fließt in die Konfliktprüfung ein.
 - **Kapazitätsplanung** ✔ *(umgesetzt: Ports je Kategorie und HE je Rack mit Engpässen, Kachel auf der Übersicht)*
   Freie Ports und Höheneinheiten je Rack bzw. Etage, Warnung bei weniger als 10 % frei.
-- **Zeitreise-Ansicht** (setzt die Verbindungs-Historie voraus)
+- **Zeitreise-Ansicht** ✔ *(umgesetzt: Stand am, Vergleich neu/entfernt/umgesteckt, Pfad zu einem Zeitpunkt)*
   Bestand zu einem beliebigen Datum anzeigen und zwei Zeitpunkte als Diff vergleichen.
 - **Automatischer LLDP-Abgleich nach „Ausgeführt“**
   Abgleich im Checkmk-Takt, Auftrag wird automatisch zur Bestätigung vorgeschlagen.
