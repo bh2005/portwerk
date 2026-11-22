@@ -21,6 +21,17 @@
         <StatCard label="Aktiv" :value="s.devices_by_status.active || 0" :hint="`${s.devices_by_status.planned || 0} geplant`" />
       </div>
 
+      <router-link v-if="cap && cap.alerts" to="/capacity" :class="card" class="block p-4 border-l-4 border-l-red-500 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Kapazität: {{ cap.alerts }} Engpass/Engpässe (unter {{ cap.warn }} % frei)</h2>
+          <span class="text-xs text-ks-600 dark:text-ks-400">Kapazität öffnen →</span>
+        </div>
+        <ul class="mt-2 text-sm space-y-0.5">
+          <li v-for="(a, i) in cap.worst" :key="i"><span class="text-red-600 font-medium tabular-nums">{{ a.free_pct }} %</span>
+            <span class="ml-2 text-slate-700 dark:text-slate-200">{{ a.label }}</span><span class="ml-1 text-slate-500">· {{ a.path }}</span></li>
+        </ul>
+      </router-link>
+
       <div class="grid md:grid-cols-3 gap-3">
         <div v-for="g in groups" :key="g.title" :class="card" class="p-4">
           <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">{{ g.title }}</h2>
@@ -58,7 +69,7 @@ import StatCard from '../components/StatCard.vue'
 import { api, errText } from '../api.js'
 import { card, th, td, typeLabel, statusLabel, sourceLabel, fmtTime } from '../ui.js'
 
-const s = ref(null), error = ref(''), tasks = ref([])
+const s = ref(null), error = ref(''), tasks = ref([]), cap = ref(null)
 const sorted = o => Object.entries(o || {}).sort((a, b) => b[1] - a[1])
 const groups = computed(() => !s.value ? [] : [
   { title: 'Nach Typ', rows: sorted(s.value.devices_by_type), label: typeLabel },
@@ -67,6 +78,7 @@ const groups = computed(() => !s.value ? [] : [
 ])
 onMounted(async () => {
   try { s.value = await api.stats() } catch (e) { error.value = errText(e) }
+  try { cap.value = await api.capacitySummary() } catch { /* Kapazität ist optional */ }
   try { tasks.value = (await api.workorders({ assigned: 'me' })).filter(w => !['confirmed', 'rejected'].includes(w.status)) } catch { /* ohne Aufträge keine Karte */ }
 })
 </script>

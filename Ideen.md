@@ -36,7 +36,7 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
   Die Kette Switch → Patchfeld → Dose → Endgerät gezeichnet statt als Liste, mit Soll/Ist-Status je Station.
 - **Port-Reservierung** ✔ *(umgesetzt: Reservierungen mit Zweck/Frist, „verplant“ durch offene Aufträge, Rückfrage beim Verplanen)*
   Ports für geplante Aufträge oder Projekte vormerken, damit sie nicht doppelt verplant werden; fließt in die Konfliktprüfung ein.
-- **Kapazitätsplanung**
+- **Kapazitätsplanung** ✔ *(umgesetzt: Ports je Kategorie und HE je Rack mit Engpässen, Kachel auf der Übersicht)*
   Freie Ports und Höheneinheiten je Rack bzw. Etage, Warnung bei weniger als 10 % frei.
 - **Zeitreise-Ansicht** (setzt die Verbindungs-Historie voraus)
   Bestand zu einem beliebigen Datum anzeigen und zwei Zeitpunkte als Diff vergleichen.
