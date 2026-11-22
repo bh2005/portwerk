@@ -84,6 +84,7 @@ class PeerIn(BaseModel):
 
 
 class CableIn(BaseModel):
+    use_reserved: bool = False                      # reservierte/verplante Ports trotzdem verwenden (Reservierung wird freigegeben)
     port_b_id: Optional[int] = None             # None = Kabel/Verbindung lösen
     cable_label: str = ""
     cable_type: str = "other"
@@ -120,6 +121,7 @@ class WorkOrderIn(BaseModel):
 
 
 class WorkItemIn(BaseModel):
+    use_reserved: bool = False                      # reservierte/verplante Ports trotzdem verwenden (Reservierung wird freigegeben)
     action:       str = "connect"           # connect | disconnect | move | install_device | remove_device
     device_id:    Optional[int] = None      # bei install_device / remove_device
     wan_link_id:  Optional[int] = None      # bei wan_activate / wan_change / wan_terminate
@@ -294,6 +296,7 @@ class UplinkIn(BaseModel):
 
 
 class DeviceWizardIn(BaseModel):
+    use_reserved: bool = False                      # reservierte/verplante Ports trotzdem verwenden (Reservierung wird freigegeben)
     """Gerät platzieren: Stammdaten, Position im Rack, Ports aus Katalogmodell oder eigener Vorlage, optional ein Kabel."""
     hostname: str = Field(default="", max_length=120)               # bei Platzhaltern (Kabelführung …) leer = automatischer Name
     type: str = "switch"
@@ -322,6 +325,7 @@ class DeviceWizardIn(BaseModel):
 
 
 class CableWizardIn(BaseModel):
+    use_reserved: bool = False                      # reservierte/verplante Ports trotzdem verwenden (Reservierung wird freigegeben)
     """Zwei Ports mit einem Kabel verbinden (beliebige Kabelart aus dem Katalog: Daten, Glasfaser, Strom, Koax, seriell, Telefon …)."""
     port_a_id: int
     port_b_id: int
@@ -356,6 +360,7 @@ class BulkPair(BaseModel):
 
 
 class BulkCablesIn(BaseModel):
+    use_reserved: bool = False                      # reservierte/verplante Ports trotzdem verwenden (Reservierung wird freigegeben)
     """Viele Kabel auf einmal: als eine Liste (ein Patchauftrag mit vielen Positionen) oder sofort."""
     pairs: list[BulkPair] = Field(min_length=1, max_length=1000)
     cable_type: str = "Cat6A"

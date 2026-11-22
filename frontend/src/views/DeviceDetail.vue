@@ -47,6 +47,7 @@
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ports ({{ d.ports.length }})</h2>
           <div class="flex gap-2">
+            <button v-if="canReserve && picked.size" :class="btnGhost" @click="openReserve">Reservieren ({{ picked.size }})</button>
             <router-link v-if="d.ports.some(p => p.cable)" :to="{ path: '/labels', query: { device: String(d.id) } }" :class="btnGhost">Etiketten</router-link>
             <template v-if="canWrite">
               <button :class="btnGhost" @click="openBulk">Mehrere anlegen</button>
@@ -58,11 +59,12 @@
         <p v-if="!d.ports.length" class="text-sm text-slate-400">Noch keine Ports.</p>
         <div v-else class="overflow-x-auto">
           <table class="w-full text-sm">
-            <thead><tr class="bg-slate-50 dark:bg-slate-700/40"><th :class="th">Name</th><th :class="th">Medium</th><th :class="th">Geschw.</th><th :class="th">Beschreibung</th>
+            <thead><tr class="bg-slate-50 dark:bg-slate-700/40"><th v-if="canReserve" :class="th" class="w-6"><input type="checkbox" title="alle freien Ports wählen" :checked="picked.size > 0 && picked.size === freePorts.length" @change="toggleAll($event.target.checked)" /></th><th :class="th">Name</th><th :class="th">Medium</th><th :class="th">Geschw.</th><th :class="th">Beschreibung</th>
               <th :class="th">Status</th><th v-if="d.type === 'patchpanel'" :class="th">Gegenseite</th>
               <th :class="th">Verbunden mit</th><th v-if="canWrite" :class="th"></th></tr></thead>
             <tbody>
               <tr v-for="p in d.ports" :key="p.id" class="border-t border-slate-100 dark:border-slate-700">
+                <td v-if="canReserve" :class="td"><input v-if="!p.reservation" type="checkbox" :checked="picked.has(p.id)" @change="togglePick(p.id)" /></td>
                 <td :class="td" class="font-mono text-xs">{{ p.name }}</td>
                 <td :class="td">{{ p.medium }}</td>
                 <td :class="td">{{ fmtSpeed(p.speed_mbps) }}</td>
@@ -77,7 +79,13 @@
                   <span v-if="p.cable && p.cable.cable_label" class="ml-1 text-slate-400">({{ p.cable.cable_label }})</span>
                   <span v-if="p.cable && p.cable.measurement_ok === true" class="ml-1 text-green-500" title="Messung bestanden">✓</span>
                   <span v-if="p.cable && p.cable.measurement_ok === false" class="ml-1 text-red-500" title="Messung nicht bestanden">✗</span>
-                  <span v-if="!p.cable" class="text-slate-400">–</span>
+                  <span v-if="!p.cable && !p.reservation && !p.planned" class="text-slate-400">–</span>
+                  <span v-if="p.reservation" class="ml-1 inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                    :title="`reserviert von ${p.reservation.reserved_by}` + (p.reservation.workorder ? ` für ${p.reservation.workorder.number}` : '')">
+                    reserviert: {{ p.reservation.purpose }}<template v-if="p.reservation.until"> (bis {{ fmtDate(p.reservation.until) }})</template>
+                    <button v-if="canReserve" class="ml-1 underline" @click="releaseRes(p)">freigeben</button></span>
+                  <router-link v-if="p.planned" :to="`/workorders/${p.planned.id}`" class="ml-1 inline-block px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 hover:underline"
+                    :title="p.planned.title">verplant: {{ p.planned.number }}</router-link>
                   <button :class="btnLink" class="ml-2" title="Frühere Verbindungen dieses Ports" @click="showPortHistory(p)">Historie</button>
                 </td>
                 <td v-if="canWrite" :class="td" class="text-right whitespace-nowrap">
@@ -140,6 +148,19 @@
         </div>
       </div>
     </template>
+
+    <ModalDialog v-if="resForm" title="Ports reservieren" :error="formError" @close="resForm = null">
+      <p class="text-sm text-slate-500 mb-3">{{ resForm.names }}</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2"><label :class="lbl">Wofür (Projekt, Zweck)</label><input v-model="resForm.purpose" :class="inp" placeholder="z. B. Kamera-Projekt Halle 3" /></div>
+        <div><label :class="lbl">Reserviert bis (optional)</label><input v-model="resForm.until" type="date" :class="inp" /></div>
+      </div>
+      <p class="text-xs text-slate-400 mt-2">Reservierte Ports gelten in Assistenten nicht mehr als frei; wer sie verplanen will, bekommt eine Rückfrage.</p>
+      <template #footer>
+        <button :class="btnGhost" @click="resForm = null">Abbrechen</button>
+        <button :class="btnPrimary" :disabled="!resForm.purpose.trim()" @click="saveReserve">Reservieren</button>
+      </template>
+    </ModalDialog>
 
     <ModalDialog v-if="portForm" :title="portForm.id ? 'Port bearbeiten' : 'Neuer Port'" :error="formError" @close="portForm = null">
       <div class="grid grid-cols-2 gap-3">
@@ -265,13 +286,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
 import CableWizard from '../components/CableWizard.vue'
 import HelpHint from '../components/HelpHint.vue'
 import { cableTypes, countLabel, loadCableTypes } from '../catalog.js'
-import { api, errText, canWriteMaster } from '../api.js'
+import { api, errText, conflictOf, canWriteMaster, hasRole } from '../api.js'
 import { checkmkUrl, loadCheckmk } from '../checkmk.js'
 import { inp, lbl, card, th, td, btnPrimary, btnGhost, btnDanger, btnLink, DEVICE_TYPES, DEVICE_STATUS, PORT_MEDIA,
          typeLabel, sourceLabel, fmtSpeed, fmtTime, linkClass } from '../ui.js'
@@ -284,6 +305,26 @@ const error = ref(''), msg = ref(''), msgErr = ref(false), formError = ref('')
 const portForm = ref(null), bulk = ref(null), peer = ref(null), cableForm = ref(null)
 const cableWiz = ref(null)
 const hist = reactive({ rows: [], at: '', port: null, error: '' }), histCard = ref(null)
+const canReserve = hasRole('planer'), picked = ref(new Set()), resForm = ref(null)
+const freePorts = computed(() => (d.value?.ports || []).filter(p => !p.reservation))
+const fmtDate = s => s ? s.split('-').reverse().join('.') : ''
+function togglePick(id) { const s = new Set(picked.value); s.has(id) ? s.delete(id) : s.add(id); picked.value = s }
+function toggleAll(on) { picked.value = new Set(on ? freePorts.value.map(p => p.id) : []) }
+function openReserve() {
+  formError.value = ''
+  const names = d.value.ports.filter(p => picked.value.has(p.id)).map(p => p.name)
+  resForm.value = { purpose: '', until: '', names: `${d.value.hostname}: ${names.slice(0, 12).join(', ')}${names.length > 12 ? ` … (${names.length})` : ''}` }
+}
+async function saveReserve() {
+  try {
+    await api.reservePorts({ port_ids: [...picked.value], purpose: resForm.value.purpose.trim(), until: resForm.value.until || null })
+    resForm.value = null; picked.value = new Set(); msgErr.value = false; msg.value = 'Ports reserviert.'; await load()
+  } catch (e) { formError.value = errText(e) }
+}
+async function releaseRes(p) {
+  if (!confirm(`Reservierung „${p.reservation.purpose}“ für ${p.name} freigeben?`)) return
+  try { await api.releaseReservation(p.reservation.id); await load() } catch (e) { error.value = errText(e) }
+}
 const END_REASONS = { manual: '(direkt)', workorder: '', wizard: '(Assistent)', retire: '(Rückbau)', '': '(Port/Gerät gelöscht)' }
 async function loadHistory() {
   if (!d.value) return
@@ -385,7 +426,11 @@ async function saveCable() {
     const { port, devices, ports, deviceId, portId, ...cableFields } = cableForm.value
     await api.setCable(port.id, { port_b_id: portId, ...cableFields })
     cableForm.value = null; await load()
-  } catch (e) { formError.value = errText(e) }
+  } catch (e) {
+    const c = conflictOf(e)
+    if (c && c.code === 'port_reserved' && !cableForm.value.use_reserved && confirm(c.message)) { cableForm.value.use_reserved = true; return saveCable() }
+    formError.value = errText(e)
+  }
 }
 
 async function openPeer(p) {
@@ -403,5 +448,5 @@ async function savePeer() {
 }
 
 onMounted(async () => { loadCableTypes(); loadCheckmk(); try { locations.value = await api.locations() } catch {} ; load() })
-watch(() => route.params.id, id => { if (id) { hist.port = null; hist.at = ''; load() } })
+watch(() => route.params.id, id => { if (id) { hist.port = null; hist.at = ''; picked.value = new Set(); load() } })
 </script>

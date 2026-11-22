@@ -148,10 +148,10 @@
 
       <!-- Rückfrage bei Konflikt -->
       <div v-if="conflict" class="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 space-y-2">
-        <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ conflict.code === 'slot_busy' ? 'Die Höheneinheiten sind belegt' : (conflict.conflicts.length > 1 ? `${conflict.conflicts.length} Zielports sind belegt` : 'Der Zielport ist belegt') }}</p>
+        <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ conflict.code === 'slot_busy' ? 'Die Höheneinheiten sind belegt' : conflict.code === 'port_reserved' ? 'Zielport reserviert bzw. schon verplant' : (conflict.conflicts.length > 1 ? `${conflict.conflicts.length} Zielports sind belegt` : 'Der Zielport ist belegt') }}</p>
         <p class="text-sm text-amber-900 dark:text-amber-200">{{ conflict.message }}</p>
         <div class="flex gap-2">
-          <button :class="btnPrimary" @click="resolveConflict(true)">Ja, zurückbauen</button>
+          <button :class="btnPrimary" @click="resolveConflict(true)">{{ conflict.code === 'port_reserved' ? 'Ja, trotzdem verwenden' : 'Ja, zurückbauen' }}</button>
           <button :class="btnGhost" @click="resolveConflict(false)">Nein, andere Wahl treffen</button>
         </div>
       </div>
@@ -223,7 +223,7 @@ const canOrder = hasRole('planer')
 const form = reactive({
   hostname: '', type: placeholder.value ? 'blank_panel' : (isPanel.value ? 'patchpanel' : 'switch'), model_id: null, vendor: '', model: '', height_u: null, location_id: props.locationId, rack_position: null,
   serial: '', mgmt_ip: '', note: '', status: 'active', mode: canDirect ? 'direct' : 'workorder', workorder_id: null, workorder_title: '',
-  replace_devices: false, remove_old: false,
+  replace_devices: false, remove_old: false, use_reserved: false,
   // Einbaulage: Seite und Ausrichtung (hochkant = Seitenkanal, z. B. PDU)
   orientation: props.kind === 'vertical' ? 'vertical' : 'horizontal',
   mount_side: props.kind === 'vertical' ? (props.mountSide || 'rear') : (['placeholder', 'patchpanel'].includes(props.kind) ? (props.mountSide || 'front') : 'both'),
@@ -360,6 +360,7 @@ async function resolveConflict(yes) {
     return
   }
   if (c.code === 'slot_busy') form.replace_devices = true
+  else if (c.code === 'port_reserved') form.use_reserved = true
   else form.remove_old = true
   conflict.value = null
   await check()
@@ -374,7 +375,7 @@ async function next() {
   if (stepKey.value === 'mode') {
     if (!canDirect) form.mode = 'workorder'
     if (canOrder) { try { openOrders.value = (await api.workorders()).filter(w => ['draft', 'rework'].includes(w.status)) } catch {} }
-    form.replace_devices = false; form.remove_old = false
+    form.replace_devices = false; form.remove_old = false; form.use_reserved = false
     await check()
   }
 }

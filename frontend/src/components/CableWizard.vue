@@ -68,10 +68,10 @@
       </div>
 
       <div v-if="conflict" class="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 space-y-2">
-        <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ conflict.conflicts.length > 1 ? `${conflict.conflicts.length} Ports sind belegt` : 'Ein Port ist belegt' }}</p>
+        <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ conflict.code === 'port_reserved' ? 'Reserviert bzw. schon verplant' : (conflict.conflicts.length > 1 ? `${conflict.conflicts.length} Ports sind belegt` : 'Ein Port ist belegt') }}</p>
         <p class="text-sm text-amber-900 dark:text-amber-200">{{ conflict.message }}</p>
         <div class="flex gap-2">
-          <button :class="btnPrimary" @click="resolve(true)">Ja, zurückbauen</button>
+          <button :class="btnPrimary" @click="resolve(true)">{{ conflict.code === 'port_reserved' ? 'Ja, trotzdem verwenden' : 'Ja, zurückbauen' }}</button>
           <button :class="btnGhost" @click="resolve(false)">Nein, andere Ports wählen</button>
         </div>
       </div>
@@ -120,7 +120,7 @@ const canOrder = hasRole('planer')
 
 const form = reactive({
   cable_type: 'Cat6', port_a_id: '', port_b_id: '', cable_label: '', length_m: null, fiber_count: null, color: '', installed_at: null, note: '',
-  mode: canDirect ? 'direct' : 'workorder', remove_old: false, workorder_id: null, workorder_title: '',
+  mode: canDirect ? 'direct' : 'workorder', remove_old: false, use_reserved: false, workorder_id: null, workorder_title: '',
 })
 
 const categories = computed(() => CABLE_CATEGORIES.filter(([k]) => cableTypes.value.some(t => t.category === k)))
@@ -151,7 +151,9 @@ async function check() {
 }
 async function resolve(yes) {
   if (!yes) { conflict.value = null; step.value = 1; return }
-  form.remove_old = true; conflict.value = null
+  if (conflict.value.code === 'port_reserved') form.use_reserved = true
+  else form.remove_old = true
+  conflict.value = null
   await check()
 }
 async function modeChanged() { conflict.value = null; await check() }
@@ -161,7 +163,7 @@ async function next() {
   step.value++
   if (step.value === 3) {
     if (!canDirect) form.mode = 'workorder'
-    form.remove_old = false
+    form.remove_old = false; form.use_reserved = false
     if (canOrder) { try { openOrders.value = (await api.workorders()).filter(w => ['draft', 'rework'].includes(w.status)) } catch {} }
     await check()
   }

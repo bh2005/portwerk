@@ -51,7 +51,7 @@ export function errText(e, fallback = 'Fehler') {
 /** Rückfrage-Antwort des Servers („Port belegt“, „HE belegt“): liefert {code, message, conflicts} oder null. */
 export function conflictOf(e) {
   const d = e?.response?.data?.detail
-  return e?.response?.status === 409 && d && typeof d === 'object' && ['port_busy', 'slot_busy'].includes(d.code) ? d : null
+  return e?.response?.status === 409 && d && typeof d === 'object' && ['port_busy', 'slot_busy', 'port_reserved'].includes(d.code) ? d : null
 }
 
 const get  = (url, params) => http.get(url, { params }).then(r => r.data)
@@ -95,6 +95,11 @@ export const api = {
   cables:       params => get('/api/cables', params),
   updateCable:  (id, body) => put(`/api/cables/${id}`, body),
   cableHistory: params => get('/api/cable-history', params),
+  reservations:        params => get('/api/reservations', params),
+  reservePorts:        body => post('/api/reservations', body),
+  updateReservation:   (id, body) => put(`/api/reservations/${id}`, body),
+  releaseReservation:  id => del(`/api/reservations/${id}`),
+  releaseReservations: ids => post('/api/reservations/release', { ids }),
   labels:       params => http.get('/api/labels', { params, paramsSerializer: { indexes: null } }).then(r => r.data),
   resolveLabel: params => get('/api/labels/resolve', params),
 
