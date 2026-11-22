@@ -22,12 +22,12 @@ def body(rack, **kw):
 def run_order(client, admin, wid):
     wo = client.get(f"/api/workorders/{wid}", headers=admin).json()
     for act in ("submit", "approve", "start"):
-        r = client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin)
+        r = client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"})
         assert r.status_code == 200, (act, r.text)
     for it in wo["items"]:
         assert client.post(f"/api/workorders/{wid}/items/{it['id']}/execute", headers=admin, json={"item_status": "done"}).status_code == 200
     for act in ("finish", "confirm"):
-        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin).status_code == 200
+        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"}).status_code == 200
 
 
 def test_port_busy_direct_removes_old_cable_after_confirmation(client, admin, rack):
@@ -65,12 +65,12 @@ def test_port_busy_workorder_creates_removal_order_and_blocks_start(client, admi
     assert [r["number"] for r in rem["required_by"]] == [main["number"]]
     # Hauptauftrag darf erst starten, wenn der Rückbau bestätigt ist
     for act in ("submit", "approve"):
-        assert client.post(f"/api/workorders/{wo['id']}/transition/{act}", headers=admin).status_code == 200
-    blocked = client.post(f"/api/workorders/{wo['id']}/transition/start", headers=admin)
+        assert client.post(f"/api/workorders/{wo['id']}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"}).status_code == 200
+    blocked = client.post(f"/api/workorders/{wo['id']}/transition/start", headers=admin, json={"override_reason": "Test (allein)"})
     assert blocked.status_code == 409 and rem["number"] in blocked.json()["detail"]
     run_order(client, admin, rem["id"])
     assert client.get("/api/cables", headers=admin).json() == []                                           # alter Patch ist jetzt weg
-    assert client.post(f"/api/workorders/{wo['id']}/transition/start", headers=admin).status_code == 200
+    assert client.post(f"/api/workorders/{wo['id']}/transition/start", headers=admin, json={"override_reason": "Test (allein)"}).status_code == 200
 
 
 def test_slot_busy_asks_and_replaces_directly(client, admin, rack):

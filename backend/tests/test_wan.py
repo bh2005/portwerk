@@ -32,11 +32,11 @@ def order(client, admin, title="WAN"):
 
 def run(client, admin, wid):
     for act in ("submit", "approve", "start"):
-        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin).status_code == 200
+        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"}).status_code == 200
     for it in client.get(f"/api/workorders/{wid}", headers=admin).json()["items"]:
         assert client.post(f"/api/workorders/{wid}/items/{it['id']}/execute", headers=admin, json={"item_status": "done"}).status_code == 200
     for act in ("finish", "confirm"):
-        r = client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin)
+        r = client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"})
         assert r.status_code == 200, r.text
 
 

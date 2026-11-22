@@ -21,7 +21,8 @@ export const sections = [
 <p>Gerätetypen: Switch, Router, Firewall, Access Point, Server, Patchfeld, Dose, Endgerät, Sonstiges. Der Status ist <i>geplant</i>, <i>aktiv</i> oder <i>außer Betrieb</i>.</p>
 <ul><li><b>HE-Position und Höhe</b> sind nur in einem Rack möglich. Überschneidungen und Überschreiten der Rackhöhe werden abgewiesen.</li>
 <li><b>Ports</b> lassen sich einzeln oder gesammelt anlegen (Präfix, Start, Anzahl).</li>
-<li><b>Patchfelder:</b> jeder Port kann mit einer Gegenseite verknüpft werden (Durchschleifung).</li></ul>` },
+<li><b>Patchfelder:</b> jeder Port kann mit einer Gegenseite verknüpft werden (Durchschleifung).</li>
+<li><b>Verbindungs-Historie</b> (unten auf der Geräteseite): alle aktuellen und früheren Verbindungen mit Zeitraum, wer bzw. welcher Auftrag sie hergestellt und getrennt hat. Mit <b>Stand am</b> zeigt sie, was zu einem bestimmten Zeitpunkt steckte; <b>Historie</b> in der Portzeile filtert auf einen Port. Gelöschte Ports und Geräte bleiben mit ihrem damaligen Namen erhalten.</li></ul>` },
 
   { id: 'import', title: 'Import', html: `
 <p>Der Import legt Geräte und Ports an und aktualisiert sie. Er ändert nie Verbindungen.</p>
@@ -45,6 +46,8 @@ export const sections = [
 <tr><td>Techniker</td><td>Aufträge ausführen</td></tr>
 <tr><td>Betrachter</td><td>nur lesen</td></tr></table>
 <p>Rollen sind kombinierbar. Der letzte aktive Administrator kann nicht entfernt werden.</p>
+<h3>Vier-Augen-Prinzip</h3>
+<p>Wer einen Auftrag angelegt oder eingereicht hat, darf ihn nicht selbst <b>freigeben</b>; wer ihn ausgeführt hat, darf ihn nicht selbst <b>bestätigen</b>. Ablehnen und Nacharbeit bleiben erlaubt. Administratoren können im Notfall mit <b>Begründung</b> übersteuern – die Ausnahme steht im Audit-Log und am Auftrag.</p>
 <h3>API-Zugänge</h3>
 <p>Tokens für Skripte (Präfix <code>opp_</code>). Umfang <i>read</i> oder <i>write</i>, optional mit Ablauf. Der Klartext wird nur einmal angezeigt; Übergabe im Header <code>Authorization: Bearer …</code> bzw. <code>X-Auth-Token</code>.</p>
 <h3>Audit-Log</h3>

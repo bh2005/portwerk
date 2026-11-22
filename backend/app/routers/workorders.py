@@ -15,7 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .. import access, audit, db, openplan
+from .. import access, audit, cablelog, db, openplan
 from . import wan
 from ..auth import Principal, current_principal
 from .catalog import check_cable_type
@@ -46,6 +46,9 @@ STATUS_LABELS = {
 ACTION_LABELS = {"connect": "Verbindung herstellen", "disconnect": "Verbindung trennen", "move": "Verbindung umstecken",
                  "install_device": "Gerät einbauen", "remove_device": "Gerät zurückbauen",
                  "wan_activate": "WAN in Betrieb nehmen", "wan_change": "WAN ändern", "wan_terminate": "WAN kündigen"}
+# Vier-Augen-Prinzip: Aktion -> Spalten der Personen, die diese Aktion nicht selbst ausführen dürfen
+FOUR_EYES: dict[str, tuple[str, ...]] = {"approve": ("created_by", "submitted_by"), "confirm": ("finished_by",)}
+ACTOR_COLUMNS = {"submit": "submitted_by", "approve": "approved_by", "finish": "finished_by", "confirm": "confirmed_by"}
 OPEN_STATES = ("draft", "submitted", "approved", "in_progress", "done", "rework")      # Aufträge, die noch nicht abgeschlossen sind
 
 
@@ -212,17 +215,12 @@ def finalize_hostname(did: int) -> bool:
     return True
 
 
-def retire_device(did: int) -> int:
+def retire_device(did: int, by: str = "", workorder_id: Optional[int] = None) -> int:
     """Gerät ausbauen: Kabel an allen Ports entfernen, Status „außer Betrieb“, HE-Position frei. Das Gerät bleibt als Historie erhalten,
     gibt aber seinen Hostnamen frei (er wird zu „<Name>~zurückgebaut-<Datum>“, der ursprüngliche Name steht in ``former_hostname``);
     wartet ein Ersatzgerät auf den Namen, übernimmt es ihn jetzt."""
-    ports = [r["id"] for r in db.rows("SELECT id FROM ports WHERE device_id = ?", (did,))]
-    n = 0
-    for pid in ports:
-        c = db.row("SELECT id FROM cables WHERE port_a_id = ? OR port_b_id = ?", (pid, pid))
-        if c:
-            db.execute("DELETE FROM cables WHERE id = ?", (c["id"],))
-            n += 1
+    n = cablelog.remove("port_a_id IN (SELECT id FROM ports WHERE device_id = ?) OR port_b_id IN (SELECT id FROM ports WHERE device_id = ?)",
+                        (did, did), by=by, workorder_id=workorder_id, reason="retire")
     d = db.row("SELECT hostname, former_hostname FROM devices WHERE id = ?", (did,))
     now = time.time()
     if d and not d["former_hostname"]:                                       # erstmaliger Rückbau: Namen freigeben
@@ -387,6 +385,11 @@ def _wo_out(w: dict, with_items: bool = False) -> dict:
         "openplan_link":    w["openplan_link"],
         "created_by":   w["created_by"],
         "created_at":   w["created_at"],
+        "submitted_by": w.get("submitted_by", ""),
+        "approved_by":  w.get("approved_by", ""),
+        "finished_by":  w.get("finished_by", ""),
+        "confirmed_by": w.get("confirmed_by", ""),
+        "four_eyes_override": [x for x in (w.get("four_eyes_override") or "").split("\n") if x],
         "updated_at":   w["updated_at"],
         "progress":     _progress(w["id"]),
         "openplan":     _openplan_out(w),
@@ -419,7 +422,7 @@ def _apply_workorder(w: dict, me: Principal) -> None:
 
         if action == "connect" and a_id and b_id:
             # bestehende Verbindungen an beiden Ports entfernen
-            db.execute("DELETE FROM cables WHERE port_a_id IN (?,?) OR port_b_id IN (?,?)", (a_id, b_id, a_id, b_id))
+            cablelog.remove_at_ports([a_id, b_id], by=me.name, workorder_id=w["id"], reason="workorder")
             lo, hi = (a_id, b_id) if a_id < b_id else (b_id, a_id)
             db.execute(
                 """INSERT INTO cables(port_a_id, port_b_id, cable_label, cable_type, fiber_count, length_m,
@@ -438,21 +441,14 @@ def _apply_workorder(w: dict, me: Principal) -> None:
             finalize_hostname(item["device_id"])
 
         elif action == "remove_device" and item["device_id"]:
-            retire_device(item["device_id"])
+            retire_device(item["device_id"], by=me.name, workorder_id=w["id"])
 
         elif action == "disconnect" and a_id:
-            db.execute("DELETE FROM cables WHERE port_a_id = ? OR port_b_id = ?", (a_id, a_id))
-            if b_id:
-                db.execute("DELETE FROM cables WHERE port_a_id = ? OR port_b_id = ?", (b_id, b_id))
+            cablelog.remove_at_ports([a_id, b_id], by=me.name, workorder_id=w["id"], reason="workorder")
 
         elif action == "move" and a_id and b_id:
             # alten Zielport lösen, neuen verbinden
-            old_b = item["old_port_b_id"]
-            if old_b:
-                db.execute("DELETE FROM cables WHERE port_a_id IN (?,?) OR port_b_id IN (?,?)", (a_id, old_b, a_id, old_b))
-            else:
-                db.execute("DELETE FROM cables WHERE port_a_id = ? OR port_b_id = ?", (a_id, a_id))
-            db.execute("DELETE FROM cables WHERE port_a_id = ? OR port_b_id = ?", (b_id, b_id))
+            cablelog.remove_at_ports([a_id, item["old_port_b_id"], b_id], by=me.name, workorder_id=w["id"], reason="workorder")
             lo, hi = (a_id, b_id) if a_id < b_id else (b_id, a_id)
             db.execute(
                 """INSERT INTO cables(port_a_id, port_b_id, cable_label, cable_type, fiber_count, length_m,
@@ -550,8 +546,30 @@ def delete_workorder(wid: int, me: Principal = Depends(current_principal)):
 
 # ── Status-Übergänge ─────────────────────────────────────────────────────────
 
+class TransitionIn(BaseModel):
+    override_reason: str = Field("", max_length=500, description="Nur Administratoren: Begründung, um das Vier-Augen-Prinzip zu übersteuern")
+
+
+def _four_eyes(w: dict, action: str, me: Principal, reason: str) -> str:
+    """Prüft das Vier-Augen-Prinzip; liefert den Vermerk einer Admin-Ausnahme (leer = keine nötig)."""
+    me_name = me.name.casefold()
+    hits = [col for col in FOUR_EYES.get(action, ()) if (w.get(col) or "").casefold() == me_name]
+    if not hits:
+        return ""
+    roles = {"created_by": "angelegt", "submitted_by": "eingereicht", "finished_by": "ausgeführt"}
+    what = " und ".join(dict.fromkeys(roles[c] for c in hits))
+    verb = {"approve": "freigeben", "confirm": "bestätigen"}[action]
+    msg = f"Vier-Augen-Prinzip: Du hast diesen Auftrag {what} und darfst ihn nicht selbst {verb}."
+    if not me.is_admin:
+        raise HTTPException(409, {"code": "four_eyes", "message": msg + " Bitte eine andere Person beauftragen.", "can_override": False})
+    if not reason.strip():
+        raise HTTPException(409, {"code": "four_eyes", "message": msg + " Als Administrator kannst du mit Begründung übersteuern.",
+                                  "can_override": True})
+    return f"{action}: {me.name}: {reason.strip()}"
+
+
 @router.post("/{wid}/transition/{action}")
-def transition(wid: int, action: str, me: Principal = Depends(current_principal)):
+def transition(wid: int, action: str, body: Optional[TransitionIn] = None, me: Principal = Depends(current_principal)):
     w = _wo_or_404(wid, me)
     trans = TRANSITIONS.get(w["status"], {})
     if action not in trans:
@@ -564,12 +582,18 @@ def transition(wid: int, action: str, me: Principal = Depends(current_principal)
         dep = _wo_ref(w["depends_on"])
         if dep and dep["blocking"]:
             raise HTTPException(409, f"Vor dem Start muss der Rückbau-Auftrag {dep['number']} bestätigt sein (aktuell: {dep['status_label']})")
+    override = _four_eyes(w, action, me, body.override_reason if body else "")
 
     if action == "confirm":
         _apply_workorder(w, me)
         audit.log(me.name, "workorder.confirm", "workorder", wid, w["number"])
 
     db.execute("UPDATE workorders SET status = ?, updated_at = ? WHERE id = ?", (new_status, time.time(), wid))
+    if action in ACTOR_COLUMNS:
+        db.execute(f"UPDATE workorders SET {ACTOR_COLUMNS[action]} = ? WHERE id = ?", (me.name, wid))
+    if override:
+        db.execute("UPDATE workorders SET four_eyes_override = TRIM(four_eyes_override || char(10) || ?, char(10)) WHERE id = ?", (override, wid))
+        audit.log(me.name, "workorder.four_eyes_override", "workorder", wid, f"{w['number']} – {override}")
     audit.log(me.name, f"workorder.{action}", "workorder", wid, w["number"])
     openplan.schedule_sync(wid, me.name)
     return _wo_out(db.row("SELECT * FROM workorders WHERE id = ?", (wid,)), with_items=True)

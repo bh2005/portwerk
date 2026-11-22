@@ -11,7 +11,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import access, audit, db
+from .. import access, audit, cablelog, db
 from ..access import require_writer
 from ..auth import Principal, current_principal
 from ..schemas import CONTAINER_KINDS, DEVICE_TYPES, PASSIVE_TYPES, BulkCablesIn, BulkParseIn, CableWizardIn, PortListSpec, DeviceIn, DeviceWizardIn, PortGroup, SiteWizardIn
@@ -380,12 +380,12 @@ def device_wizard(body: DeviceWizardIn, me: Principal = Depends(current_principa
                       "removal_order": {"id": dep["id"], "number": dep["number"]} if dep else None}
         else:
             for d in overlaps:                                  # sofort ausbauen (Kabel weg, HE frei)
-                n = workorders.retire_device(d["id"])
+                n = workorders.retire_device(d["id"], by=me.name)
                 audit.log(me.name, "device.retire", "device", d["id"], f"{d['hostname']} zurückgebaut für {hostname} ({n} Kabel entfernt)")
             if planned_name:
                 workorders.finalize_hostname(did)                          # alter Name ist jetzt frei
             for c in cable_conflicts:
-                db.execute("DELETE FROM cables WHERE id = ?", (c["cable_id"],))
+                cablelog.remove_cable(c["cable_id"], by=me.name, reason="wizard")
                 audit.log(me.name, "cable.remove", "cable", c["cable_id"], f"{c['port']} ↔ {c['other']} entfernt für {hostname}")
             for up, target in link_rows:
                 own_id = own_ids[up.port_name]
@@ -543,7 +543,7 @@ def cable_wizard(body: CableWizardIn, me: Principal = Depends(current_principal)
                       "removal_order": {"id": dep["id"], "number": dep["number"]} if dep else None}
         else:
             for c in conflicts:
-                db.execute("DELETE FROM cables WHERE id = ?", (c["cable_id"],))
+                cablelog.remove_cable(c["cable_id"], by=me.name, reason="wizard")
                 audit.log(me.name, "cable.remove", "cable", c["cable_id"], f"{c['port']} ↔ {c['other']} entfernt für neues Kabel")
             lo, hi = (a["id"], b["id"]) if a["id"] < b["id"] else (b["id"], a["id"])
             cable_id = db.execute(
@@ -784,7 +784,7 @@ def bulk_cables(body: BulkCablesIn, me: Principal = Depends(current_principal)):
         else:
             with db.transaction() as c:                               # alles oder nichts
                 for cf in conflicts:
-                    c.execute("DELETE FROM cables WHERE id = ?", (cf["cable_id"],))
+                    cablelog.remove_cable(cf["cable_id"], by=me.name, reason="wizard", c=c)
                 for p in pairs:
                     lo, hi = sorted((p.port_a_id, p.port_b_id))
                     cable_ids.append(c.execute(

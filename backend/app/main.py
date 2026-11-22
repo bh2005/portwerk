@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import acme_client, auth
 from .config import settings
-from .routers import accounts, catalog, compare, imports, masterdata, notify, openplan, overview, patchlists, search, serverconfig, wan, wizards, workorders
+from .routers import accounts, catalog, compare, history, imports, masterdata, notify, openplan, overview, patchlists, search, serverconfig, wan, wizards, workorders
 from .static import find_static_dir, register_static
 
 logger = logging.getLogger("opp")
@@ -41,6 +41,7 @@ app.include_router(openplan.router)
 app.include_router(wan.router)
 app.include_router(compare.router)
 app.include_router(search.router)
+app.include_router(history.router)
 
 
 @app.on_event("startup")

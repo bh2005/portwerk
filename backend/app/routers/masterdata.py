@@ -9,7 +9,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from .. import access, audit, db
+from .. import access, audit, cablelog, db
 from ..access import require_writer
 from ..rackmount import check_mount, describe, pending_removal_device_ids, rack_conflicts
 from ..auth import Principal, current_principal, require_master_write
@@ -661,14 +661,14 @@ def set_cable(pid: int, body: CableIn, me: Principal = Depends(require_writer)):
     if body.port_b_id:
         access.require_write(me, access.site_of_port(body.port_b_id))              # beide Enden müssen im eigenen Bereich liegen
     body.cable_type = check_cable_type(body.cable_type)
-    db.execute("DELETE FROM cables WHERE port_a_id = ? OR port_b_id = ?", (pid, pid))
+    cablelog.remove_at_ports([pid], by=me.name, reason="manual")
     if body.port_b_id:
         q = db.row("SELECT * FROM ports WHERE id = ?", (body.port_b_id,))
         if not q:
             raise HTTPException(404, "Zielport nicht gefunden")
         if q["id"] == pid:
             raise HTTPException(400, "Ein Port kann nicht mit sich selbst verbunden werden")
-        db.execute("DELETE FROM cables WHERE port_a_id = ? OR port_b_id = ?", (q["id"], q["id"]))
+        cablelog.remove_at_ports([q["id"]], by=me.name, reason="manual")
         a, b = (pid, q["id"]) if pid < q["id"] else (q["id"], pid)
         db.execute(
             """INSERT INTO cables(port_a_id, port_b_id, cable_label, cable_type, fiber_count, length_m,
