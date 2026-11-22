@@ -9,6 +9,7 @@
         <select v-model="group" :class="inp" class="!w-44" @change="load"><option value="location">nach Ort sortiert</option><option value="order">nach Auftrag</option><option value="none">in Auftragsreihenfolge</option></select>
         <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="onlyOpen" @change="load" /> nur offene</label>
         <button :class="btnGhost" @click="sendOpen = true">Senden …</button>
+        <button :class="btnGhost" @click="exportPdf">PDF</button>
         <button :class="btnGhost" @click="exportCsv">CSV-Export</button>
         <button :class="btnPrimary" @click="print">Drucken</button>
       </div>
@@ -128,6 +129,12 @@ async function act(kind) {
   await load()
 }
 
+async function exportPdf() {
+  try {
+    const blob = await api.patchlistPdf(ids, group.value, onlyOpen.value)
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'patchliste.pdf'; a.click(); URL.revokeObjectURL(a.href)
+  } catch (e) { error.value = errText(e) }
+}
 async function exportCsv() {
   try {
     const blob = await api.patchlistExport(ids, group.value, onlyOpen.value)

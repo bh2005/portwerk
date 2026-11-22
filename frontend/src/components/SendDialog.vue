@@ -22,6 +22,7 @@
         <textarea v-model="emails" rows="2" :class="inp" class="font-mono text-xs" spellcheck="false" placeholder="extern@example.test"></textarea></div>
       <div><label :class="lbl">Nachricht (optional)</label><textarea v-model="message" rows="3" :class="inp" placeholder="z. B. Bitte bis Freitag in Etage 2 patchen."></textarea></div>
       <div class="flex gap-5 flex-wrap text-sm text-slate-600 dark:text-slate-300">
+        <label class="flex items-center gap-2"><input type="checkbox" v-model="attachPdf" /> Arbeitsanweisung als PDF anhängen</label>
         <label class="flex items-center gap-2"><input type="checkbox" v-model="attachCsv" /> Arbeitsliste als CSV anhängen</label>
         <label class="flex items-center gap-2"><input type="checkbox" v-model="includeList" /> Positionen im Text auflisten</label>
       </div>
@@ -47,7 +48,7 @@ const props = defineProps({
 defineEmits(['close'])
 
 const users = ref([]), q = ref(''), picked = ref(new Set()), emails = ref(''), message = ref('')
-const attachCsv = ref(true), includeList = ref(true)
+const attachCsv = ref(true), attachPdf = ref(true), includeList = ref(true)
 const busy = ref(false), error = ref(''), result = ref(null)
 
 const emailList = computed(() => emails.value.split(/[\n,;\s]+/).map(x => x.trim()).filter(Boolean))
@@ -56,7 +57,7 @@ function toggle(id) { const s = new Set(picked.value); s.has(id) ? s.delete(id) 
 
 async function send() {
   busy.value = true; error.value = ''
-  try { result.value = await props.submit({ user_ids: [...picked.value], emails: emailList.value, message: message.value, attach_csv: attachCsv.value, include_list: includeList.value }) }
+  try { result.value = await props.submit({ user_ids: [...picked.value], emails: emailList.value, message: message.value, attach_csv: attachCsv.value, attach_pdf: attachPdf.value, include_list: includeList.value }) }
   catch (e) { error.value = errText(e) } finally { busy.value = false }
 }
 onMounted(async () => { try { users.value = await api.directoryUsers(props.workorderId) } catch (e) { error.value = errText(e) } })

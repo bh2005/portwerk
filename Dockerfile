@@ -10,6 +10,8 @@ RUN npm run build
 FROM python:3.12-slim
 ENV PYTHONUNBUFFERED=1 OPP_DATA_DIR=/data OPP_STATIC_DIR=/app/static
 WORKDIR /app
+# Unicode-Schrift für die PDF-Arbeitsanweisung (Umlaute, Pfeile, Kästchen)
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/app ./app

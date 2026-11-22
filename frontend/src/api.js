@@ -106,6 +106,8 @@ export const api = {
   bulkParse:        text => post('/api/wizards/bulk-cables/parse', { text }),
   bulkItems:        (wid, b) => post(`/api/workorders/${wid}/items/bulk`, b),
   exportWorkorder:  id => http.get(`/api/workorders/${id}/export`, { responseType: 'blob' }).then(r => r.data),
+  workorderPdf:     id => http.get(`/api/workorders/${id}/pdf`, { params: { base: location.origin }, responseType: 'blob' }).then(r => r.data),
+  patchlistPdf:     (ids, group, only_open) => http.get('/api/patchlists/pdf', { params: { ids, group, only_open }, responseType: 'blob' }).then(r => r.data),
   patchlist:        (ids, group, only_open) => get('/api/patchlists', { ids, group, only_open }),
   patchlistExport:  (ids, group, only_open) => http.get('/api/patchlists/export', { params: { ids, group, only_open }, responseType: 'blob' }).then(r => r.data),
   rackSlots:        (locationId, height_u, extra = {}) => get(`/api/wizards/rack-slots/${locationId}`, { height_u, ...extra }),
