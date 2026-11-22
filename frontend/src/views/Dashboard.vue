@@ -2,6 +2,16 @@
   <div class="max-w-5xl space-y-5">
     <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Übersicht</h1>
     <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <div v-if="ready.length" :class="card" class="p-4 border-l-4 border-l-green-500">
+      <h2 class="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400 mb-2">Zur Bestätigung vorgeschlagen ({{ ready.length }}) – LLDP stimmt</h2>
+      <ul class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
+        <li v-for="w in ready" :key="w.id" class="py-1.5 flex items-center gap-3">
+          <router-link :to="`/workorders/${w.id}`" class="font-mono font-medium text-ks-700 dark:text-ks-400 hover:underline">{{ w.number }}</router-link>
+          <span class="flex-1 truncate text-slate-700 dark:text-slate-200">{{ w.title }}</span>
+          <span class="text-xs text-slate-400 whitespace-nowrap">ausgeführt von {{ w.finished_by || '–' }}</span>
+        </li>
+      </ul>
+    </div>
     <div v-if="tasks.length" :class="card" class="p-4">
       <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Meine Aufgaben ({{ tasks.length }})</h2>
       <ul class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
@@ -66,10 +76,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import StatCard from '../components/StatCard.vue'
-import { api, errText } from '../api.js'
+import { api, errText, hasRole } from '../api.js'
 import { card, th, td, typeLabel, statusLabel, sourceLabel, fmtTime } from '../ui.js'
 
-const s = ref(null), error = ref(''), tasks = ref([]), cap = ref(null)
+const s = ref(null), error = ref(''), tasks = ref([]), cap = ref(null), ready = ref([])
 const sorted = o => Object.entries(o || {}).sort((a, b) => b[1] - a[1])
 const groups = computed(() => !s.value ? [] : [
   { title: 'Nach Typ', rows: sorted(s.value.devices_by_type), label: typeLabel },
@@ -79,6 +89,7 @@ const groups = computed(() => !s.value ? [] : [
 onMounted(async () => {
   try { s.value = await api.stats() } catch (e) { error.value = errText(e) }
   try { cap.value = await api.capacitySummary() } catch { /* Kapazität ist optional */ }
+  if (hasRole('freigeber')) { try { ready.value = (await api.workorders({ status: 'done' })).filter(w => w.lldp_status === 'ok') } catch { /* optional */ } }
   try { tasks.value = (await api.workorders({ assigned: 'me' })).filter(w => !['confirmed', 'rejected'].includes(w.status)) } catch { /* ohne Aufträge keine Karte */ }
 })
 </script>

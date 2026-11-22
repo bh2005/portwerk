@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from .. import access, audit, checkmk, compare, db, importer
+from .. import access, audit, checkmk, compare, db, importer, verify
 from ..auth import Principal, current_principal, require_master_write
 
 router = APIRouter(prefix="/api/import", tags=["import"])
@@ -163,6 +163,8 @@ def checkmk_import(body: CheckmkImport, me: Principal = Depends(require_master_w
         raise HTTPException(400, "Kein Host mit Interfaces im Inventar (alle %d Hosts übersprungen)" % len(skipped))
     result = importer.run(records, "checkmk", me.name, body.dry_run, body.atomic, body.create_locations)
     nb = {} if body.dry_run else compare.store(lldp)                    # LLDP/CDP-Nachbarn für den Soll/Ist-Abgleich
+    if nb.get("devices"):
+        nb["orders_checked"] = verify.refresh_open(me.name)               # ausgeführte Aufträge gegen die frischen Nachbardaten prüfen
     audit.log(me.name, "import.checkmk", "import", result["run_id"],
               f"{'Trockenlauf ' if body.dry_run else ''}{result['stats']} übersprungen={len(skipped)} lldp_hosts={len(lldp)}")
     return {**result, "skipped_hosts": skipped[:200], "skipped_count": len(skipped), "lldp_hosts": len(lldp), "neighbors": nb}

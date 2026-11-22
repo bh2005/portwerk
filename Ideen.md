@@ -40,7 +40,7 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
   Freie Ports und Höheneinheiten je Rack bzw. Etage, Warnung bei weniger als 10 % frei.
 - **Zeitreise-Ansicht** ✔ *(umgesetzt: Stand am, Vergleich neu/entfernt/umgesteckt, Pfad zu einem Zeitpunkt)*
   Bestand zu einem beliebigen Datum anzeigen und zwei Zeitpunkte als Diff vergleichen.
-- **Automatischer LLDP-Abgleich nach „Ausgeführt“**
+- **Automatischer LLDP-Abgleich nach „Ausgeführt“** ✔ *(umgesetzt: Prüfung je Position nach jedem Checkmk-Import, Vorschlag zur Bestätigung)*
   Abgleich im Checkmk-Takt, Auftrag wird automatisch zur Bestätigung vorgeschlagen.
 - **VLAN/Portprofil als Attribut**
   Nur dokumentieren, nicht konfigurieren – damit Patchaufträge auch Anweisungen wie „Port auf VLAN 20“ tragen können.

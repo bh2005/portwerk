@@ -160,6 +160,7 @@ export const api = {
   deleteWorkitem:    (wid, iid) => del(`/api/workorders/${wid}/items/${iid}`),
   executeWorkitem:   (wid, iid, b) => post(`/api/workorders/${wid}/items/${iid}/execute`, b),
   reopenWorkitem:    (wid, iid) => post(`/api/workorders/${wid}/items/${iid}/reopen`),
+  verifyWorkorder:   id => post(`/api/workorders/${id}/verify`),
 
   // Import
   importFields:   () => get('/api/import/fields'),
