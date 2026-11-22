@@ -60,5 +60,13 @@ export const linkClass = s => ({
   down: 'text-slate-400',
 }[s] || 'text-slate-500')
 
+/** Wert eines <input type="datetime-local"> (Ortszeit des Browsers) als ISO mit Zeitzone – der Server läuft ggf. in UTC. */
+export function withOffset(v) {
+  if (!v) return v
+  const d = new Date(v.length === 10 ? `${v}T23:59:59` : v)
+  if (isNaN(d)) return v
+  const p = n => String(Math.trunc(Math.abs(n))).padStart(2, '0'), off = -d.getTimezoneOffset()
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}${off >= 0 ? '+' : '-'}${p(off / 60)}:${p(off % 60)}`
+}
 export function fmtTime(ts) { return ts ? new Date(ts * 1000).toLocaleString('de-DE') : '–' }
 export function fmtSpeed(m) { return !m ? '–' : (m >= 1000 ? `${m / 1000} Gbit/s` : `${m} Mbit/s`) }

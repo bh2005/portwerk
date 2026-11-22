@@ -6,14 +6,15 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from .. import access, db
+from .. import access, db, timetravel
 from ..auth import Principal, current_principal
 
 router = APIRouter(prefix="/api/cable-history", tags=["historie"])
 
 
 def _parse_at(at: Optional[str]) -> Optional[float]:
-    """``YYYY-MM-DD`` (Ende des Tages) oder ``YYYY-MM-DDTHH:MM[:SS]`` in Ortszeit des Servers."""
+    """``YYYY-MM-DD`` (Ende des Tages) oder ``YYYY-MM-DDTHH:MM[:SS]`` – mit Zeitzone (``+01:00``, ``Z``) genau,
+    ohne in Ortszeit des Servers (im Container meist UTC; die Oberfläche schickt deshalb immer die Zeitzone mit)."""
     if not at:
         return None
     try:
@@ -39,6 +40,38 @@ def _out(r: dict, local_ports: Optional[set]) -> dict:
         "ended_by": r["ended_by"], "end_reason": r["end_reason"],
         "ended_workorder": {"id": r["ended_workorder_id"], "number": r["ended_wo_number"]} if r["ended_workorder_id"] else None,
     }
+
+
+def _scope(me: Principal, site_id: Optional[int], location_id: Optional[int], device_id: Optional[int]) -> Optional[set]:
+    if device_id is not None:
+        if not db.row("SELECT id FROM devices WHERE id = ?", (device_id,)):
+            raise HTTPException(404, "Gerät nicht gefunden")
+        access.require_read(me, access.site_of_device(device_id), "Gerät")
+    elif location_id is not None:
+        if not db.row("SELECT id FROM locations WHERE id = ?", (location_id,)):
+            raise HTTPException(404, "Location nicht gefunden")
+        access.require_read(me, access.site_of_location(location_id), "Location")
+    elif site_id is not None:
+        access.require_read(me, site_id, "Standort")
+    return timetravel.scope_devices(site_id, location_id, device_id)
+
+
+@router.get("/snapshot")
+def snapshot(at: str, site_id: Optional[int] = None, location_id: Optional[int] = None, device_id: Optional[int] = None,
+             me: Principal = Depends(current_principal)):
+    """Zeitreise: alle Verbindungen, die zum Zeitpunkt ``at`` steckten (optional nur Standort/Location/Gerät)."""
+    t = _parse_at(at)
+    rows = timetravel.active_at(t, me, _scope(me, site_id, location_id, device_id))
+    return {"at": t, "connections": [timetravel.conn(r) for r in rows]}
+
+
+@router.get("/diff")
+def diff(from_: str = Query(..., alias="from"), to: Optional[str] = None, site_id: Optional[int] = None, location_id: Optional[int] = None,
+         device_id: Optional[int] = None, me: Principal = Depends(current_principal)):
+    """Zeitreise: Vergleich zweier Zeitpunkte (``to`` leer = jetzt) – neu, entfernt, umgesteckt, nur zwischenzeitlich gesteckt."""
+    import time
+    t1, t2 = _parse_at(from_), (_parse_at(to) if to else time.time())
+    return timetravel.diff(t1, t2, me, _scope(me, site_id, location_id, device_id))
 
 
 @router.get("")

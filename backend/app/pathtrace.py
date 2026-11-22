@@ -21,11 +21,15 @@ def _port(pid: int) -> Optional[dict]:
                      FROM ports p JOIN devices d ON d.id = p.device_id LEFT JOIN locations l ON l.id = d.location_id WHERE p.id = ?""", (pid,))
 
 
-def _cable(pid: int) -> Optional[dict]:
-    return db.row("SELECT * FROM cables WHERE port_a_id = ? OR port_b_id = ?", (pid, pid))
+def _cable(pid: int, at: Optional[float] = None) -> Optional[dict]:
+    if at is None:
+        return db.row("SELECT * FROM cables WHERE port_a_id = ? OR port_b_id = ?", (pid, pid))
+    h = db.row("""SELECT * FROM cable_history WHERE (port_a_id = ? OR port_b_id = ?) AND valid_from <= ? AND (valid_to IS NULL OR valid_to > ?)
+                  ORDER BY valid_from DESC LIMIT 1""", (pid, pid, at, at))
+    return {**h, "id": h["cable_id"], "measurement_ok": None} if h else None      # Verbindung, wie sie zu diesem Zeitpunkt steckte
 
 
-def _walk(start: dict, first: str) -> tuple[list, str]:
+def _walk(start: dict, first: str, at: Optional[float] = None) -> tuple[list, str]:
     """Von ``start`` aus abwechselnd Kabel/Durchschleifung folgen. Liefert [(Verbindung, Port), …] und den Grund für das Ende."""
     out, cur, step, seen = [], start, first, {start["id"]}
     for _ in range(MAX_STEPS):
@@ -37,7 +41,7 @@ def _walk(start: dict, first: str) -> tuple[list, str]:
             nxt = _port(cur["peer_port_id"])
             link = {"kind": "through"}
         else:
-            c = _cable(cur["id"])
+            c = _cable(cur["id"], at)
             if not c:
                 return out, ("open" if cur["type"] in THROUGH_TYPES else "")
             nxt = _port(c["port_b_id"] if c["port_a_id"] == cur["id"] else c["port_a_id"])
@@ -87,12 +91,13 @@ def _lldp(end: dict, other: dict) -> dict:
     return {"status": "not_seen", "text": f"{end['hostname']}:{end['name']} meldet keinen Nachbarn"}
 
 
-def trace(port_id: int, me: Principal) -> dict:
+def trace(port_id: int, me: Principal, at: Optional[float] = None) -> dict:
+    """``at``: Pfad zu diesem Zeitpunkt aus der Verbindungs-Historie (Geräte, Orte und Patchfeld-Gegenseiten: heutiger Stand)."""
     start = _port(port_id)
     if not start:
         return {}
-    right, right_end = _walk(start, "cable")
-    left, left_end = _walk(start, "through")
+    right, right_end = _walk(start, "cable", at)
+    left, left_end = _walk(start, "through", at)
     # Kette als Folge von Ports mit Verbindungen dazwischen: links (umgedreht) · Start · rechts
     ports = [p for _, p in reversed(left)] + [start] + [p for _, p in right]
     links = [lk for lk, _ in reversed(left)] + [lk for lk, _ in right]
@@ -101,8 +106,8 @@ def trace(port_id: int, me: Principal) -> dict:
     if last_active and not first_active:                                   # aktives Netzgerät nach links
         ports.reverse(); links.reverse(); ends.reverse()
 
-    planned = _planned([p["id"] for p in ports])
-    res = reservations.active(p["id"] for p in ports)
+    planned = _planned([p["id"] for p in ports]) if at is None else {}          # Planungen/Reservierungen/LLDP nur für heute
+    res = reservations.active(p["id"] for p in ports) if at is None else {}
     vis = access.visible_sites(me)
 
     def visible(p: dict) -> bool:
@@ -132,7 +137,7 @@ def trace(port_id: int, me: Principal) -> dict:
     return {
         "start_port_id": port_id, "nodes": nodes, "links": node_links, "complete": complete,
         "ends": [reasons.get(e, "") for e in ends],
-        "lldp": [_lldp(a, b), _lldp(b, a)] if complete and visible(a) and visible(b) else [],
+        "lldp": [_lldp(a, b), _lldp(b, a)] if complete and visible(a) and visible(b) and at is None else [], "at": at,
         "summary": f"{shown(nodes[0], 0)} → {shown(nodes[-1], -1)}" if len(ports) > 1 else f"{shown(nodes[0], 0)} (nicht verbunden)",
         "hops": max(0, len(nodes) - 2),
     }

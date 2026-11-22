@@ -151,6 +151,11 @@
     </template>
 
     <ModalDialog v-if="pathDlg" huge :title="`Pfad ab ${d.hostname}:${pathDlg.port}`" :error="pathDlg.error" @close="pathDlg = null">
+      <div class="flex items-end gap-2 mb-3">
+        <div><label :class="lbl">Stand am (leer = heute)</label><input v-model="pathDlg.at" type="datetime-local" :class="inp" class="!py-1" @change="loadPath" /></div>
+        <button v-if="pathDlg.at" :class="btnLink" class="pb-2" @click="pathDlg.at = ''; loadPath()">heute</button>
+        <p v-if="pathDlg.data?.at" class="text-xs text-slate-400 pb-2">Verbindungen aus der Historie; Geräte, Orte und Patchfeld-Gegenseiten: heutiger Stand.</p>
+      </div>
       <p v-if="!pathDlg.data && !pathDlg.error" class="text-sm text-slate-400">Verfolge …</p>
       <PathGraphic v-if="pathDlg.data" :path="pathDlg.data" @navigate="pathDlg = null" />
     </ModalDialog>
@@ -313,9 +318,11 @@ const portForm = ref(null), bulk = ref(null), peer = ref(null), cableForm = ref(
 const cableWiz = ref(null)
 const hist = reactive({ rows: [], at: '', port: null, error: '' }), histCard = ref(null)
 const canReserve = hasRole('planer'), picked = ref(new Set()), resForm = ref(null), pathDlg = ref(null)
-async function showPath(p) {
-  pathDlg.value = { port: p.name, data: null, error: '' }
-  try { pathDlg.value.data = await api.portPath(p.id) } catch (e) { pathDlg.value.error = errText(e) }
+function showPath(p) { pathDlg.value = { port: p.name, portId: p.id, at: '', data: null, error: '' }; loadPath() }
+async function loadPath() {
+  const dlg = pathDlg.value
+  dlg.error = ''
+  try { dlg.data = await api.portPath(dlg.portId, dlg.at || undefined) } catch (e) { dlg.error = errText(e) }
 }
 const freePorts = computed(() => (d.value?.ports || []).filter(p => !p.reservation))
 const fmtDate = s => s ? s.split('-').reverse().join('.') : ''
