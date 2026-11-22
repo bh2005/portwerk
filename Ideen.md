@@ -11,7 +11,7 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
 2. **Vier-Augen-Prinzip** ✔ *(umgesetzt: immer; Administratoren können mit Begründung übersteuern)*
    Die Rolle `freigeber` genügt; niemand wird daran gehindert, den eigenen Auftrag freizugeben (offener Punkt 5 im Konzept:
    immer, je Auftrag oder ab Priorität?).
-3. **Arbeitsanweisung als PDF**
+3. **Arbeitsanweisung als PDF** ✔ *(umgesetzt: Auftrag und Patchliste, E-Mail-Anhang, QR-Code zum Auftrag)*
    Im Konzept vorgesehen (Druck/CSV/PDF), PDF ist nicht umgesetzt.
 4. **Backup/Restore** ✔ *(umgesetzt: Verwaltung → Sicherung, ZIP mit DB + TLS, täglich automatisch, Wiederherstellung mit Prüfung)*
    Fehlt in der Oberfläche. Bei SQLite im Volume für den Betrieb wichtig (z. B. Download einer konsistenten Sicherung per

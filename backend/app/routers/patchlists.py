@@ -61,9 +61,17 @@ def build(ids: list[int], group: str, only_open: bool, me: Principal) -> dict:
             o = workorders._item_out(it)
             a, a_loc = _end(o, "a")
             b, b_loc = _end(o, "b")
+            if o["action"] == "disconnect" and not b and o["port_a"]:       # Trennen: was steckt jetzt am anderen Ende?
+                peer = db.row("""SELECT p.name, d.hostname, d.location_id FROM cables c
+                                 JOIN ports p ON p.id = CASE WHEN c.port_a_id = :pid THEN c.port_b_id ELSE c.port_a_id END
+                                 JOIN devices d ON d.id = p.device_id
+                                 WHERE c.port_a_id = :pid OR c.port_b_id = :pid""", {"pid": o["port_a"]["id"]})
+                if peer:
+                    b, b_loc = f"{peer['hostname']}:{peer['name']}", masterdata.location_path(peer["location_id"]) if peer["location_id"] else ""
             items.append({
                 "id": it["id"], "workorder_id": w["id"], "order": w["number"], "order_status": w["status"], "action": o["action"],
                 "action_label": o["action_label"], "a": a, "a_location": a_loc, "b": b, "b_location": b_loc,
+                "old_b": (f"{o['old_port_b']['device_hostname']}:{o['old_port_b']['name']}" if o.get("old_port_b") else ""),
                 "cable_label": it["cable_label"], "cable_type": it["cable_type"] if it["cable_type"] != "other" else "", "length_m": it["length_m"],
                 "color": it["color"], "note": it["note"], "item_status": it["item_status"], "deviation_note": it["deviation_note"],
                 "executed_by": it["executed_by"], "executed_at": it["executed_at"], "idx": it["idx"],

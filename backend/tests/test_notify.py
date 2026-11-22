@@ -109,7 +109,7 @@ def test_mail_test_and_smtp_options(client, admin, fake_smtp):
 def test_send_workorder_to_user_and_external_with_csv(client, admin, lab, fake_smtp):
     user(client, admin, "tech", scopes=[("techniker", lab["site"])], email="tech@example.test")
     uid = {u["username"]: u["id"] for u in client.get("/api/users", headers=admin).json()}["tech"]
-    body = {"user_ids": [uid], "emails": ["extern@example.test"], "message": "Bitte bis Freitag erledigen."}
+    body = {"user_ids": [uid], "emails": ["extern@example.test"], "message": "Bitte bis Freitag erledigen.", "attach_pdf": True}
     assert client.post(f"/api/workorders/{lab['wo']}/send", headers=admin, json=body).status_code == 409                # Versand aus
     enable(client, admin)
     r = client.post(f"/api/workorders/{lab['wo']}/send", headers=admin, json=body)
@@ -122,7 +122,8 @@ def test_send_workorder_to_user_and_external_with_csv(client, admin, lab, fake_s
     html = m.get_body(preferencelist=("html",)).get_content()
     assert "Im System öffnen" in html and "sw-b:P4" in html
     att = list(m.iter_attachments())
-    assert len(att) == 1 and att[0].get_filename() == f"{lab['number']}-arbeitsliste.csv"
+    assert [a.get_filename() for a in att] == [f"{lab['number']}-arbeitsliste.csv", f"{lab['number']}-arbeitsanweisung.pdf"]
+    assert att[1].get_content_type() == "application/pdf" and att[1].get_payload(decode=True).startswith(b"%PDF")
     csv_text = att[0].get_content()
     assert "Nr;Aktion" in csv_text and "sw-a:P2;sw-b:P2;K-2" in csv_text
     audit = [a for a in client.get("/api/audit", headers=admin).json() if a["action"] == "workorder.send"]

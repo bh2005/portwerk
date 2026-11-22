@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from .. import access, audit, auth, db, mailer
 from ..auth import Principal, current_principal, require_admin, require_user
 from ..schemas import AssignIn, MailSettingsIn, MailTestIn, PatchlistSendIn, SendIn
-from . import masterdata, patchlists, workorders
+from . import documents, masterdata, patchlists, workorders
 
 router = APIRouter(tags=["benachrichtigung"])
 
@@ -94,7 +94,7 @@ def _compose(me: Principal, intro: str, message: str, meta: list[tuple[str, str]
     if total > len(rows):
         lines.append(f"… und {total - len(rows)} weitere" + (" – vollständige Liste im Anhang." if attached else " – vollständige Liste im System."))
     elif attached:
-        lines.append("\nDie Arbeitsliste liegt als CSV im Anhang (öffnet in Excel).")
+        lines.append("\nDie Arbeitsliste liegt im Anhang (PDF zum Drucken, CSV für Excel).")
     esc = _html.escape
     h = [f"<p>{esc(sender)} {esc(intro)}</p>"]
     if message.strip():
@@ -147,8 +147,11 @@ def send_workorder(wid: int, body: SendIn, me: Principal = Depends(current_princ
     meta = [("Auftrag", f"{w['number']} – {w['title']}"), ("Status", workorders.STATUS_LABELS.get(w["status"], w["status"])),
             ("Priorität", w["priority"]), ("Ort", masterdata.location_path(loc["id"]) if loc else ""),
             ("Zeitraum", " – ".join(x for x in (w["planned_from"], w["planned_to"]) if x))]
-    text, html = _compose(me, f"hat dir den Patchauftrag {w['number']} gesendet.", body.message, meta, _link(cfg, f"/workorders/{wid}"), rows, len(items), body.attach_csv)
+    text, html = _compose(me, f"hat dir den Patchauftrag {w['number']} gesendet.", body.message, meta, _link(cfg, f"/workorders/{wid}"), rows, len(items),
+                          body.attach_csv or body.attach_pdf)
     att = [(f"{w['number']}-arbeitsliste.csv", ("﻿" + workorders.worklist_csv(w)).encode("utf-8"), "text/csv")] if body.attach_csv else []
+    if body.attach_pdf:
+        att.append((f"{w['number']}-arbeitsanweisung.pdf", documents.workorder_pdf(w, me, documents.public_base(None, None)), "application/pdf"))
     mailer.send(cfg, to, f"[Portwerk] {w['number']} {w['title']} ({len(items)} Positionen)", text, html, att)
     audit.log(me.name, "workorder.send", "workorder", wid, f"{w['number']} an {', '.join(to)}")
     return {"sent_to": to, "skipped_no_email": skipped, "items": len(items)}
@@ -172,8 +175,11 @@ def send_patchlist(body: PatchlistSendIn, me: Principal = Depends(current_princi
     meta = [("Aufträge", ", ".join(f"{o['number']} {o['title']}" for o in data["orders"])), ("Sortierung", {"location": "nach Ort", "order": "nach Auftrag", "none": "Auftragsreihenfolge"}[body.group]),
             ("Fortschritt", f"{data['summary']['done']} von {data['summary']['total']} erledigt")]
     link = _link(cfg, f"/patchlist?ids={','.join(str(i) for i in ids)}")
-    text, html = _compose(me, f"hat dir eine Patchliste mit {len(data['orders'])} Auftrag/Aufträgen gesendet.", body.message, meta, link, rows, len(items), body.attach_csv)
+    text, html = _compose(me, f"hat dir eine Patchliste mit {len(data['orders'])} Auftrag/Aufträgen gesendet.", body.message, meta, link, rows, len(items),
+                          body.attach_csv or body.attach_pdf)
     att = [("patchliste.csv", ("﻿" + patchlists.patchlist_csv(data)).encode("utf-8"), "text/csv")] if body.attach_csv else []
+    if body.attach_pdf:
+        att.append(("patchliste.pdf", documents.patchlist_pdf(ids, body.group, body.only_open, me)[0], "application/pdf"))
     mailer.send(cfg, to, f"[Portwerk] Patchliste {', '.join(o['number'] for o in data['orders'])} ({len(items)} Positionen)", text, html, att)
     audit.log(me.name, "patchlist.send", "workorder", ",".join(str(i) for i in ids), f"{len(items)} Positionen an {', '.join(to)}")
     return {"sent_to": to, "skipped_no_email": skipped, "items": len(items)}

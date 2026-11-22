@@ -398,6 +398,7 @@ class SendIn(BaseModel):
     emails: list[str] = Field(default_factory=list, max_length=50)
     message: str = Field(default="", max_length=2000)
     attach_csv: bool = True
+    attach_pdf: bool = False                         # Arbeitsanweisung als PDF anhängen (Oberfläche: vorausgewählt)
     include_list: bool = True                        # Positionen im Text der E-Mail auflisten
 
 

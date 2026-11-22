@@ -117,6 +117,7 @@
           <button v-if="canEditItems" :class="btnDanger" :disabled="!picked.size || saving" @click="bulk('delete')">Auswahl löschen</button>
         </template>
         <span class="flex-1"></span>
+        <button :class="btnLink" @click="downloadPdf">Arbeitsanweisung (PDF)</button>
         <button :class="btnLink" @click="exportList">Arbeitsliste (CSV)</button>
         <router-link :to="{ path: '/patchlist', query: { ids: String(wo.id) } }" :class="btnLink">Patchliste / Druck</router-link>
         <router-link v-if="wo.items.some(i => ['connect', 'move'].includes(i.action))" :to="{ path: '/labels', query: { workorder: String(wo.id) } }" :class="btnLink">Kabeletiketten</router-link>
@@ -451,6 +452,12 @@ async function bulk(kind) {
   } else Object.assign(body, { action: 'execute', item_status: 'done' })
   saving.value = true
   try { wo.value = await api.bulkItems(wo.value.id, body); picked.value = new Set(); err.value = '' } catch (e) { err.value = errText(e) } finally { saving.value = false }
+}
+function saveBlob(blob, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href)
+}
+async function downloadPdf() {
+  try { saveBlob(await api.workorderPdf(wo.value.id), `${wo.value.number}-arbeitsanweisung.pdf`) } catch (e) { err.value = errText(e) }
 }
 async function exportList() {
   try {
