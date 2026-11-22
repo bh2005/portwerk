@@ -1,6 +1,6 @@
 # Portwerk – Konzept
 
-Stand: Konzeptphase (Entwurf zur Abstimmung, noch kein Code).
+Stand: November 2026 – Etappen 1–3 umgesetzt, aus Etappe 4 die Beschriftungsetiketten (siehe Abschnitte 9–11). Das Dokument beschreibt den ursprünglichen Entwurf; Abweichungen stehen in Abschnitt 11.
 
 **Ziel:** Verwaltung und Planung von **Verkabelung/Patchungen** (Switchport ↔ Patchfeld ↔ Dose ↔ Endgerät) als schlankes Web-Werkzeug.
 Der Schwerpunkt liegt auf dem **Ablauf** (Patchauftrag planen → freigeben → ausführen → bestätigen, mit Historie) und nicht auf einer
@@ -11,7 +11,7 @@ Abgrenzung: Das Betriebssystem-Patching von Servern ist *nicht* Thema (dafür gi
 
 ## 1. Leitlinien
 
-- **Schlank:** ein Container, FastAPI + SQLite, Vue 3 / TypeScript. Deutsche Oberfläche.
+- **Schlank:** ein Container, FastAPI + SQLite, Vue 3 (umgesetzt in JavaScript). Deutsche Oberfläche.
 - **Gleiches Aussehen und gleiche Bedienung wie die anderen Web-Projekte** (chrony-webui, OpenPlan): Sidebar, Dark Mode, kontextbezogenes
   Hilfe-Panel (`F1` / `?`) mit Handbuch, Tooltips an Feldern, lokale Benutzer plus optional AD/LDAP, Rollen, Audit-Log.
 - **Bestand ändert sich über Aufträge.** Direkte Änderungen am Bestand sind nur Administratoren erlaubt (und werden protokolliert).
@@ -86,8 +86,7 @@ LLDP-Nachbarn eines Switchports zeigen, was *tatsächlich* an der Gegenstelle h�
 Nach einem Auftrag kann der Abgleich automatisch laufen und das Ergebnis als Bestätigungsvorschlag anzeigen. Außerdem eine Übersicht
 „Bestand weicht von der Realität ab“ als Bericht.
 
-*Offen:* Aus welcher Quelle kommen die LLDP-Nachbarn (Checkmk-Inventar-Pfad bzw. gesonderte Auswertung)? Das wird zu Beginn gegen die
-Zielumgebung geprüft.
+*Entschieden:* Die Nachbarn kommen aus dem Checkmk-Inventar (`networking.lldp_cache` / `cdp_cache`), siehe Abschnitt 10.
 
 ## 5. Import
 
@@ -151,23 +150,38 @@ Rollen sind kombinierbar; lokale Benutzer plus optional AD/LDAP (Gruppen → Rol
 ## 8. Technik
 
 - Backend: FastAPI (Python 3.12), SQLite (Migrationen als SQL-Dateien), Tests mit pytest.
-- Frontend: Vue 3, TypeScript, Vite, Tailwind (gleiche Farbpalette/Komponenten wie chrony-webui und OpenPlan), PWA.
-- Betrieb: ein Docker-Container (Port 8084), Backup/Restore, Audit-Log, Swagger unter `/docs`.
+- Frontend: Vue 3, Vite, Tailwind (gleiche Farbpalette/Komponenten wie chrony-webui und OpenPlan); umgesetzt in JavaScript, ohne PWA (siehe Abschnitt 11).
+- Betrieb: ein Docker-Container (Port 8084), Backup/Restore, Audit-Log, Swagger unter `/api/docs`.
 - CI: GitHub Actions (Backend-Tests, Frontend-Typprüfung/-Build).
 
 ## 9. Umfang in Etappen
 
-| Etappe | Inhalt |
-|---|---|
-| **1 – Stammdaten und Import** | Standorte/Locations/Racks, Geräte, Ports, Import aus Checkmk, CSV, JSON, API; Port-Ansicht und freie Ports; Benutzer/Rollen, Audit, Hilfe |
-| **2 – Patchverbindungen und Aufträge** | Verbindungen, Pfadansicht, Aufträge mit Ablauf und Historie, Konfliktprüfung, Arbeitsanweisung (Druck/CSV/PDF), **OpenPlan-Schnittstelle** |
-| **3 – Soll/Ist** | LLDP-Beobachtungen, Abgleich, Bestätigungsvorschlag, Abweichungsbericht |
-| **4 – Ausbau** | Webhooks nach außen, Berichte, Geräte aus OpenPlan, Beschriftungsetiketten |
+| Etappe | Inhalt | Stand |
+|---|---|---|
+| **1 – Stammdaten und Import** | Standorte/Locations/Racks, Geräte, Ports, Import aus Checkmk, CSV, JSON, API; Port-Ansicht und freie Ports; Benutzer/Rollen, Audit, Hilfe | ✔ |
+| **2 – Patchverbindungen und Aufträge** | Verbindungen, Pfadansicht, Aufträge mit Ablauf und Historie, Konfliktprüfung, Arbeitsanweisung (Druck/CSV/PDF), **OpenPlan-Schnittstelle** | ✔ |
+| **3 – Soll/Ist** | LLDP-Beobachtungen, Abgleich, Bestätigungsvorschlag, Abweichungsbericht | ✔ |
+| **4 – Ausbau** | Webhooks nach außen, Berichte, Geräte aus OpenPlan, Beschriftungsetiketten | teilweise: Etiketten ✔, Berichte (Kapazität, Zeitreise) ✔; Webhooks nach außen und Geräte aus OpenPlan offen |
 
-## 10. Offene Punkte zur Abstimmung
+Über den Entwurf hinaus umgesetzt: Port-Reservierungen, mobile Techniker-Ansicht, Pfad-Tracer als Grafik, Zeitreise (Stand am / Vergleich),
+Kapazitätsplanung, Sicherung/Wiederherstellung, WAN-Leitungsverzeichnis, Geräte- und Kabel-Assistenten mit Gerätekatalog.
 
-1. Kabel als **eigene Entität** (Kabelnummer, Bestand) oder nur als Attribute der Verbindung (Vorschlag: zunächst Attribute)?
-2. Genaues Verhalten „durchgeschleift“ bei Patchfeldern (Vorder-/Rückseite) und Dosen – Beispiele aus der Praxis sammeln.
-3. Quelle der LLDP-Daten (siehe Abschnitt 4).
-4. Standardnamen der OpenPlan-Schritte (Vorschlag: `Patchen`).
-5. Vier-Augen-Prinzip: immer, optional je Auftrag, oder nur ab Priorität?
+## 10. Entscheidungen zu den ehemals offenen Punkten
+
+1. **Kabel** sind Attribute der Verbindung (Tabelle `cables`: Kabelnummer, Art aus dem Katalog, Anzahl Adern/Paare, Länge, Farbe, Messung) – kein eigener
+   Kabelbestand. Die Historie steht in `cable_history`; ein umgestecktes Kabel ist über seine Kabelnummer auffindbar (Etiketten, Zeitreise).
+2. **Durchgeschleift:** Vorder- und Rückseite eines Patchfelds bzw. einer Dose sind als Port-Paar verknüpft (`peer_port_id`, Rückseite üblicherweise `…-back`).
+   Pfad-Tracer, Soll/Ist-Abgleich und LLDP-Prüfung folgen diesen Paaren; einseitige Felder sind möglich.
+3. **LLDP-Quelle:** Checkmk-HW/SW-Inventar (`networking.lldp_cache` / `cdp_cache`), übertragen mit `tools/checkmk_export.py`. Jeder Import aktualisiert die
+   Beobachtungen und prüft ausgeführte Aufträge.
+4. **OpenPlan:** Statt einen Schritt per Namen zu suchen, legt Portwerk Aufgaben unter dem Abschnitt „Patchaufträge (aus Portwerk)“ an oder verknüpft eine
+   vorhandene Aufgabe ausdrücklich (siehe `docs/openplan.md`).
+5. **Vier-Augen-Prinzip:** immer. Wer anlegt oder einreicht, gibt nicht frei; wer ausführt, bestätigt nicht. Administratoren können mit Begründung übersteuern
+   (Audit-Log und Vermerk am Auftrag).
+
+## 11. Abweichungen vom Entwurf
+
+- **Frontend in JavaScript** statt TypeScript; **keine PWA** – für den Einsatz vor Ort gibt es die mobile Techniker-Ansicht (`/m`).
+- **Bestätigungsvorschlag:** Die LLDP-Prüfung schlägt Aufträge zur Bestätigung vor, bestätigt aber nie selbst (Vier-Augen-Prinzip).
+- **Historie:** Verbindungen sind vollständig historisiert (`cable_history`, auch beim Löschen von Ports/Geräten); Geräte-Orte und Patchfeld-Paare nicht –
+  Zeitreise und „Pfad am Datum“ zeigen dafür den heutigen Stand.
