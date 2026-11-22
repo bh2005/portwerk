@@ -95,6 +95,7 @@ export const api = {
   cables:       params => get('/api/cables', params),
   updateCable:  (id, body) => put(`/api/cables/${id}`, body),
   cableHistory: params => get('/api/cable-history', params),
+  portPath:     id => get(`/api/ports/${id}/path`),
   reservations:        params => get('/api/reservations', params),
   reservePorts:        body => post('/api/reservations', body),
   updateReservation:   (id, body) => put(`/api/reservations/${id}`, body),

@@ -86,6 +86,7 @@
                     <button v-if="canReserve" class="ml-1 underline" @click="releaseRes(p)">freigeben</button></span>
                   <router-link v-if="p.planned" :to="`/workorders/${p.planned.id}`" class="ml-1 inline-block px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 hover:underline"
                     :title="p.planned.title">verplant: {{ p.planned.number }}</router-link>
+                  <button v-if="p.cable || p.peer_port_id" :class="btnLink" class="ml-2" title="Ganze Strecke über Patchfelder bis zum Endgerät" @click="showPath(p)">Pfad</button>
                   <button :class="btnLink" class="ml-2" title="Frühere Verbindungen dieses Ports" @click="showPortHistory(p)">Historie</button>
                 </td>
                 <td v-if="canWrite" :class="td" class="text-right whitespace-nowrap">
@@ -148,6 +149,11 @@
         </div>
       </div>
     </template>
+
+    <ModalDialog v-if="pathDlg" huge :title="`Pfad ab ${d.hostname}:${pathDlg.port}`" :error="pathDlg.error" @close="pathDlg = null">
+      <p v-if="!pathDlg.data && !pathDlg.error" class="text-sm text-slate-400">Verfolge …</p>
+      <PathGraphic v-if="pathDlg.data" :path="pathDlg.data" @navigate="pathDlg = null" />
+    </ModalDialog>
 
     <ModalDialog v-if="resForm" title="Ports reservieren" :error="formError" @close="resForm = null">
       <p class="text-sm text-slate-500 mb-3">{{ resForm.names }}</p>
@@ -290,6 +296,7 @@ import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
 import CableWizard from '../components/CableWizard.vue'
+import PathGraphic from '../components/PathGraphic.vue'
 import HelpHint from '../components/HelpHint.vue'
 import { cableTypes, countLabel, loadCableTypes } from '../catalog.js'
 import { api, errText, conflictOf, canWriteMaster, hasRole } from '../api.js'
@@ -305,7 +312,11 @@ const error = ref(''), msg = ref(''), msgErr = ref(false), formError = ref('')
 const portForm = ref(null), bulk = ref(null), peer = ref(null), cableForm = ref(null)
 const cableWiz = ref(null)
 const hist = reactive({ rows: [], at: '', port: null, error: '' }), histCard = ref(null)
-const canReserve = hasRole('planer'), picked = ref(new Set()), resForm = ref(null)
+const canReserve = hasRole('planer'), picked = ref(new Set()), resForm = ref(null), pathDlg = ref(null)
+async function showPath(p) {
+  pathDlg.value = { port: p.name, data: null, error: '' }
+  try { pathDlg.value.data = await api.portPath(p.id) } catch (e) { pathDlg.value.error = errText(e) }
+}
 const freePorts = computed(() => (d.value?.ports || []).filter(p => !p.reservation))
 const fmtDate = s => s ? s.split('-').reverse().join('.') : ''
 function togglePick(id) { const s = new Set(picked.value); s.has(id) ? s.delete(id) : s.add(id); picked.value = s }

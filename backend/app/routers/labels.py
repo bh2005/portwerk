@@ -50,7 +50,7 @@ def _visible_device_ids(me: Principal) -> Optional[set]:
     return {r["id"] for r in db.rows(f"SELECT d.id FROM devices d WHERE {clause}", tuple(args))}
 
 
-CABLE_SQL = """SELECT c.id, c.cable_label, c.cable_type, c.length_m, c.color,
+CABLE_SQL = """SELECT c.id, c.cable_label, c.cable_type, c.length_m, c.color, c.port_a_id, c.port_b_id,
                       da.id AS dev_a, da.hostname AS host_a, pa.name AS port_a, db_.id AS dev_b, db_.hostname AS host_b, pb.name AS port_b
                FROM cables c
                JOIN ports pa ON pa.id = c.port_a_id JOIN devices da ON da.id = pa.device_id
@@ -59,7 +59,8 @@ CABLE_SQL = """SELECT c.id, c.cable_label, c.cable_type, c.length_m, c.color,
 
 def _cable_dict(r: dict) -> dict:
     return {"cable_id": r["id"], "cable_label": r["cable_label"], "cable_type": r["cable_type"], "length_m": r["length_m"],
-            "color": r["color"], "a": _end(r["host_a"], r["port_a"], r["dev_a"]), "b": _end(r["host_b"], r["port_b"], r["dev_b"])}
+            "color": r["color"], "a": _end(r["host_a"], r["port_a"], r["dev_a"]), "b": _end(r["host_b"], r["port_b"], r["dev_b"]),
+            "port_a_id": r["port_a_id"], "port_b_id": r["port_b_id"]}
 
 
 @router.get("")
