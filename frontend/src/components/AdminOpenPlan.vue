@@ -8,7 +8,9 @@
     <fieldset :class="box">
       <legend :class="legend">Zugang zu OpenPlan</legend>
       <div class="grid sm:grid-cols-2 gap-3">
-        <div><label :class="lbl">OpenPlan-Adresse</label><input v-model="f.base_url" :class="inp" placeholder="https://openplan.example.test" /></div>
+        <div><label :class="lbl">OpenPlan-Adresse (für die API)</label><input v-model="f.base_url" :class="inp" placeholder="https://openplan.example.test" /></div>
+        <div><label :class="lbl">OpenPlan-Adresse für Links (Browser, optional)</label><input v-model="f.link_url" :class="inp" placeholder="leer = wie API-Adresse" />
+          <p :class="hint">Nur nötig, wenn Portwerk OpenPlan unter einer anderen Adresse erreicht als die Benutzer – z. B. im Docker-Netz <code>http://openplan:8080</code>, im Browser <code>https://openplan.example.test</code>.</p></div>
         <div><label :class="lbl">API-Token (Dienstkonto)</label><input v-model="f.token" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.token_set ? '●●●●●● gespeichert – leer lassen zum Beibehalten' : 'op_…'" />
           <label v-if="meta.token_set" class="flex items-center gap-2 text-xs text-slate-500 mt-1"><input type="checkbox" v-model="f.clear_token" /> gespeichertes Token entfernen</label></div>
         <div><label :class="lbl">Standard-Projekt (ID, optional)</label><input v-model="f.default_project_id" :class="inp" placeholder="z. B. 7" /></div>
@@ -25,7 +27,7 @@
       <legend :class="legend">Rückrichtung (optional): Webhook von OpenPlan</legend>
       <div class="grid sm:grid-cols-2 gap-3">
         <div><label :class="lbl">Adresse dieser Anwendung (für Links in OpenPlan)</label><input v-model="f.own_url" :class="inp" placeholder="https://opp.example.test" />
-          <p :class="hint">Leer = öffentliche URL aus den E-Mail-Einstellungen.</p></div>
+          <p :class="hint">Leer = öffentliche URL aus den E-Mail-Einstellungen. Den Webhook in OpenPlan auf die Adresse richten, unter der <i>OpenPlan</i> Portwerk erreicht (im Docker-Netz z. B. <code>http://portwerk:8084/api/integrations/openplan/webhook</code>).</p></div>
         <div><label :class="lbl">Webhook-Geheimnis</label><input v-model="f.webhook_secret" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.webhook_secret_set ? '●●●●●● gespeichert' : 'whsec_…'" />
           <label v-if="meta.webhook_secret_set" class="flex items-center gap-2 text-xs text-slate-500 mt-1"><input type="checkbox" v-model="f.clear_webhook_secret" /> entfernen</label></div>
       </div>
@@ -55,7 +57,7 @@ const box = 'border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-
 const legend = 'px-2 text-sm font-semibold text-slate-700 dark:text-slate-200'
 const hint = 'text-xs text-slate-400 mt-1'
 
-const f = reactive({ enabled: false, base_url: '', token: '', clear_token: false, default_project_id: '', ca_pem: '', verify_tls: true, auto_sync: true, own_url: '', webhook_secret: '', clear_webhook_secret: false })
+const f = reactive({ enabled: false, base_url: '', link_url: '', token: '', clear_token: false, default_project_id: '', ca_pem: '', verify_tls: true, auto_sync: true, own_url: '', webhook_secret: '', clear_webhook_secret: false })
 const meta = reactive({ token_set: false, webhook_secret_set: false, webhook_url: '', configured: false })
 const busy = ref(false), msg = ref(''), err = ref(''), result = ref(null)
 
