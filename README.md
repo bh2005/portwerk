@@ -19,7 +19,8 @@ docker compose up -d --build         # Oberfläche und API unter http://localhos
 docker compose logs portwerk | grep -i passwort    # Start-Passwort, wenn OPP_ADMIN_PASSWORD leer war
 ```
 
-Die Daten liegen im Volume `opp-data` (SQLite). Hinter einem TLS-inspizierenden Proxy müssen die Proxy-CA-Zertifikate beim Build bekannt sein.
+Die Daten liegen im Volume `opp-data` (SQLite). Sicherungen (Verwaltung → Sicherung, täglich automatisch) liegen im selben Volume unter `/data/backups` – für eine Kopie
+außerhalb des Servers herunterladen oder das Verzeichnis abholen, z. B. `docker compose cp portwerk:/data/backups ./backups`. Hinter einem TLS-inspizierenden Proxy müssen die Proxy-CA-Zertifikate beim Build bekannt sein.
 
 ## Schnellstart (Entwicklung)
 

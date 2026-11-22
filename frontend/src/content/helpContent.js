@@ -48,6 +48,8 @@ export const sections = [
 <p>Rollen sind kombinierbar. Der letzte aktive Administrator kann nicht entfernt werden.</p>
 <h3>Vier-Augen-Prinzip</h3>
 <p>Wer einen Auftrag angelegt oder eingereicht hat, darf ihn nicht selbst <b>freigeben</b>; wer ihn ausgeführt hat, darf ihn nicht selbst <b>bestätigen</b>. Ablehnen und Nacharbeit bleiben erlaubt. Administratoren können im Notfall mit <b>Begründung</b> übersteuern – die Ausnahme steht im Audit-Log und am Auftrag.</p>
+<h3>Sicherung</h3>
+<p>Verwaltung → <b>Sicherung</b>: „Jetzt sichern“ legt ein ZIP mit Datenbank und Server-Zertifikat an; täglich automatisch mit einstellbarer Uhrzeit und Aufbewahrung. Wiederherstellen (vom Server oder aus einer Datei) ersetzt den gesamten Bestand – vorher wird der aktuelle Stand gesichert, danach melden sich alle neu an. Sicherungen enthalten Passwort-Hashes und Zugangsdaten: vertraulich aufbewahren.</p>
 <h3>API-Zugänge</h3>
 <p>Tokens für Skripte (Präfix <code>opp_</code>). Umfang <i>read</i> oder <i>write</i>, optional mit Ablauf. Der Klartext wird nur einmal angezeigt; Übergabe im Header <code>Authorization: Bearer …</code> bzw. <code>X-Auth-Token</code>.</p>
 <h3>Audit-Log</h3>

@@ -7,9 +7,9 @@ import anyio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import acme_client, auth
+from . import acme_client, auth, backup
 from .config import settings
-from .routers import accounts, catalog, compare, history, imports, masterdata, notify, openplan, overview, patchlists, search, serverconfig, wan, wizards, workorders
+from .routers import accounts, backups, catalog, compare, history, imports, masterdata, notify, openplan, overview, patchlists, search, serverconfig, wan, wizards, workorders
 from .static import find_static_dir, register_static
 
 logger = logging.getLogger("opp")
@@ -42,6 +42,7 @@ app.include_router(wan.router)
 app.include_router(compare.router)
 app.include_router(search.router)
 app.include_router(history.router)
+app.include_router(backups.router)
 
 
 @app.on_event("startup")
@@ -51,6 +52,7 @@ async def startup() -> None:
         logger.warning("Start-Admin '%s' angelegt mit generiertem Passwort: %s (bitte nach der Anmeldung ändern)",
                        settings.admin_username, generated)
     # Sync-Routen laufen in einem Thread-Pool; die Obergrenze verhindert, dass viele parallele Anfragen eine kleine VM überlasten.
+    backup.start_background()                # tägliche automatische Sicherung (Einstellung in der Verwaltung)
     acme_client.start_background()           # prüft regelmäßig, ob das Server-Zertifikat erneuert werden muss
     anyio.to_thread.current_default_thread_limiter().total_tokens = 8
 
