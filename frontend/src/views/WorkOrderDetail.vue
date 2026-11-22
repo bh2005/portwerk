@@ -119,6 +119,7 @@
         <span class="flex-1"></span>
         <button :class="btnLink" @click="exportList">Arbeitsliste (CSV)</button>
         <router-link :to="{ path: '/patchlist', query: { ids: String(wo.id) } }" :class="btnLink">Patchliste / Druck</router-link>
+        <router-link v-if="wo.items.some(i => ['connect', 'move'].includes(i.action))" :to="{ path: '/labels', query: { workorder: String(wo.id) } }" :class="btnLink">Kabeletiketten</router-link>
       </div>
       <p v-if="!wo.items.length" class="p-6 text-sm text-slate-400">Noch keine Positionen. Füge Verbindungen hinzu, die hergestellt oder getrennt werden sollen.</p>
       <table v-else class="w-full text-sm">

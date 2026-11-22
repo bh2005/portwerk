@@ -46,10 +46,13 @@
       <div :class="card" class="p-4">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ports ({{ d.ports.length }})</h2>
-          <div v-if="canWrite" class="flex gap-2">
-            <button :class="btnGhost" @click="openBulk">Mehrere anlegen</button>
-            <button :class="btnGhost" @click="startCable(null)">Kabel-Assistent</button>
-            <button :class="btnPrimary" @click="openPort()">+ Port</button>
+          <div class="flex gap-2">
+            <router-link v-if="d.ports.some(p => p.cable)" :to="{ path: '/labels', query: { device: String(d.id) } }" :class="btnGhost">Etiketten</router-link>
+            <template v-if="canWrite">
+              <button :class="btnGhost" @click="openBulk">Mehrere anlegen</button>
+              <button :class="btnGhost" @click="startCable(null)">Kabel-Assistent</button>
+              <button :class="btnPrimary" @click="openPort()">+ Port</button>
+            </template>
           </div>
         </div>
         <p v-if="!d.ports.length" class="text-sm text-slate-400">Noch keine Ports.</p>
@@ -128,7 +131,7 @@
                   <template v-if="!h.active">
                     <router-link v-if="h.ended_workorder" :to="`/workorders/${h.ended_workorder.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ h.ended_workorder.number }}</router-link>
                     <span v-else>{{ h.ended_by || '–' }}</span>
-                    <span class="text-slate-400"> {{ END_REASONS[h.end_reason] || '' }}</span>
+                    <span class="text-slate-400 ml-1">{{ END_REASONS[h.end_reason] || '' }}</span>
                   </template>
                 </td>
               </tr>

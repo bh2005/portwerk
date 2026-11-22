@@ -95,6 +95,8 @@ export const api = {
   cables:       params => get('/api/cables', params),
   updateCable:  (id, body) => put(`/api/cables/${id}`, body),
   cableHistory: params => get('/api/cable-history', params),
+  labels:       params => http.get('/api/labels', { params, paramsSerializer: { indexes: null } }).then(r => r.data),
+  resolveLabel: params => get('/api/labels/resolve', params),
 
   // Assistenten
   deviceWizard:     b => post('/api/wizards/device', b),
