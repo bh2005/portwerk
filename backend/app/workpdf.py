@@ -107,7 +107,7 @@ def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]]
         pdf.set_xy(pdf.w - pdf.r_margin - qr_size - 10, top + qr_size)
         pdf.font(6.5)
         pdf.set_text_color(100, 116, 139)
-        pdf.cell(qr_size + 10, 3, t("Auftrag öffnen"), align="C")
+        pdf.cell(qr_size + 10, 3, t("Auf dem Handy abhaken"), align="C")
         pdf.set_text_color(0, 0, 0)
         pdf.set_xy(pdf.l_margin, max(pdf.get_y(), top + 2))
     pdf.ln(2)
@@ -180,8 +180,10 @@ def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]]
                 if multi:
                     r.cell(t(x["order"]))
                 r.cell(t(x["action_label"]))
-                r.cell(t(x["a"] + (f"\n{x['a_location']}" if x["a_location"] else "")))
-                b = x["b"] + (f"\n{x['b_location']}" if x["b_location"] and x["b_location"] != x["a_location"] else "")
+                r.cell(t(x["a"] + (f"\n{x['a_location']}" if x["a_location"] else "") + (f" · HE {x['a_unit']}" if x.get("a_unit") else "")))
+                b_where = " · ".join(p for p in ((x["b_location"] if x["b_location"] != x["a_location"] else ""),
+                                                 (f"HE {x['b_unit']}" if x.get("b_unit") else "")) if p)
+                b = x["b"] + (f"\n{b_where}" if x["b"] and b_where else "")
                 if x.get("old_b"):
                     b += f"\n(bisher: {x['old_b']})"
                 r.cell(t(b))

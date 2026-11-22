@@ -55,7 +55,7 @@ def workorder_pdf(w: dict, me: Principal, base: str) -> bytes:
         warning = f"Erst ausführen, wenn der Rückbau-Auftrag {dep['number']} bestätigt ist."
     notes = [w["description"], f"Notiz: {w['note']}" if w["note"] else ""]
     return workpdf.render(data, title=f"Arbeitsanweisung {w['number']}", subtitle=w["title"], meta=meta, notes=notes,
-                          qr_url=f"{base}/workorders/{w['id']}" if base else "", warning=warning, by=me.name)
+                          qr_url=f"{base}/m/wo/{w['id']}" if base else "", warning=warning, by=me.name)
 
 
 def patchlist_pdf(ids: list[int], group: str, only_open: bool, me: Principal) -> tuple[bytes, dict]:

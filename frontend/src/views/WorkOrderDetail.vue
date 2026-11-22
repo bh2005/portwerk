@@ -1,5 +1,7 @@
 <template>
   <div class="max-w-5xl space-y-5" v-if="wo">
+    <router-link v-if="['approved', 'in_progress', 'rework'].includes(wo.status)" :to="`/m/wo/${wo.id}`"
+      class="md:hidden block text-center bg-ks-600 text-white font-semibold py-3 rounded-xl print:hidden">Mobile Ansicht zum Abhaken</router-link>
     <!-- Kopfzeile -->
     <div class="flex items-start justify-between gap-4 flex-wrap">
       <div>

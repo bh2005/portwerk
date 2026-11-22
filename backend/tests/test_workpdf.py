@@ -85,3 +85,16 @@ def test_fallback_font_without_dejavu(client, admin, lab, monkeypatch):
     monkeypatch.setattr(workpdf, "_font_dir", lambda: None)
     t = text_of(client.get(f"/api/workorders/{lab['wo']['id']}/pdf", headers=admin).content)
     assert "pc-ä:eth0" in t and "[ ]" in t                                              # Latin-1 bleibt, Kästchen als Ersatz
+
+
+def test_rack_units_in_patchlist_and_pdf_qr_points_to_mobile_view(client, admin, lab, monkeypatch):
+    from app import workpdf
+    sw = client.get("/api/devices", headers=admin, params={"q": "sw-1"}).json()["items"][0]
+    body = {k: sw.get(k) for k in ("hostname", "type", "location_id", "status")} | {"rack_position": 7}
+    assert client.put(f"/api/devices/{sw['id']}", headers=admin, json=body).status_code == 200
+    items = client.get("/api/patchlists", headers=admin, params={"ids": str(lab["wo"]["id"])}).json()["items"]
+    assert {x["a_unit"] for x in items} == {7} and items[0]["a_device_id"] == sw["id"]
+    seen, orig = {}, workpdf._qr_png
+    monkeypatch.setattr(workpdf, "_qr_png", lambda url: seen.setdefault("url", url) and orig(url))
+    t = text_of(client.get(f"/api/workorders/{lab['wo']['id']}/pdf", headers=admin, params={"base": "https://pw.example"}).content)
+    assert seen["url"] == f"https://pw.example/m/wo/{lab['wo']['id']}" and "HE 7" in t

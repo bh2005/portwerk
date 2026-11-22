@@ -1,7 +1,7 @@
 <template>
   <div :class="{ dark: isDark }">
-    <!-- Login-Seite: kein Layout -->
-    <router-view v-if="$route.path === '/login'" />
+    <!-- Login-Seite und mobile Seiten (Techniker, Scan-Ziel): ohne Seitenleiste -->
+    <router-view v-if="$route.path === '/login' || $route.meta.bare" />
 
     <!-- Normales Layout mit Sidebar -->
     <div v-else class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 print:block print:h-auto print:overflow-visible print:bg-white">
