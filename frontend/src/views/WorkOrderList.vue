@@ -45,7 +45,9 @@
             <td :class="td" @click.stop><input type="checkbox" :checked="picked.has(w.id)" @change="pick(w.id)" /></td>
             <td :class="td" class="font-mono font-medium text-ks-700 dark:text-ks-400">{{ w.number }}</td>
             <td :class="td" class="font-medium text-slate-800 dark:text-slate-200 max-w-xs truncate">{{ w.title }}</td>
-            <td :class="td"><span :class="statusClass(w.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">{{ w.status_label }}</span></td>
+            <td :class="td"><span :class="statusClass(w.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">{{ w.status_label }}</span>
+              <span v-if="w.status === 'done' && w.lldp_status === 'ok'" class="ml-1 text-xs text-green-600 font-medium" title="LLDP-Prüfung stimmt – Vorschlag: bestätigen">LLDP ✓</span>
+              <span v-else-if="['done', 'in_progress'].includes(w.status) && w.lldp_status === 'problem'" class="ml-1 text-xs text-red-600 font-medium" title="LLDP meldet eine Abweichung">LLDP ⚠</span></td>
             <td :class="td"><span :class="prioClass(w.priority)" class="text-xs font-medium">{{ prioLabel(w.priority) }}</span></td>
             <td :class="td" class="text-slate-500 text-xs">{{ w.assigned_to ? (w.assigned_to.full_name || w.assigned_to.username) : '–' }}</td>
             <td :class="td" class="text-slate-500 whitespace-nowrap">{{ w.progress.done }}/{{ w.progress.total }}

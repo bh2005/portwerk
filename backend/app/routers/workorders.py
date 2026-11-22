@@ -15,7 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .. import access, audit, cablelog, db, openplan, reservations
+from .. import access, audit, cablelog, db, openplan, reservations, verify
 from . import wan
 from ..auth import Principal, current_principal
 from .catalog import check_cable_type
@@ -393,6 +393,8 @@ def _wo_out(w: dict, with_items: bool = False) -> dict:
         "finished_by":  w.get("finished_by", ""),
         "confirmed_by": w.get("confirmed_by", ""),
         "four_eyes_override": [x for x in (w.get("four_eyes_override") or "").split("\n") if x],
+        "lldp_status":  w.get("lldp_status", ""),
+        "lldp_checked_at": w.get("lldp_checked_at"),
         "updated_at":   w["updated_at"],
         "progress":     _progress(w["id"]),
         "openplan":     _openplan_out(w),
@@ -402,6 +404,7 @@ def _wo_out(w: dict, with_items: bool = False) -> dict:
         "required_by":  [dict(r) for r in db.rows("SELECT id, number, status FROM workorders WHERE depends_on = ? ORDER BY id", (w["id"],))],
     }
     if with_items:
+        out["lldp_detail"] = json.loads(w["lldp_detail"]) if w.get("lldp_detail") else []
         out["items"] = [_item_out(i) for i in db.rows(
             "SELECT * FROM workitems WHERE workorder_id = ? ORDER BY idx, id", (w["id"],)
         )]
@@ -601,7 +604,18 @@ def transition(wid: int, action: str, body: Optional[TransitionIn] = None, me: P
         audit.log(me.name, "workorder.four_eyes_override", "workorder", wid, f"{w['number']} – {override}")
     audit.log(me.name, f"workorder.{action}", "workorder", wid, w["number"])
     openplan.schedule_sync(wid, me.name)
+    if action == "finish":
+        verify.refresh(wid, me.name)                                     # erste LLDP-Prüfung (meist „wartet auf frische Daten“)
     return _wo_out(db.row("SELECT * FROM workorders WHERE id = ?", (wid,)), with_items=True)
+
+
+@router.post("/{wid}/verify")
+def verify_now(wid: int, me: Principal = Depends(current_principal)):
+    """LLDP-Prüfung jetzt ausführen (mit den zuletzt importierten Nachbardaten) und am Auftrag speichern."""
+    w = _wo_or_404(wid, me)
+    if w["status"] not in verify.CHECK_STATES:
+        raise HTTPException(409, "Geprüft werden Aufträge in Ausführung oder ausgeführte Aufträge")
+    return verify.refresh(wid, me.name)
 
 
 # ── Positionen (WorkItems) ────────────────────────────────────────────────────

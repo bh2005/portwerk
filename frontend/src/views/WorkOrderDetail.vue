@@ -42,6 +42,27 @@
       </div>
     </div>
 
+    <!-- LLDP-Prüfung -->
+    <div v-if="['in_progress', 'done'].includes(wo.status)" :class="card" class="p-4 print:hidden border-l-4" :style="{ borderLeftColor: LLDP_COLOR[wo.lldp_status] || '#cbd5e1' }">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          LLDP-Prüfung: <span :style="{ color: LLDP_COLOR[wo.lldp_status] }">{{ LLDP_TEXT[wo.lldp_status] || 'noch nicht geprüft' }}</span>
+          <span v-if="wo.lldp_checked_at" class="ml-2 text-xs font-normal text-slate-400">geprüft {{ fmtTime(wo.lldp_checked_at) }}</span>
+        </h2>
+        <button :class="btnLink" :disabled="verifying" @click="verifyNow">{{ verifying ? 'Prüfe …' : 'Jetzt prüfen' }}</button>
+      </div>
+      <p v-if="wo.status === 'done' && wo.lldp_status === 'ok'" class="mt-2 text-sm text-green-700 dark:text-green-400">
+        Alle prüfbaren Positionen stimmen mit den LLDP/CDP-Nachbarn überein – Vorschlag: <b>bestätigen</b>.</p>
+      <p v-else class="mt-1 text-xs text-slate-400">Die Prüfung läuft nach jedem Checkmk-Import automatisch. LLDP-Daten zählen erst, wenn sie nach dem Abhaken der Position gemeldet wurden.</p>
+      <ul v-if="(wo.lldp_detail || []).some(d => d.status !== 'n/a')" class="mt-2 text-sm space-y-1">
+        <li v-for="d in wo.lldp_detail.filter(x => x.status !== 'n/a')" :key="d.item_id" class="flex gap-2">
+          <span class="w-5 text-center font-bold" :style="{ color: ITEM_COLOR[d.status] }">{{ ITEM_ICON[d.status] }}</span>
+          <span class="text-slate-400 tabular-nums">#{{ itemNo(d.item_id) }}</span>
+          <span class="text-slate-700 dark:text-slate-200">{{ d.text || d.label }}</span>
+        </li>
+      </ul>
+    </div>
+
     <!-- OpenPlan -->
     <div v-if="ops.enabled && canAssign" :class="card" class="p-4 print:hidden">
       <div class="flex items-center justify-between gap-3 flex-wrap">
@@ -480,6 +501,19 @@ async function load() {
   finally { loading.value = false }
 }
 
+const LLDP_TEXT = { ok: 'stimmt ✓', problem: 'Abweichung', pending: 'wartet auf frische LLDP-Daten', none: 'nicht per LLDP prüfbar' }
+const LLDP_COLOR = { ok: '#16a34a', problem: '#dc2626', pending: '#d97706', none: '#94a3b8' }
+const ITEM_ICON = { ok: '✓', problem: '⚠', stale: '…', unknown: '–' }
+const ITEM_COLOR = { ok: '#16a34a', problem: '#dc2626', stale: '#d97706', unknown: '#94a3b8' }
+const verifying = ref(false)
+const itemNo = id => (wo.value.items.findIndex(i => i.id === id) + 1) || '?'
+async function verifyNow() {
+  verifying.value = true
+  try {
+    const r = await api.verifyWorkorder(wo.value.id)
+    wo.value = { ...wo.value, lldp_status: r.status, lldp_checked_at: r.checked_at, lldp_detail: r.items }
+  } catch (e) { err.value = errText(e) } finally { verifying.value = false }
+}
 const ACTOR_FIELDS = [['submitted_by', 'Eingereicht von'], ['approved_by', 'Freigegeben von'], ['finished_by', 'Ausgeführt von'], ['confirmed_by', 'Bestätigt von']]
 
 async function doTransition(action, overrideReason) {
