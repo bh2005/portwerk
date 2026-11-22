@@ -162,7 +162,7 @@ def test_worklist_bulk_actions_progress_and_export(client, admin, lab):
     assert bulk("delete", ids[:2]).json()["progress"]["total"] == 8                                       # im Entwurf löschen
     ids = ids[2:]
     for act in ("submit", "approve", "start"):
-        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin).status_code == 200
+        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"}).status_code == 200
     assert bulk("delete", ids[:1]).status_code == 409
     assert bulk("execute", [99999]).status_code == 404
     r = bulk("execute", ids[:6])
@@ -197,7 +197,7 @@ def test_combined_patchlist_from_several_orders(client, admin, lab):
     assert client.get(f"/api/patchlists?ids={w1['id']}&group=none", headers=admin).json()["summary"]["total"] == 3
     # nur offene Positionen
     for act in ("submit", "approve", "start"):
-        client.post(f"/api/workorders/{w1['id']}/transition/{act}", headers=admin)
+        client.post(f"/api/workorders/{w1['id']}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"})
     first = client.get(f"/api/workorders/{w1['id']}", headers=admin).json()["items"][0]["id"]
     client.post(f"/api/workorders/{w1['id']}/items/bulk", headers=admin, json={"ids": [first], "action": "execute"})
     assert client.get(f"/api/patchlists?ids={ids}&only_open=true", headers=admin).json()["summary"]["total"] == 6
@@ -226,7 +226,7 @@ def test_permissions_for_bulk_and_patchlist(client, admin, lab):
     assert client.get(f"/api/patchlists?ids={wid}", headers=vw).status_code == 200                          # Betrachter dürfen die Liste lesen
     assert client.post(f"/api/workorders/{wid}/items/bulk", headers=vw, json={"ids": [1], "action": "delete"}).status_code == 403
     for act in ("submit", "approve", "start"):
-        client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin)
+        client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"})
     ids = [i["id"] for i in client.get(f"/api/workorders/{wid}", headers=admin).json()["items"]]
     assert client.post(f"/api/workorders/{wid}/items/bulk", headers=pl, json={"ids": ids, "action": "execute"}).status_code == 403   # Planer hakt nicht ab
     assert client.post(f"/api/workorders/{wid}/items/bulk", headers=tk, json={"ids": ids, "action": "execute"}).status_code == 200

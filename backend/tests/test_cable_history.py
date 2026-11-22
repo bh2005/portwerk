@@ -35,11 +35,11 @@ def set_times(hid, start, end=None):
 def run_order(client, admin, wid):
     wo = client.get(f"/api/workorders/{wid}", headers=admin).json()
     for act in ("submit", "approve", "start"):
-        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin).status_code == 200
+        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"}).status_code == 200
     for it in wo["items"]:
         assert client.post(f"/api/workorders/{wid}/items/{it['id']}/execute", headers=admin, json={"item_status": "done"}).status_code == 200
     for act in ("finish", "confirm"):
-        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin).status_code == 200
+        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"}).status_code == 200
 
 
 def test_replug_keeps_old_connection_in_history(client, admin, lab):

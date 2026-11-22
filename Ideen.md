@@ -8,7 +8,7 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
    Die Tabelle `links` hat kein `valid_from`/`valid_to`; getrennte Verbindungen werden gelöscht. Die Frage „Was steckte am 3. März
    an Gi1/0/12?“ lässt sich nur über das Audit-Log beantworten. Betrifft das Datenmodell und wird mit wachsendem Bestand teurer –
    daher zuerst angehen.
-2. **Vier-Augen-Prinzip**
+2. **Vier-Augen-Prinzip** ✔ *(umgesetzt: immer; Administratoren können mit Begründung übersteuern)*
    Die Rolle `freigeber` genügt; niemand wird daran gehindert, den eigenen Auftrag freizugeben (offener Punkt 5 im Konzept:
    immer, je Auftrag oder ab Priorität?).
 3. **Arbeitsanweisung als PDF**
@@ -48,6 +48,6 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
 ## Vorgeschlagene Reihenfolge
 
 1. ~~Verbindungs-Historie~~ ✔
-2. Vier-Augen-Prinzip
+2. ~~Vier-Augen-Prinzip~~ ✔
 3. Backup/Restore
 4. Kabeletiketten mit QR-Code

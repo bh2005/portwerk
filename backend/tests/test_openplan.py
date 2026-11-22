@@ -199,7 +199,7 @@ def test_create_task_links_order_sets_reference_and_syncs_lifecycle(client, admi
     assert t["status"] == "open" and o["status"] == "open"                                                                                           # Entwurf = offen
     assert client.post(f"/api/workorders/{wo['id']}/openplan/create", headers=admin, json={"project_id": 1}).status_code == 409                     # schon verknüpft
     # Lebenszyklus: Status/Fortschritt wandern automatisch nach OpenPlan
-    step = lambda a: client.post(f"/api/workorders/{wo['id']}/transition/{a}", headers=admin)  # noqa: E731
+    step = lambda a: client.post(f"/api/workorders/{wo['id']}/transition/{a}", headers=admin, json={"override_reason": "Test (allein)"})  # noqa: E731
     for a in ("submit", "approve"):
         assert step(a).status_code == 200 and t["status"] == "open"
     assert step("start").status_code == 200 and t["status"] == "in_progress" and t["percent"] == 0
@@ -222,8 +222,8 @@ def test_rejection_and_rework_map_to_openplan(client, admin, op, lab):
     wo = lab["order"]("Abgelehnt")
     client.post(f"/api/workorders/{wo['id']}/openplan/create", headers=admin, json={"project_id": 1})
     t = op.tasks[int(client.get(f"/api/workorders/{wo['id']}", headers=admin).json()["openplan"]["task"])]
-    client.post(f"/api/workorders/{wo['id']}/transition/submit", headers=admin)
-    client.post(f"/api/workorders/{wo['id']}/transition/reject", headers=admin)
+    client.post(f"/api/workorders/{wo['id']}/transition/submit", headers=admin, json={"override_reason": "Test (allein)"})
+    client.post(f"/api/workorders/{wo['id']}/transition/reject", headers=admin, json={"override_reason": "Test (allein)"})
     assert t["status"] == "blocked" and "abgelehnt" in t["note"]
 
 
@@ -251,7 +251,7 @@ def test_sync_failure_never_breaks_the_workflow(client, admin, op, lab):
     wo = lab["order"]("Ausfall")
     client.post(f"/api/workorders/{wo['id']}/openplan/create", headers=admin, json={"project_id": 1})
     op.fail = OpenPlanError(0, "OpenPlan nicht erreichbar: Connection refused")
-    r = client.post(f"/api/workorders/{wo['id']}/transition/submit", headers=admin)
+    r = client.post(f"/api/workorders/{wo['id']}/transition/submit", headers=admin, json={"override_reason": "Test (allein)"})
     assert r.status_code == 200 and r.json()["status"] == "submitted"                          # Arbeitsablauf läuft weiter
     assert "nicht erreichbar" in client.get(f"/api/workorders/{wo['id']}", headers=admin).json()["openplan"]["error"]
     assert any(a["action"] == "openplan.sync_failed" for a in client.get("/api/audit", headers=admin).json())
@@ -261,10 +261,10 @@ def test_sync_failure_never_breaks_the_workflow(client, admin, op, lab):
     # Anbindung aus: nichts wird gesendet
     client.put("/api/admin/openplan", headers=admin, json={"enabled": False})
     n = len(op.calls)
-    client.post(f"/api/workorders/{wo['id']}/transition/approve", headers=admin)
+    client.post(f"/api/workorders/{wo['id']}/transition/approve", headers=admin, json={"override_reason": "Test (allein)"})
     assert len(op.calls) == n
     client.put("/api/admin/openplan", headers=admin, json={"enabled": True, "auto_sync": False})
-    client.post(f"/api/workorders/{wo['id']}/transition/start", headers=admin)
+    client.post(f"/api/workorders/{wo['id']}/transition/start", headers=admin, json={"override_reason": "Test (allein)"})
     assert len(op.calls) == n                                                                  # auto_sync aus: nur manueller Abgleich
 
 

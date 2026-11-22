@@ -110,11 +110,11 @@ def test_workorder_mode_planned_device_and_confirmation(client, admin, rack):
     assert [i["action"] for i in wo["items"]] == ["install_device", "connect"]
     assert wo["items"][1]["cable_label"] == "K1" and wo["items"][1]["port_a"]["device_hostname"] == "sw-neu" and wo["items"][0]["device"]["hostname"] == "sw-neu"
     for act in ("submit", "approve", "start"):
-        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin).status_code == 200
+        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"}).status_code == 200
     for it in wo["items"]:
         assert client.post(f"/api/workorders/{wid}/items/{it['id']}/execute", headers=admin, json={"item_status": "done"}).status_code == 200
     for act in ("finish", "confirm"):
-        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin).status_code == 200
+        assert client.post(f"/api/workorders/{wid}/transition/{act}", headers=admin, json={"override_reason": "Test (allein)"}).status_code == 200
     dev = client.get(f"/api/devices/{d['device_id']}", headers=admin).json()
     assert dev["status"] == "active"                                                        # eingebaut
     assert [p for p in dev["ports"] if p["name"] == "Port8"][0]["cable"]["cable_label"] == "K1"
@@ -133,7 +133,7 @@ def test_workorder_mode_existing_order_and_requirements(client, admin, rack):
                      workorder_id=wo["id"], uplink={"port_name": "Port1", "target_port_id": rack["pp_port2"]}))
     assert r2.status_code == 200
     assert len(client.get(f"/api/workorders/{wo['id']}", headers=admin).json()["items"]) == 4          # je Gerät: Einbau + Kabel
-    client.post(f"/api/workorders/{wo['id']}/transition/submit", headers=admin)
+    client.post(f"/api/workorders/{wo['id']}/transition/submit", headers=admin, json={"override_reason": "Test (allein)"})
     late = client.post("/api/wizards/device", headers=admin, json=body(rack, hostname="sw-3", rack_position=3, model_id=mid, mode="workorder",
                        workorder_id=wo["id"], uplink={"port_name": "Port1", "target_port_id": rack["pp_port2"]}))
     assert late.status_code == 409                                                          # nur Entwürfe

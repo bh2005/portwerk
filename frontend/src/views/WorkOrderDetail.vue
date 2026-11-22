@@ -33,6 +33,11 @@
       <div v-if="wo.planned_to"><span :class="metaLbl">Geplant bis</span><span class="text-slate-700 dark:text-slate-200">{{ wo.planned_to }}</span></div>
       <div v-if="wo.location"><span :class="metaLbl">Standort</span><span class="text-slate-700 dark:text-slate-200">{{ wo.location.name }}</span></div>
       <div v-if="wo.note"><span :class="metaLbl">Notiz</span><span class="text-slate-700 dark:text-slate-200">{{ wo.note }}</span></div>
+      <div v-for="[k, l] in ACTOR_FIELDS.filter(([k]) => wo[k])" :key="k"><span :class="metaLbl">{{ l }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo[k] }}</span></div>
+      <div v-if="wo.four_eyes_override && wo.four_eyes_override.length" class="col-span-2 md:col-span-4">
+        <span :class="metaLbl">Vier-Augen-Prinzip übersteuert</span>
+        <span v-for="o in wo.four_eyes_override" :key="o" class="block text-amber-700 dark:text-amber-400">{{ o }}</span>
+      </div>
     </div>
 
     <!-- OpenPlan -->
@@ -465,12 +470,24 @@ async function load() {
   finally { loading.value = false }
 }
 
-async function doTransition(action) {
+const ACTOR_FIELDS = [['submitted_by', 'Eingereicht von'], ['approved_by', 'Freigegeben von'], ['finished_by', 'Ausgeführt von'], ['confirmed_by', 'Bestätigt von']]
+
+async function doTransition(action, overrideReason) {
   transitioning.value = true
   try {
-    wo.value = await api.workorderTransition(wo.value.id, action)
+    wo.value = await api.workorderTransition(wo.value.id, action, overrideReason)
     err.value = ''
-  } catch (e) { err.value = errText(e) }
+  } catch (e) {
+    const d = e?.response?.data?.detail
+    if (e?.response?.status === 409 && d?.code === 'four_eyes' && d.can_override && !overrideReason) {
+      const reason = prompt(`${d.message}\n\nBegründung für die Ausnahme (wird im Audit-Log und am Auftrag vermerkt):`)
+      transitioning.value = false
+      if (reason && reason.trim()) return doTransition(action, reason.trim())
+      err.value = d.message
+      return
+    }
+    err.value = errText(e)
+  }
   finally { transitioning.value = false }
 }
 
