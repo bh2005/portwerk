@@ -1,7 +1,7 @@
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-6 overflow-y-auto" @click.self="$emit('close')">
     <div class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden"
-         :class="wide ? 'max-w-2xl' : 'max-w-md'" role="dialog" aria-modal="true" :aria-label="title">
+         :class="huge ? 'max-w-6xl' : wide ? 'max-w-2xl' : 'max-w-md'" role="dialog" aria-modal="true" :aria-label="title">
       <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700">
         <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ title }}</h2>
         <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Schließen (Esc)">
@@ -23,7 +23,7 @@
 import { onMounted, onUnmounted } from 'vue'
 
 const emit = defineEmits(['close'])
-defineProps({ title: String, wide: Boolean, error: String })
+defineProps({ title: String, wide: Boolean, huge: Boolean, error: String })
 
 function onKey(e) { if (e.key === 'Escape') emit('close') }
 onMounted(() => window.addEventListener('keydown', onKey))

@@ -32,7 +32,7 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
   Techniker vor Ort mit dem Handy scannen kann.
 - **Mobile Techniker-Ansicht** ✔ *(umgesetzt: /m, Abhaken mit großen Knöpfen, Scannen, Einstieg über PDF-QR und Login am Handy)*
   Schlanke Seite „Mein Auftrag“ zum Abhaken der Positionen am Rack – große Schaltflächen, auch mit Handschuhen bedienbar.
-- **Pfad-Tracer als Grafik**
+- **Pfad-Tracer als Grafik** ✔ *(umgesetzt: „Pfad“ am Port und nach dem Scan, beide Richtungen, LLDP-Abgleich der Enden)*
   Die Kette Switch → Patchfeld → Dose → Endgerät gezeichnet statt als Liste, mit Soll/Ist-Status je Station.
 - **Port-Reservierung** ✔ *(umgesetzt: Reservierungen mit Zweck/Frist, „verplant“ durch offene Aufträge, Rückfrage beim Verplanen)*
   Ports für geplante Aufträge oder Projekte vormerken, damit sie nicht doppelt verplant werden; fließt in die Konfliktprüfung ein.

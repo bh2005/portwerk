@@ -421,6 +421,16 @@ def _ports_with_cables(ports: list[dict]) -> list[dict]:
     return [_port_with_cable(p) for p in ports]
 
 
+@router.get("/ports/{pid}/path")
+def port_path(pid: int, me: Principal = Depends(current_principal)):
+    """Vollständiger Pfad ab diesem Port (beide Richtungen, über Patchfelder/Dosen) mit Kabeldaten, Planungen und LLDP-Abgleich der Enden."""
+    if not db.row("SELECT id FROM ports WHERE id = ?", (pid,)):
+        raise HTTPException(404, "Port nicht gefunden")
+    access.require_read(me, access.site_of_port(pid), "Port")
+    from .. import pathtrace
+    return pathtrace.trace(pid, me)
+
+
 @router.get("/devices/{did}/ports")
 def list_ports(did: int, me: Principal = Depends(current_principal)):
     if not db.row("SELECT id FROM devices WHERE id = ?", (did,)):

@@ -16,6 +16,11 @@
           <div class="text-xs font-semibold uppercase tracking-wide text-green-600 dark:text-green-400 mb-2">steckt aktuell</div>
           <Ends :a="c.a" :b="c.b" />
           <p class="text-xs text-slate-400 mt-2">{{ [c.cable_type !== 'other' ? c.cable_type : '', c.length_m ? `${c.length_m} m` : '', c.color].filter(Boolean).join(' · ') }}</p>
+          <button v-if="!paths[c.cable_id]" class="mt-3 w-full py-2 rounded-xl border border-ks-600 text-ks-700 dark:text-ks-300 font-medium" @click="loadPath(c)">Ganzen Pfad anzeigen</button>
+          <div v-else class="mt-3 border-t border-slate-100 dark:border-slate-700 pt-3">
+            <p v-if="paths[c.cable_id].error" class="text-sm text-red-500">{{ paths[c.cable_id].error }}</p>
+            <PathGraphic v-else-if="paths[c.cable_id].data" :path="paths[c.cable_id].data" />
+          </div>
         </div>
 
         <div v-for="(p, i) in r.planned" :key="'p' + i" :class="card" class="p-4 border-l-4 border-l-amber-500">
@@ -48,6 +53,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { api, errText } from '../api.js'
 import { card, fmtTime } from '../ui.js'
 import MobileBar from '../components/mobile/MobileBar.vue'
+import PathGraphic from '../components/PathGraphic.vue'
 
 const end = e => e
   ? (e.device_id ? hx(RouterLink, { to: `/devices/${e.device_id}`, class: 'text-ks-600 dark:text-ks-400 hover:underline' }, () => `${e.hostname}:${e.port}`)
@@ -57,7 +63,11 @@ const Ends = (props) => hx('div', { class: 'font-mono text-sm' }, [end(props.a),
 Ends.props = ['a', 'b']
 
 const route = useRoute()
-const r = ref(null), err = ref(''), loading = ref(false)
+const r = ref(null), err = ref(''), loading = ref(false), paths = ref({})
+async function loadPath(c) {
+  paths.value = { ...paths.value, [c.cable_id]: { data: null, error: '' } }
+  try { paths.value[c.cable_id].data = await api.portPath(c.port_a_id) } catch (e) { paths.value[c.cable_id].error = errText(e) }
+}
 
 async function load() {
   loading.value = true; err.value = ''; r.value = null
