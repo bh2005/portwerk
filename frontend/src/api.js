@@ -196,4 +196,11 @@ export const api = {
   fetchTlsCa:       url => post('/api/admin/tls/fetch-ca', { url }),
   issueTls:         () => post('/api/admin/tls/issue'),
   tlsCert:          () => http.get('/api/admin/tls/cert', { responseType: 'blob' }).then(r => r.data),
+  backups:            () => get('/api/admin/backups'),
+  createBackup:       () => post('/api/admin/backups'),
+  saveBackupSettings: b => put('/api/admin/backups/settings', b),
+  deleteBackup:       name => del(`/api/admin/backups/${encodeURIComponent(name)}`),
+  downloadBackup:     name => http.get(`/api/admin/backups/${encodeURIComponent(name)}/download`, { responseType: 'blob' }).then(r => r.data),
+  restoreBackup:      name => post(`/api/admin/backups/${encodeURIComponent(name)}/restore`, { confirm: true }),
+  restoreBackupUpload: file => { const f = new FormData(); f.append('file', file); return post('/api/admin/backups/restore-upload', f, { params: { confirm: true } }) },
 }

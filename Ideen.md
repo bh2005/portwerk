@@ -13,7 +13,7 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
    immer, je Auftrag oder ab Priorität?).
 3. **Arbeitsanweisung als PDF**
    Im Konzept vorgesehen (Druck/CSV/PDF), PDF ist nicht umgesetzt.
-4. **Backup/Restore**
+4. **Backup/Restore** ✔ *(umgesetzt: Verwaltung → Sicherung, ZIP mit DB + TLS, täglich automatisch, Wiederherstellung mit Prüfung)*
    Fehlt in der Oberfläche. Bei SQLite im Volume für den Betrieb wichtig (z. B. Download einer konsistenten Sicherung per
    `VACUUM INTO`, Einspielen mit Prüfung der Schema-Version).
 5. **Etappe 4 (Ausbau)**
@@ -49,5 +49,5 @@ Stand: 2026-11-22. Abgleich von [docs/konzept.md](docs/konzept.md) mit dem aktue
 
 1. ~~Verbindungs-Historie~~ ✔
 2. ~~Vier-Augen-Prinzip~~ ✔
-3. Backup/Restore
+3. ~~Backup/Restore~~ ✔
 4. Kabeletiketten mit QR-Code

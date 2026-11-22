@@ -11,6 +11,7 @@
 
     <AdminLdap v-if="tab === 'ldap'" />
     <AdminTls v-if="tab === 'tls'" />
+    <AdminBackup v-if="tab === 'backup'" />
     <AdminMail v-if="tab === 'mail'" />
     <AdminCheckmk v-if="tab === 'checkmk'" />
     <AdminOpenPlan v-if="tab === 'openplan'" />
@@ -137,6 +138,7 @@ import { ref, computed, watch } from 'vue'
 import ModalDialog from '../components/ModalDialog.vue'
 import AdminLdap from '../components/AdminLdap.vue'
 import AdminTls from '../components/AdminTls.vue'
+import AdminBackup from '../components/AdminBackup.vue'
 import AdminMail from '../components/AdminMail.vue'
 import AdminCheckmk from '../components/AdminCheckmk.vue'
 import AdminOpenPlan from '../components/AdminOpenPlan.vue'
@@ -145,7 +147,7 @@ import { api, errText, isAdmin, siteAdminIds } from '../api.js'
 import { inp, lbl, card, th, td, btnPrimary, btnGhost, btnDanger, btnLink, ROLES, roleLabel, fmtTime } from '../ui.js'
 
 const globalAdmin = isAdmin()
-const tabs = globalAdmin ? [['users', 'Benutzer'], ['tokens', 'API-Zugänge'], ['ldap', 'AD / LDAP'], ['tls', 'Zertifikat (ACME)'], ['mail', 'E-Mail'], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan'], ['audit', 'Audit-Log']] : [['users', 'Benutzer']]
+const tabs = globalAdmin ? [['users', 'Benutzer'], ['tokens', 'API-Zugänge'], ['ldap', 'AD / LDAP'], ['tls', 'Zertifikat (ACME)'], ['backup', 'Sicherung'], ['mail', 'E-Mail'], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan'], ['audit', 'Audit-Log']] : [['users', 'Benutzer']]
 const sites = ref([])
 const siteChoices = () => globalAdmin ? sites.value : sites.value.filter(s => siteAdminIds().includes(s.id))
 const scopeText = s => `${roleLabel(s.role)} @ ${s.site_code}`
