@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import logging
+import os
 
 import anyio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from . import acme_client, auth, backup
 from .config import settings
@@ -26,6 +28,33 @@ app = FastAPI(
 if settings.cors_origins.strip():
     app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
                        allow_methods=["*"], allow_headers=["*"])
+
+# HTTP -> HTTPS: nur wenn FORCE_HTTPS=1 UND der HTTPS-Listener tatsächlich läuft (Marker DATA_DIR/tls/serving). So sperrt man sich nie aus,
+# solange noch kein Zertifikat existiert. Ausgenommen: ACME-HTTP-01 und der Health-Check (Docker/Monitoring).
+# Nur verwenden, wenn Portwerk selbst TLS terminiert (nicht hinter einem Reverse-Proxy, der TLS abschließt – sonst Weiterleitungsschleife).
+FORCE_HTTPS = os.environ.get("FORCE_HTTPS", "").lower() in ("1", "true", "yes")
+PUBLIC_HTTPS_PORT = os.environ.get("PUBLIC_HTTPS_PORT", "443")
+HTTP_EXEMPT = ("/.well-known/acme-challenge/", "/health")
+
+
+def _host(h: str) -> str:
+    """Host-Header ohne Port (IPv6-Literale bleiben in Klammern)."""
+    if h.startswith("["):
+        return h.split("]")[0] + "]"
+    return h.rsplit(":", 1)[0] if ":" in h else h
+
+
+@app.middleware("http")
+async def https_redirect(request, call_next):
+    if (FORCE_HTTPS and request.url.scheme == "http" and not request.url.path.startswith(HTTP_EXEMPT)
+            and acme_client.TLS_DIR.joinpath("serving").exists()):
+        host = _host(request.headers.get("host") or "")
+        if host:
+            port = "" if PUBLIC_HTTPS_PORT == "443" else ":" + PUBLIC_HTTPS_PORT
+            query = "?" + request.url.query if request.url.query else ""
+            return RedirectResponse("https://%s%s%s%s" % (host, port, request.url.path, query), status_code=308)
+    return await call_next(request)
+
 
 app.include_router(accounts.router)
 app.include_router(masterdata.router)

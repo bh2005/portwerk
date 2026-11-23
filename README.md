@@ -69,6 +69,8 @@ Umgebungsvariablen (Präfix `OPP_`):
 | `OPP_BACKUP_BACKGROUND` | `0` schaltet die tägliche automatische Sicherung ab (Standard an) |
 | `OPP_CORS_ORIGINS` | nur Entwicklung: erlaubte Ursprünge (Vite-Dev-Server) |
 | `TLS_PORT` | zusätzlicher HTTPS-Listener, sobald ein Zertifikat vorliegt |
+| `FORCE_HTTPS` | `1` leitet HTTP auf HTTPS um, aber erst wenn der HTTPS-Listener wirklich läuft (Ausnahmen: ACME-HTTP-01, `/health`); nur ohne vorgeschalteten TLS-Proxy |
+| `PUBLIC_HTTPS_PORT` | Port in der Weiterleitung (Standard `443`) |
 
 ## Entwicklung
 
