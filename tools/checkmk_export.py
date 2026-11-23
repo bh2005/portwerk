@@ -120,6 +120,8 @@ def attach_locations(hosts: list[dict], site_dir: Path, sock: Path, group: str) 
 
 def post(url: str, token: str, payload: dict, ca_file: str = "", insecure: bool = False, timeout: int = 300) -> dict:
     ctx = ssl.create_default_context(cafile=ca_file or None)
+    if ca_file:                         # interne CAs (z. B. step-ca) setzen oft pathLen ohne keyCertSign; Python >= 3.13 prüft das streng (Kette und Hostname werden weiter geprüft)
+        ctx.verify_flags &= ~getattr(ssl, "VERIFY_X509_STRICT", 0)
     if insecure:
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
