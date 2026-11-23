@@ -37,14 +37,26 @@
       </table>
     </div>
 
-    <!-- Details -->
-    <div v-if="sel" :class="card" class="p-4 space-y-3">
-      <div class="flex items-start justify-between flex-wrap gap-2">
-        <div>
-          <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ sel.name }} <span class="px-2 py-0.5 rounded-full text-xs font-medium ml-2" :class="statusClass(sel.status)">{{ sel.status_label }}</span></h2>
-          <p class="text-xs text-slate-400">{{ sel.site_a }} ↔ {{ sel.site_b || '–' }} · {{ sel.technology_label }}</p>
+    <!-- Details (Seitenleiste von rechts) -->
+    <SidePanel :open="!!sel" :close-on-esc="!form" @close="sel = null">
+      <template #title>
+        <template v-if="sel">
+          <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100 break-words">{{ sel.name }}</h2>
+          <p class="text-xs text-slate-400 mt-0.5"><span class="px-2 py-0.5 rounded-full text-xs font-medium mr-2" :class="statusClass(sel.status)">{{ sel.status_label }}</span>{{ sel.site_a }} ↔ {{ sel.site_b || '–' }} · {{ sel.technology_label }}</p>
+        </template>
+      </template>
+      <template v-if="sel">
+        <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+          <div v-for="[k, v] in details" :key="k" :class="WIDE.includes(k) ? 'sm:col-span-2' : ''"><dt :class="lbl">{{ k }}</dt><dd class="text-slate-700 dark:text-slate-200 break-words whitespace-pre-line">{{ v || '–' }}</dd></div>
+        </dl>
+        <div v-if="sel.orders?.length">
+          <h3 :class="lbl">Aufträge</h3>
+          <ul class="text-sm space-y-1"><li v-for="o in sel.orders" :key="o.id + o.action">
+            <router-link :to="`/workorders/${o.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ o.number }}</router-link> {{ o.title }} <span class="text-xs text-slate-400">· {{ ACTIONS[o.action] || o.action }} · {{ o.status }}</span></li></ul>
         </div>
-        <div class="flex gap-3 items-center flex-wrap" v-if="canPlan(sel)">
+      </template>
+      <template #footer v-if="sel && canPlan(sel)">
+        <div class="flex gap-3 items-center flex-wrap">
           <button v-if="sel.status !== 'active' && sel.status !== 'terminated'" :class="btnPrimary" :disabled="busy" @click="orderFor(sel, 'wan_activate')">In Betrieb nehmen (Auftrag)</button>
           <button v-if="sel.status !== 'terminated'" :class="btnGhost" :disabled="busy" @click="openForm(sel, true)">Ändern per Auftrag …</button>
           <button v-if="sel.status !== 'terminated'" :class="btnDanger" :disabled="busy" @click="orderFor(sel, 'wan_terminate')">Kündigen (Auftrag)</button>
@@ -53,16 +65,8 @@
             <button v-if="['planned', 'terminated'].includes(sel.status)" :class="btnDanger" @click="remove(sel)">Löschen</button>
           </template>
         </div>
-      </div>
-      <dl class="grid sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
-        <div v-for="[k, v] in details" :key="k"><dt :class="lbl">{{ k }}</dt><dd class="text-slate-700 dark:text-slate-200 break-words">{{ v || '–' }}</dd></div>
-      </dl>
-      <div v-if="sel.orders?.length">
-        <h3 :class="lbl">Aufträge</h3>
-        <ul class="text-sm space-y-1"><li v-for="o in sel.orders" :key="o.id + o.action">
-          <router-link :to="`/workorders/${o.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ o.number }}</router-link> {{ o.title }} <span class="text-xs text-slate-400">· {{ ACTIONS[o.action] || o.action }} · {{ o.status }}</span></li></ul>
-      </div>
-    </div>
+      </template>
+    </SidePanel>
 
     <!-- Formular -->
     <ModalDialog v-if="form" wide :title="formTitle" :error="formError" @close="form = null">
@@ -100,6 +104,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
+import SidePanel from '../components/SidePanel.vue'
 import { api, errText, canWriteMaster, getToken, isGlobal, scopesOf, siteAdminIds } from '../api.js'
 import { inp, lbl, card, btnPrimary, btnGhost, btnDanger, btnLink, th, td } from '../ui.js'
 
@@ -110,6 +115,7 @@ const q = ref(''), fStatus = ref(''), fSite = ref(''), expiring = ref(false)
 const error = ref(''), note = ref(''), busy = ref(false)
 const form = ref(null), formError = ref(''), asOrder = ref(false), editId = ref(null), original = ref(null)
 const portsA = ref([]), portsB = ref([])
+const WIDE = ['Kontakt', 'Notiz']
 const csvUrl = '/api/wan/export.csv'
 const ACTIONS = { wan_activate: 'in Betrieb nehmen', wan_change: 'ändern', wan_terminate: 'kündigen' }
 const FIELDS = ['name', 'technology', 'provider', 'circuit_id', 'bandwidth_down', 'bandwidth_up', 'contract_number', 'contract_start', 'contract_end',
