@@ -265,5 +265,18 @@ def revoke_token(tid: int, me: Principal = Depends(require_admin)):
 # ── Audit-Log ─────────────────────────────────────────────────────────────────
 
 @router.get("/api/audit")
-def get_audit(limit: int = 200, actor: str = "", entity: str = "", _: Principal = Depends(require_admin)):
-    return audit.recent(limit, actor or None, entity or None)
+def get_audit(limit: int = 200, offset: int = 0, q: str = "", actor: str = "", action: str = "", entity: str = "",
+              date_from: str = "", date_to: str = "", _: Principal = Depends(require_admin)):
+    """Audit-Log mit Suche (``q``) und Filtern (Benutzer, Aktion bzw. Präfix, Objektart, Zeitraum); ``offset`` zum Nachladen."""
+    for name, v in (("date_from", date_from), ("date_to", date_to)):
+        if v:
+            try:
+                audit.day_start(v)
+            except ValueError:
+                raise HTTPException(400, f"{name}: Datum im Format JJJJ-MM-TT erwartet")
+    return audit.search(q.strip(), actor.strip(), action.strip(), entity.strip(), date_from, date_to, limit, offset)
+
+
+@router.get("/api/audit/facets")
+def get_audit_facets(_: Principal = Depends(require_admin)):
+    return audit.facets()

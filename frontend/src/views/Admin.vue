@@ -67,17 +67,36 @@
     </div>
 
     <!-- Audit -->
-    <div v-if="tab === 'audit'" :class="card" class="overflow-x-auto">
-      <table class="w-full text-xs">
-        <thead><tr class="bg-slate-50 dark:bg-slate-700/40"><th :class="th">Zeit</th><th :class="th">Benutzer</th><th :class="th">Aktion</th><th :class="th">Objekt</th><th :class="th">Detail</th></tr></thead>
-        <tbody>
-          <tr v-if="!audit.length"><td colspan="5" class="px-3 py-6 text-center text-slate-400">Keine Einträge.</td></tr>
-          <tr v-for="a in audit" :key="a.id" class="border-t border-slate-100 dark:border-slate-700">
-            <td :class="td" class="whitespace-nowrap">{{ fmtTime(a.ts) }}</td><td :class="td">{{ a.actor }}</td><td :class="td" class="font-mono">{{ a.action }}</td>
-            <td :class="td">{{ a.entity }} {{ a.entity_id }}</td><td :class="td" class="text-slate-500">{{ a.detail }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-if="tab === 'audit'" class="space-y-3">
+      <form :class="card" class="p-3 flex flex-wrap gap-2 items-end" @submit.prevent="loadAudit()">
+        <div class="grow min-w-56"><label :class="lbl">Suche</label><input v-model="af.q" :class="inp" placeholder="Benutzer, Aktion, Objekt oder Detail …" /></div>
+        <div><label :class="lbl">Benutzer</label>
+          <select v-model="af.actor" :class="inp"><option value="">alle</option><option v-for="a in auditFacets.actors" :key="a" :value="a">{{ a }}</option></select></div>
+        <div><label :class="lbl">Aktion</label>
+          <select v-model="af.action" :class="inp"><option value="">alle</option>
+            <optgroup label="Bereich"><option v-for="g in auditGroups" :key="g" :value="g">{{ g }}.*</option></optgroup>
+            <optgroup label="Aktion"><option v-for="a in auditFacets.actions" :key="a" :value="a">{{ a }}</option></optgroup></select></div>
+        <div><label :class="lbl">Objekt</label>
+          <select v-model="af.entity" :class="inp"><option value="">alle</option><option v-for="e in auditFacets.entities" :key="e" :value="e">{{ e }}</option></select></div>
+        <div><label :class="lbl">Von</label><input v-model="af.date_from" type="date" :class="inp" /></div>
+        <div><label :class="lbl">Bis</label><input v-model="af.date_to" type="date" :class="inp" /></div>
+        <button type="submit" :class="btnPrimary">Suchen</button>
+        <button type="button" :class="btnGhost" @click="resetAudit">Zurücksetzen</button>
+      </form>
+      <p class="text-xs text-slate-400">{{ audit.length }} Einträge{{ auditFiltered ? ' (gefiltert)' : '' }}{{ auditMore ? ' – weitere vorhanden' : '' }}</p>
+      <div :class="card" class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead><tr class="bg-slate-50 dark:bg-slate-700/40"><th :class="th">Zeit</th><th :class="th">Benutzer</th><th :class="th">Aktion</th><th :class="th">Objekt</th><th :class="th">Detail</th></tr></thead>
+          <tbody>
+            <tr v-if="!audit.length"><td colspan="5" class="px-3 py-6 text-center text-slate-400">Keine Einträge{{ auditFiltered ? ' für diese Suche' : '' }}.</td></tr>
+            <tr v-for="a in audit" :key="a.id" class="border-t border-slate-100 dark:border-slate-700">
+              <td :class="td" class="whitespace-nowrap">{{ fmtTime(a.ts) }}</td><td :class="td">{{ a.actor }}</td><td :class="td" class="font-mono">{{ a.action }}</td>
+              <td :class="td">{{ a.entity }} {{ a.entity_id }}</td><td :class="td" class="text-slate-500">{{ a.detail }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div v-if="auditMore" class="text-center"><button type="button" :class="btnGhost" @click="loadAudit(true)">Mehr laden</button></div>
     </div>
 
     <ModalDialog v-if="userForm" :title="userForm.id ? `Benutzer ${userForm.username}` : 'Neuer Benutzer'" :error="formError" @close="userForm = null">
@@ -153,6 +172,26 @@ const siteChoices = () => globalAdmin ? sites.value : sites.value.filter(s => si
 const scopeText = s => `${roleLabel(s.role)} @ ${s.site_code}`
 const tab = ref('users')
 const users = ref([]), tokens = ref([]), audit = ref([])
+const AUDIT_PAGE = 200
+const emptyFilter = () => ({ q: '', actor: '', action: '', entity: '', date_from: '', date_to: '' })
+const af = ref(emptyFilter())
+const auditFacets = ref({ actors: [], actions: [], entities: [] })
+const auditMore = ref(false)
+const auditFiltered = computed(() => Object.values(af.value).some(v => v))
+const auditGroups = computed(() => [...new Set(auditFacets.value.actions.filter(a => a.includes('.')).map(a => a.split('.')[0]))])
+async function loadAudit(append = false) {
+  error.value = ''
+  try {
+    const params = { limit: AUDIT_PAGE, offset: append === true ? audit.value.length : 0 }
+    for (const [k, v] of Object.entries(af.value)) if (v) params[k] = v
+    const rows = await api.audit(params)
+    audit.value = append === true ? [...audit.value, ...rows] : rows
+    auditMore.value = rows.length === AUDIT_PAGE
+  } catch (e) { error.value = errText(e) }
+}
+function resetAudit() { af.value = emptyFilter(); loadAudit() }
+let auditTimer = null
+watch(af, () => { clearTimeout(auditTimer); auditTimer = setTimeout(() => { if (tab.value === 'audit') loadAudit() }, 400) }, { deep: true })
 const error = ref(''), formError = ref('')
 const userForm = ref(null), resetForm = ref(null), tokenForm = ref(null), newToken = ref(null)
 
@@ -161,7 +200,7 @@ async function load() {
   try {
     if (tab.value === 'users') { users.value = await api.users(); sites.value = await api.sites() }
     else if (tab.value === 'tokens') tokens.value = await api.tokens()
-    else if (tab.value === 'audit') audit.value = await api.audit({ limit: 200 })
+    else if (tab.value === 'audit') { auditFacets.value = await api.auditFacets(); await loadAudit() }
   } catch (e) { error.value = errText(e) }
 }
 watch(tab, t => { helpContext.value = t; load() }, { immediate: true })
