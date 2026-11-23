@@ -4,8 +4,9 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 
 ## Offen
 
-- **VLAN-Soll/Ist über Checkmk**
-  Manche Switches liefern VLANs im Inventar mit; daraus einen Abgleich mit der dokumentierten Port-Konfiguration bauen (wie beim LLDP-Abgleich).
+- **VLAN-Soll/Ist für Trunks, Voice-VLANs und andere Hersteller**
+  Checkmk liefert VLANs nur für Cisco und nur Access-VLANs (Plugin `inv_cisco_vlans`). Für Trunks/Voice bräuchte es eigene Daten
+  (z. B. CISCO-VTP-MIB oder ein eigenes Inventar-Plugin).
 - **Webhooks nach außen** (Konzept, Etappe 4)
   Bisher gibt es nur den eingehenden OpenPlan-Webhook. Ereignisse wie „Auftrag bestätigt“ oder „LLDP-Abweichung“ an andere Systeme melden
   (signiert, mit Wiederholung) – nach dem Muster von OpenPlan.
@@ -32,4 +33,5 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Zeitreise (Stand am, Vergleich, Pfad zu einem Zeitpunkt); Zeitzonen-Fehler bei „Stand am“ behoben | #9 |
 | LLDP-Prüfung ausgeführter Aufträge, Vorschlag zur Bestätigung | #10 |
 | README und Konzept auf den aktuellen Stand gebracht | #11 |
-| VLAN/Portprofil als Attribut (Katalog, Profile, Port-Konfiguration mit Historie, Aufträge) | (dieser PR) |
+| VLAN/Portprofil als Attribut (Katalog, Profile, Port-Konfiguration mit Historie, Aufträge) | #19 |
+| VLAN-Soll/Ist über Checkmk (Access-VLANs, Cisco), „Ist übernehmen“ | (dieser PR) |

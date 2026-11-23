@@ -113,6 +113,36 @@ def cdp_neighbors(tree: dict) -> list[dict]:
     return out
 
 
+def vlan_rows(tree: dict) -> Optional[list[dict]]:
+    """VLANs je Port aus ``networking.interfaces`` (Spalten ``vlans``/``vlantype``, Checkmk-Plugin ``inv_cisco_vlans``).
+    Die VLAN-Angaben können in derselben Zeile wie das Interface stehen oder – je nach Checkmk-Version – in einer eigenen Zeile
+    mit demselben ``index``; beides wird über ``index`` zusammengeführt. None = der Host liefert keine VLAN-Spalten."""
+    ifaces = rows(tree, "networking.interfaces")
+    if not any("vlantype" in i or "vlans" in i for i in ifaces):
+        return None
+    names = {str(i.get("index")): str(i.get("name") or i.get("description") or "").strip() for i in ifaces if i.get("name") or i.get("description")}
+    out, seen = [], set()
+    for i in ifaces:
+        vt, vl = str(i.get("vlantype") or "").strip(), str(i.get("vlans") or "").strip()
+        name = str(i.get("name") or i.get("description") or "").strip() or names.get(str(i.get("index")), "")
+        if not (vt and vl and name) or name in seen:
+            continue
+        seen.add(name)
+        out.append({"port": name, "vlans": vl, "vlantype": vt})
+    return out
+
+
+def vlans_from_hosts(hosts: list[dict]) -> dict[str, list[dict]]:
+    """{Host: [{port, vlans, vlantype}]} für alle Hosts, die VLAN-Spalten liefern (auch leere Liste = keine Access-VLANs)."""
+    out = {}
+    for h in hosts:
+        name = str(h.get("host") or "").strip()
+        v = vlan_rows(h.get("inventory") or {}) if name else None
+        if v is not None:
+            out[name] = v
+    return out
+
+
 def has_neighbor_data(tree: dict) -> bool:
     """Meldet der Host LLDP/CDP-Daten (auch ohne Nachbarn)? Dann gilt „kein Nachbar gesehen“ als Aussage."""
     return bool(node(tree, "networking.lldp_cache") or node(tree, "networking.cdp_cache"))

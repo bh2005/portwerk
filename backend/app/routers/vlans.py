@@ -8,7 +8,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .. import access, audit, db, portcfg
+from .. import access, audit, db, portcfg, vlancompare
 from ..access import require_writer
 from ..auth import Principal, current_principal, require_master_write
 from . import masterdata
@@ -126,6 +126,26 @@ def vlan_usage(vid: int = Query(ge=1, le=4094), site_id: Optional[int] = None, m
     if site_id is not None:
         access.require_read(me, site_id, "Standort")
     return _usage(vid, site_id, me)
+
+
+class AdoptIn(BaseModel):
+    port_ids: list[int] = Field(min_length=1, max_length=2000)
+
+
+@router.get("/vlans/compare")
+def vlan_compare(site_id: Optional[int] = None, me: Principal = Depends(current_principal)):
+    """VLAN-Soll/Ist: dokumentierte Port-Konfiguration gegen die von Checkmk gemeldeten Access-VLANs (nur Cisco)."""
+    if site_id is not None:
+        access.require_read(me, site_id, "Standort")
+    return vlancompare.report(me, site_id)
+
+
+@router.post("/vlans/compare/adopt")
+def vlan_adopt(body: AdoptIn, me: Principal = Depends(require_writer)):
+    """Gemeldetes Access-VLAN als Doku übernehmen (nur Ports mit eindeutigem Access-VLAN im eigenen Schreibbereich)."""
+    out = vlancompare.adopt(body.port_ids, me)
+    audit.log(me.name, "vlan.adopt", "port", ",".join(map(str, body.port_ids[:50])), f"{out['adopted']} übernommen, {out['skipped']} übersprungen")
+    return out
 
 
 # ── Portprofile ───────────────────────────────────────────────────────────────

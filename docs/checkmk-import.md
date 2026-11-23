@@ -80,6 +80,16 @@ Verkabelung – über Patchfelder und Dosen hinweg bis zum ersten aktiven Gerät
 Portnamen werden normalisiert (`GigabitEthernet0/3` = `Gi0/3`); Nachbarn werden über den Kurznamen (ohne Domäne) oder die Management-IP dem Gerät zugeordnet.
 Reine MAC-Adressen werden ignoriert. API: `GET /api/compare` (Filter `site_id`, `status`), `GET /api/compare/export.csv`.
 
+## VLAN-Soll/Ist
+
+Führt Checkmk im Inventar die Spalten `vlans`/`vlantype` in `networking.interfaces` (Plugin `inv_cisco_vlans`, nur **Cisco**,
+CISCO-VLAN-MEMBERSHIP-MIB), übernimmt der Import sie als gemeldete VLANs je Port. Je nach Checkmk-Version stehen die Angaben in der
+Interface-Zeile oder in einer eigenen Zeile mit gleichem `index` – beides wird erkannt. Das Export-Skript braucht dafür keine Änderung.
+
+Checkmk meldet nur **Access-VLANs** (`static`, `dynamic`; `multi-VLAN` wird angezeigt, aber nicht bewertet). Trunks und Voice-VLANs
+sind nicht enthalten. Der Abgleich steht unter Soll/Ist → „VLANs (Checkmk)“; gemeldete, nicht dokumentierte VLANs lassen sich
+mit „Ist übernehmen“ in die Doku eintragen.
+
 ## Link zu Checkmk
 
 Unter *Verwaltung → Checkmk* die Adresse der Site eintragen (z. B. `https://monitoring.example.test/prod`). Danach zeigen Rack-Ansicht und Gerätedetails den Link
