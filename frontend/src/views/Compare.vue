@@ -2,8 +2,14 @@
   <div class="max-w-7xl space-y-4">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Soll/Ist-Abgleich</h1>
-      <a :class="btnGhost" href="#" @click.prevent="downloadCsv">CSV-Export</a>
+      <a v-if="tab === 'lldp'" :class="btnGhost" href="#" @click.prevent="downloadCsv">CSV-Export</a>
     </div>
+    <div class="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+      <button v-for="[k, l] in TABS" :key="k" @click="setTab(k)" class="px-4 py-2 text-sm -mb-px border-b-2 transition-colors"
+        :class="tab === k ? 'border-ks-600 text-ks-700 dark:text-ks-300 font-medium' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'">{{ l }}</button>
+    </div>
+    <VlanCompare v-if="tab === 'vlan'" />
+    <template v-else>
     <p class="text-sm text-slate-500 dark:text-slate-400">Vergleicht die dokumentierte Verkabelung (Soll, auch über Patchfelder hinweg) mit den per LLDP/CDP gemeldeten Nachbarn (Ist).
       <template v-if="res"> Grundlage: {{ res.devices }} Gerät(e) mit Nachbardaten.</template></p>
     <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
@@ -41,13 +47,21 @@
         </tbody>
       </table>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { api, errText, getToken } from '../api.js'
 import { inp, card, btnGhost, th, td } from '../ui.js'
+import VlanCompare from '../components/VlanCompare.vue'
+
+const TABS = [['lldp', 'Verkabelung (LLDP/CDP)'], ['vlan', 'VLANs (Checkmk)']]
+const route = useRoute(), router = useRouter()
+const tab = ref(route.query.tab === 'vlan' ? 'vlan' : 'lldp')
+function setTab(k) { tab.value = k; router.replace({ query: k === 'vlan' ? { tab: 'vlan' } : {} }) }
 
 const res = ref(null), sites = ref([]), fSite = ref(''), q = ref(''), error = ref('')
 const active = ref(new Set(['mismatch', 'port_mismatch', 'undocumented', 'not_seen', 'unmapped']))

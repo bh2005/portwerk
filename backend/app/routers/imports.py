@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from .. import access, audit, checkmk, compare, db, importer, verify
+from .. import access, audit, checkmk, compare, db, importer, verify, vlancompare
 from ..auth import Principal, current_principal, require_master_write
 
 router = APIRouter(prefix="/api/import", tags=["import"])
@@ -165,9 +165,10 @@ def checkmk_import(body: CheckmkImport, me: Principal = Depends(require_master_w
     nb = {} if body.dry_run else compare.store(lldp)                    # LLDP/CDP-Nachbarn für den Soll/Ist-Abgleich
     if nb.get("devices"):
         nb["orders_checked"] = verify.refresh_open(me.name)               # ausgeführte Aufträge gegen die frischen Nachbardaten prüfen
+    vl = {} if body.dry_run else vlancompare.store(checkmk.vlans_from_hosts([h.model_dump() for h in body.hosts]))   # VLAN-Soll/Ist
     audit.log(me.name, "import.checkmk", "import", result["run_id"],
               f"{'Trockenlauf ' if body.dry_run else ''}{result['stats']} übersprungen={len(skipped)} lldp_hosts={len(lldp)}")
-    return {**result, "skipped_hosts": skipped[:200], "skipped_count": len(skipped), "lldp_hosts": len(lldp), "neighbors": nb}
+    return {**result, "skipped_hosts": skipped[:200], "skipped_count": len(skipped), "lldp_hosts": len(lldp), "neighbors": nb, "vlans": vl}
 
 
 @router.get("/runs")
