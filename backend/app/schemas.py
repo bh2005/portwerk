@@ -98,7 +98,7 @@ class CableIn(BaseModel):
 
 
 WORKORDER_STATUSES = ("draft", "submitted", "approved", "rejected", "in_progress", "done", "confirmed", "rework")
-WORKITEM_ACTIONS   = ("connect", "disconnect", "move", "install_device", "remove_device", "wan_activate", "wan_change", "wan_terminate")
+WORKITEM_ACTIONS   = ("connect", "disconnect", "move", "install_device", "remove_device", "wan_activate", "wan_change", "wan_terminate", "configure")
 MOUNT_SIDES        = ("front", "rear", "both")                      # Einbauseite im Rack
 ORIENTATIONS       = ("horizontal", "vertical", "din_rail")          # 19 Zoll (HE), hochkant im Seitenkanal oder Hutschiene/Montageplatte (ohne HE-Raster)
 SIDE_SLOTS         = ("", "left", "right")
@@ -130,6 +130,8 @@ class WorkItemIn(BaseModel):
     port_a_id:    Optional[int] = None
     port_b_id:    Optional[int] = None
     old_port_b_id: Optional[int] = None     # nur bei move: alter Zielport
+    cfg:          Optional[dict] = None     # Ziel-Konfiguration (VLAN/Profil) – bei configure Pflicht, bei connect/move optional
+    cfg_port_id:  Optional[int] = None      # für welchen Port der Position (leer = Switch-Ende bzw. bei configure Port A)
     cable_label:  str = ""
     cable_type:   str = "other"
     fiber_count:  Optional[int] = Field(default=None, ge=1)

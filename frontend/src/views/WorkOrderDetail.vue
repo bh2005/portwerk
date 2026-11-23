@@ -161,7 +161,8 @@
         <tbody>
           <tr v-for="item in shownItems" :key="item.id" class="border-t border-slate-100 dark:border-slate-700">
             <td v-if="selectable" :class="td"><input type="checkbox" :checked="picked.has(item.id)" @change="pick(item.id)" /></td>
-            <td :class="td"><span :class="actionClass(item.action)" class="text-xs font-medium">{{ actionLabel(item.action) }}</span></td>
+            <td :class="td"><span :class="actionClass(item.action)" class="text-xs font-medium">{{ actionLabel(item.action) }}</span>
+              <span v-if="item.cfg_text" class="block text-[11px] text-indigo-600 dark:text-indigo-400">VLAN: {{ item.cfg_text }}</span></td>
             <td :class="td" class="font-mono text-xs">
               <router-link v-if="item.wan" :to="`/wan?id=${item.wan.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">WAN {{ item.wan.name }}</router-link>
               <router-link v-else-if="item.device" :to="`/devices/${item.device.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ item.device.hostname }}</router-link>
@@ -252,6 +253,7 @@
               <option value="connect">Verbindung herstellen</option>
               <option value="disconnect">Verbindung trennen</option>
               <option value="move">Verbindung umstecken</option>
+              <option value="configure">Port umkonfigurieren (VLAN/Profil)</option>
               <option value="install_device">Gerät einbauen (vorhandenes, geplantes Gerät)</option>
               <option value="remove_device">Gerät zurückbauen</option>
               <option value="wan_activate">WAN-Verbindung in Betrieb nehmen</option>
@@ -276,15 +278,28 @@
               <input v-model.number="itemForm.port_a_id" type="number" :class="inp" placeholder="Port-ID" />
             </div>
             <div>
+              <template v-if="itemForm.action !== 'configure'">
               <label :class="lbl">{{ itemForm.action === 'move' ? 'Neuer Port B' : 'Port B' }}</label>
               <input v-model.number="itemForm.port_b_id" type="number" :class="inp" placeholder="Port-ID" />
+              </template>
             </div>
           </div>
           <div v-if="itemForm.action === 'move'">
             <label :class="lbl">Alter Port B (bisherige Verbindung)</label>
             <input v-model.number="itemForm.old_port_b_id" type="number" :class="inp" placeholder="Port-ID" />
           </div>
-          <div class="grid grid-cols-2 gap-3">
+          <div v-if="['connect', 'move', 'configure'].includes(itemForm.action)" class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2">
+            <label v-if="itemForm.action !== 'configure'" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+              <input type="checkbox" v-model="itemForm.withCfg" /> Ziel-Konfiguration (VLAN/Profil) angeben</label>
+            <div v-else class="text-sm font-medium text-slate-700 dark:text-slate-200">Ziel-Konfiguration für Port A</div>
+            <template v-if="itemForm.withCfg || itemForm.action === 'configure'">
+              <PortConfigFields :cfg="itemForm.cfgForm" :profiles="cfgProfiles" :vlans="cfgVlans" />
+              <div v-if="itemForm.action !== 'configure'"><label :class="lbl">gilt für</label>
+                <select v-model="itemForm.cfg_port_id" :class="inp"><option :value="null">automatisch (Switch-Ende)</option>
+                  <option v-if="itemForm.port_a_id" :value="itemForm.port_a_id">Port A</option><option v-if="itemForm.port_b_id" :value="itemForm.port_b_id">Port B</option></select></div>
+            </template>
+          </div>
+          <div v-if="itemForm.action !== 'configure'" class="grid grid-cols-2 gap-3">
             <div><label :class="lbl">Kabelnummer</label><input v-model="itemForm.cable_label" :class="inp" /></div>
             <div>
               <label :class="lbl">Kabeltyp</label>
@@ -293,7 +308,7 @@
               </select>
             </div>
           </div>
-          <div class="grid grid-cols-3 gap-3">
+          <div v-if="itemForm.action !== 'configure'" class="grid grid-cols-3 gap-3">
             <div><label :class="lbl">Länge (m)</label><input v-model.number="itemForm.length_m" type="number" step="0.1" :class="inp" /></div>
             <div v-if="countLabel(itemForm.cable_type)"><label :class="lbl">{{ countLabel(itemForm.cable_type) }}</label><input v-model.number="itemForm.fiber_count" type="number" :class="inp" /></div>
             <div><label :class="lbl">Farbe</label><input v-model="itemForm.color" :class="inp" /></div>
@@ -354,6 +369,7 @@ import ModalDialog from '../components/ModalDialog.vue'
 import SendDialog from '../components/SendDialog.vue'
 import OpenPlanDialog from '../components/OpenPlanDialog.vue'
 import { api, errText, conflictOf, hasRole, isAdmin } from '../api.js'
+import PortConfigFields from '../components/PortConfigFields.vue'
 import { card, inp, lbl, th, td, btnPrimary, btnGhost, btnDanger, btnLink, fmtTime } from '../ui.js'
 import { cableTypes, countLabel, loadCableTypes } from '../catalog.js'
 
@@ -366,6 +382,15 @@ const itemForm = ref({})
 const execForm = ref({ item_status: 'done', deviation_note: '' })
 const execItem = ref(null)
 const editingItemId = ref(null)
+const cfgProfiles = ref([]), cfgVlans = ref([])
+/** Formular → API: Ziel-Konfiguration nur, wenn angegeben; leere Zahlenfelder als null. */
+function itemPayload() {
+  const { withCfg, cfgForm, ...f } = itemForm.value
+  const useCfg = f.action === 'configure' || (withCfg && ['connect', 'move'].includes(f.action))
+  const n = v => (v === '' ? null : v)
+  return { ...f, port_b_id: f.action === 'configure' ? null : f.port_b_id, cfg_port_id: useCfg ? f.cfg_port_id : null,
+           cfg: useCfg ? { ...cfgForm, access_vid: n(cfgForm.access_vid), voice_vid: n(cfgForm.voice_vid), native_vid: n(cfgForm.native_vid) } : null }
+}
 
 const STEPS = [
   {s:'draft',l:'Entwurf'},{s:'submitted',l:'Eingereicht'},{s:'approved',l:'Freigegeben'},
@@ -413,14 +438,14 @@ const prioClass = p => ({ low:'text-slate-400', normal:'text-slate-600 dark:text
   high:'text-amber-600 dark:text-amber-400', critical:'text-red-600 dark:text-red-400 font-semibold' }[p] || '')
 const prioLabel = p => ({ low:'Niedrig', normal:'Normal', high:'Hoch', critical:'Kritisch' }[p] || p)
 const actionLabel = a => ({ connect:'→ herstellen', disconnect:'✕ trennen', move:'↔ umstecken', install_device:'＋ Gerät einbauen', remove_device:'✕ Gerät zurückbauen',
-  wan_activate:'🌐 WAN in Betrieb nehmen', wan_change:'🌐 WAN ändern', wan_terminate:'🌐 WAN kündigen' }[a] || a)
+  wan_activate:'🌐 WAN in Betrieb nehmen', wan_change:'🌐 WAN ändern', wan_terminate:'🌐 WAN kündigen', configure:'⚙ umkonfigurieren' }[a] || a)
 const WAN_LABELS = { name: 'Name', technology: 'Technik', provider: 'Provider', circuit_id: 'Leitungs-ID', bandwidth_down: 'Down Mbit/s', bandwidth_up: 'Up Mbit/s',
   contract_number: 'Vertrag', contract_start: 'Vertragsbeginn', contract_end: 'Vertragsende', notice_days: 'Kündigungsfrist (Tage)', monthly_cost: 'Kosten/Monat',
   contact: 'Kontakt', note: 'Notiz', remote_label: 'Gegenstelle', site_b_id: 'Standort B', port_a_id: 'Port A', port_b_id: 'Port B' }
 const patchText = p => Object.entries(p).map(([k, v]) => `${WAN_LABELS[k] || k}: ${v ?? '–'}`).join(', ')
 const actionClass = a => ({ connect:'text-green-700 dark:text-green-400', disconnect:'text-red-600 dark:text-red-400',
   move:'text-blue-600 dark:text-blue-400', install_device:'text-green-700 dark:text-green-400', remove_device:'text-red-600 dark:text-red-400',
-  wan_activate:'text-green-700 dark:text-green-400', wan_change:'text-blue-600 dark:text-blue-400', wan_terminate:'text-red-600 dark:text-red-400' }[a] || '')
+  wan_activate:'text-green-700 dark:text-green-400', wan_change:'text-blue-600 dark:text-blue-400', wan_terminate:'text-red-600 dark:text-red-400', configure:'text-indigo-600 dark:text-indigo-400' }[a] || '')
 const isWanAction = a => a.startsWith('wan_')
 const wanChoices = ref([])
 const isDeviceAction = a => a === 'install_device' || a === 'remove_device'
@@ -555,7 +580,10 @@ function openAddItem() {
   editingItemId.value = null
   api.wanLinks().then(l => { wanChoices.value = l.filter(x => x.status !== 'terminated') }).catch(() => {})
   itemForm.value = { action:'connect', device_id: null, wan_link_id: null, remove_old: false, use_reserved: false, port_a_id: null, port_b_id: null, old_port_b_id: null,
-    cable_label:'', cable_type:'Cat6', fiber_count: null, length_m: null, color:'', note:'', idx: wo.value.items.length }
+    cable_label:'', cable_type:'Cat6', fiber_count: null, length_m: null, color:'', note:'', idx: wo.value.items.length,
+    withCfg: false, cfg_port_id: null, cfgForm: { port_mode: '', access_vid: null, voice_vid: null, native_vid: null, allowed_vids: '', profile_id: null } }
+  api.portProfiles().then(p => { cfgProfiles.value = p }).catch(() => {})
+  api.vlans().then(v => { cfgVlans.value = v }).catch(() => {})
   dialogErr.value = ''
   itemDialog.value = true
 }
@@ -564,11 +592,11 @@ async function saveItem() {
   saving.value = true
   try {
     if (editingItemId.value) {
-      const updated = await api.updateWorkitem(wo.value.id, editingItemId.value, itemForm.value)
+      const updated = await api.updateWorkitem(wo.value.id, editingItemId.value, itemPayload())
       const idx = wo.value.items.findIndex(i => i.id === editingItemId.value)
       if (idx >= 0) wo.value.items[idx] = updated
     } else {
-      const item = await api.addWorkitem(wo.value.id, itemForm.value)
+      const item = await api.addWorkitem(wo.value.id, itemPayload())
       wo.value.items.push(item)
     }
     itemDialog.value = false

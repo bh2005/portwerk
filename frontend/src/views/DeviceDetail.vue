@@ -65,7 +65,8 @@
             <tbody>
               <tr v-for="p in d.ports" :key="p.id" class="border-t border-slate-100 dark:border-slate-700">
                 <td v-if="canReserve" :class="td"><input v-if="!p.reservation" type="checkbox" :checked="picked.has(p.id)" @change="togglePick(p.id)" /></td>
-                <td :class="td" class="font-mono text-xs">{{ p.name }}</td>
+                <td :class="td" class="font-mono text-xs">{{ p.name }}
+                  <span v-if="p.config" class="block font-sans text-[11px] text-indigo-600 dark:text-indigo-400 whitespace-nowrap" :title="p.config.text">{{ shortCfg(p.config) }}</span></td>
                 <td :class="td">{{ p.medium }}</td>
                 <td :class="td">{{ fmtSpeed(p.speed_mbps) }}</td>
                 <td :class="td" class="text-slate-500">{{ p.description || '–' }}</td>
@@ -88,6 +89,7 @@
                     :title="p.planned.title">verplant: {{ p.planned.number }}</router-link>
                   <button v-if="p.cable || p.peer_port_id" :class="btnLink" class="ml-2" title="Ganze Strecke über Patchfelder bis zum Endgerät" @click="showPath(p)">Pfad</button>
                   <button :class="btnLink" class="ml-2" title="Frühere Verbindungen dieses Ports" @click="showPortHistory(p)">Historie</button>
+                  <button v-if="['switch', 'router', 'firewall'].includes(d.type) || p.config" :class="btnLink" class="ml-2" title="VLAN / Portprofil" @click="openVlan(p)">VLAN</button>
                 </td>
                 <td v-if="canWrite" :class="td" class="text-right whitespace-nowrap">
                   <button :class="btnLink" @click="openPort(p)">Bearbeiten</button>
@@ -149,6 +151,23 @@
         </div>
       </div>
     </template>
+
+    <ModalDialog v-if="vlanDlg" wide :title="`VLAN / Portprofil – ${d.hostname}:${vlanDlg.port.name}`" :error="formError" @close="vlanDlg = null">
+      <p class="text-sm mb-3"><span class="text-slate-500">Aktuell:</span> <b>{{ vlanDlg.port.config ? vlanDlg.port.config.text : 'nicht dokumentiert' }}</b></p>
+      <template v-if="canWrite">
+        <PortConfigFields :cfg="vlanDlg.cfg" :profiles="vlanDlg.profiles" :vlans="vlanDlg.vlans" />
+        <p class="text-xs text-slate-400 mt-2">Direkt ändern ist für Administratoren gedacht; im Ablauf über den Auftrag „Port umkonfigurieren“.</p>
+      </template>
+      <div v-if="vlanDlg.history.length" class="mt-4">
+        <div :class="lbl">Historie</div>
+        <div v-for="(h, i) in vlanDlg.history" :key="i" class="text-xs py-1 border-t border-slate-100 dark:border-slate-700">
+          {{ fmtTime(h.changed_at) }} · {{ h.workorder ? h.workorder.number : h.changed_by }}: <span class="line-through text-slate-400">{{ h.before }}</span> → {{ h.after }}</div>
+      </div>
+      <template #footer>
+        <button :class="btnGhost" @click="vlanDlg = null">{{ canWrite ? 'Abbrechen' : 'Schließen' }}</button>
+        <button v-if="canWrite" :class="btnPrimary" @click="saveVlan">Speichern</button>
+      </template>
+    </ModalDialog>
 
     <ModalDialog v-if="pathDlg" huge :title="`Pfad ab ${d.hostname}:${pathDlg.port}`" :error="pathDlg.error" @close="pathDlg = null">
       <div class="flex items-end gap-2 mb-3">
@@ -302,6 +321,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
 import CableWizard from '../components/CableWizard.vue'
 import PathGraphic from '../components/PathGraphic.vue'
+import PortConfigFields from '../components/PortConfigFields.vue'
 import HelpHint from '../components/HelpHint.vue'
 import { cableTypes, countLabel, loadCableTypes } from '../catalog.js'
 import { api, errText, conflictOf, canWriteMaster, hasRole } from '../api.js'
@@ -318,6 +338,27 @@ const portForm = ref(null), bulk = ref(null), peer = ref(null), cableForm = ref(
 const cableWiz = ref(null)
 const hist = reactive({ rows: [], at: '', port: null, error: '' }), histCard = ref(null)
 const canReserve = hasRole('planer'), picked = ref(new Set()), resForm = ref(null), pathDlg = ref(null)
+const vlanDlg = ref(null)
+/** Kurzform für die Port-Tabelle: Profilname bzw. VLAN-Nummern (voller Text im Tooltip). */
+const shortCfg = c => c.profile ? c.profile.name
+  : c.port_mode === 'access' ? `VLAN ${c.access_vid}${c.voice_vid ? ' + V' + c.voice_vid : ''}` : `Trunk ${c.allowed_vids || 'alle'}`
+async function openVlan(p) {
+  formError.value = ''
+  const c = p.config || {}
+  vlanDlg.value = { port: p, cfg: { port_mode: c.port_mode || '', access_vid: c.access_vid ?? null, voice_vid: c.voice_vid ?? null, native_vid: c.native_vid ?? null,
+    allowed_vids: c.allowed_vids || '', profile_id: c.profile?.id ?? null }, profiles: [], vlans: [], history: [] }
+  try {
+    const [profiles, vlans, history] = await Promise.all([api.portProfiles(), api.vlans(), api.portConfigHistory(p.id)])
+    Object.assign(vlanDlg.value, { profiles, vlans, history })
+  } catch (e) { formError.value = errText(e) }
+}
+async function saveVlan() {
+  const c = vlanDlg.value.cfg, n = v => (v === '' ? null : v)
+  try {
+    await api.setPortConfig(vlanDlg.value.port.id, { ...c, access_vid: n(c.access_vid), voice_vid: n(c.voice_vid), native_vid: n(c.native_vid) })
+    vlanDlg.value = null; msgErr.value = false; msg.value = 'VLAN-Konfiguration gespeichert.'; await load()
+  } catch (e) { formError.value = errText(e) }
+}
 function showPath(p) { pathDlg.value = { port: p.name, portId: p.id, at: '', data: null, error: '' }; loadPath() }
 async function loadPath() {
   const dlg = pathDlg.value

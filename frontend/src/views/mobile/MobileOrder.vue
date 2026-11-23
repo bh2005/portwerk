@@ -46,6 +46,7 @@
             <End v-if="x.b" :label="x.action === 'disconnect' ? 'steckt an' : 'nach'" :name="x.b" :where="x.b_location !== x.a_location ? x.b_location : ''" :unit="x.b_unit" />
             <p v-if="x.old_b" class="text-sm text-slate-500">bisher: <span class="font-mono">{{ x.old_b }}</span></p>
             <p v-if="details(x)" class="text-sm text-slate-600 dark:text-slate-300">{{ details(x) }}</p>
+            <p v-if="x.cfg_text" class="text-sm font-medium text-indigo-700 dark:text-indigo-300">VLAN: {{ x.cfg_text }}</p>
             <p v-if="x.note" class="text-sm text-slate-600 dark:text-slate-300 italic">{{ x.note }}</p>
 
             <div v-if="x.item_status !== 'open'" class="text-sm" :class="x.item_status === 'done' ? 'text-green-700' : 'text-amber-700'">

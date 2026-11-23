@@ -80,7 +80,7 @@ def build(ids: list[int], group: str, only_open: bool, me: Principal) -> dict:
                 "id": it["id"], "workorder_id": w["id"], "order": w["number"], "order_status": w["status"], "action": o["action"],
                 "action_label": o["action_label"], "a": a, "a_location": a_loc, "b": b, "b_location": b_loc,
                 "old_b": (f"{o['old_port_b']['device_hostname']}:{o['old_port_b']['name']}" if o.get("old_port_b") else ""),
-                "a_unit": _unit(o["port_a"]), "b_unit": _unit(o["port_b"]),                # Höheneinheit im Rack (Suche vor Ort)
+                "a_unit": _unit(o["port_a"]), "b_unit": _unit(o["port_b"]), "cfg_text": o["cfg_text"],                # Höheneinheit im Rack (Suche vor Ort)
                 "a_device_id": o["port_a"]["device_id"] if o["port_a"] else None, "b_device_id": o["port_b"]["device_id"] if o["port_b"] else None,
                 "cable_label": it["cable_label"], "cable_type": it["cable_type"] if it["cable_type"] != "other" else "", "length_m": it["length_m"],
                 "color": it["color"], "note": it["note"], "item_status": it["item_status"], "deviation_note": it["deviation_note"],
@@ -115,12 +115,12 @@ def patchlist_csv(data: dict) -> str:
     wr = csv.writer(buf, delimiter=";")
     wr.writerow(["Patchliste", ", ".join(o["number"] for o in data["orders"]), time.strftime("%d.%m.%Y %H:%M")])
     wr.writerow([])
-    wr.writerow(["Nr", "Ort", "Auftrag", "Aktion", "Gerät/Port A", "Gerät/Port B", "Ort B", "Kabelnummer", "Kabelart", "Länge (m)", "Farbe", "Notiz",
+    wr.writerow(["Nr", "Ort", "Auftrag", "Aktion", "Gerät/Port A", "Gerät/Port B", "Ort B", "Kabelnummer", "Kabelart", "Länge (m)", "Farbe", "Konfiguration", "Notiz",
                  "Status", "Erledigt von", "Erledigt am", "erledigt ☐"])
     for n, x in enumerate(data["items"], 1):
         done = time.strftime("%d.%m.%Y %H:%M", time.localtime(x["executed_at"])) if x["executed_at"] else ""
         wr.writerow([n, x["a_location"], x["order"], x["action_label"], x["a"], x["b"], x["b_location"], x["cable_label"], x["cable_type"],
-                     x["length_m"] or "", x["color"], x["note"], ITEM_STATUS.get(x["item_status"], ""), x["executed_by"], done, ""])
+                     x["length_m"] or "", x["color"], x["cfg_text"], x["note"], ITEM_STATUS.get(x["item_status"], ""), x["executed_by"], done, ""])
     return buf.getvalue()
 
 
