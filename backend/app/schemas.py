@@ -345,6 +345,24 @@ class CableWizardIn(BaseModel):
     dry_run: bool = False
 
 
+class WorkplaceIn(BaseModel):
+    """Arbeitsplatz-Assistent: Dose → Patchfeld → freier Switchport, mit Profil/VLAN, als Patchauftrag."""
+    outlet_port_id: int
+    switch_port_id: Optional[int] = None            # leer = bester Vorschlag
+    profile_id: Optional[int] = None
+    cfg: Optional[dict] = None                      # eigene VLAN-Werte statt Profil
+    endpoint_port_id: Optional[int] = None          # optional: Endgerät an der Dose anschließen
+    cable_type: str = "Cat6"
+    cable_label: str = Field(default="", max_length=120)
+    length_m: Optional[float] = Field(default=None, ge=0)
+    color: str = ""
+    note: str = ""
+    workorder_id: Optional[int] = None              # in vorhandenen Entwurf, sonst neuer Auftrag
+    workorder_title: str = ""
+    use_reserved: bool = False
+    dry_run: bool = False
+
+
 class PortListSpec(BaseModel):
     """Quelle für die Massenverkabelung: die Ports eines Geräts oder aller Geräte einer Location (z. B. alle Datendosen)."""
     device_id: Optional[int] = None

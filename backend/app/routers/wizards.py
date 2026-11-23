@@ -11,10 +11,10 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import access, audit, cablelog, db, reservations
+from .. import access, audit, cablelog, db, portcfg, reservations, workplace
 from ..access import require_writer
 from ..auth import Principal, current_principal
-from ..schemas import CONTAINER_KINDS, DEVICE_TYPES, PASSIVE_TYPES, BulkCablesIn, BulkParseIn, CableWizardIn, PortListSpec, DeviceIn, DeviceWizardIn, PortGroup, SiteWizardIn
+from ..schemas import CONTAINER_KINDS, DEVICE_TYPES, PASSIVE_TYPES, BulkCablesIn, BulkParseIn, CableWizardIn, PortListSpec, WorkplaceIn, DeviceIn, DeviceWizardIn, PortGroup, SiteWizardIn
 from .. import rackmount
 from . import masterdata, workorders
 from .catalog import MAX_TEMPLATE_PORTS, check_cable_type
@@ -818,3 +818,94 @@ def _lbl(r: dict) -> str:
 def _port_label_by_id(pid: int) -> str:
     r = db.row("SELECT d.hostname, p.name FROM ports p JOIN devices d ON d.id = p.device_id WHERE p.id = ?", (pid,))
     return f"{r['hostname']}:{r['name']}" if r else str(pid)
+
+
+# ── Arbeitsplatz-Assistent ────────────────────────────────────────────────────
+
+@router.post("/workplace")
+def workplace_wizard(body: WorkplaceIn, me: Principal = Depends(current_principal)):
+    """Neuer Arbeitsplatz an einer Dose: Strecke bis zum Patchfeld, freier Switchport (Vorschlag oder Auswahl), Profil/VLAN →
+    Patchauftrag mit „herstellen“ (Patchfeld ↔ Switch, Ziel-Konfiguration am Switchport) und optional „herstellen“ Dose ↔ Endgerät.
+    Ist die Dose schon bis zum Switch verbunden, wird nur „Port umkonfigurieren“ angelegt. ``dry_run`` liefert Analyse und Vorschläge."""
+    info = workplace.analyse(body.outlet_port_id, me)
+    cfg = workplace.target_cfg(body.profile_id, body.cfg)
+    user_port = info["user_port"]
+    out: dict = {"state": info["state"], "why": info["why"], "path": info["path"], "user_port": workplace.label(user_port),
+                 "patch_point": None, "candidates": [], "switch_port": None, "items": [], "warnings": []}
+    if info["state"] == "undocumented":
+        if body.dry_run:
+            return {"dry_run": True, **out}
+        raise HTTPException(400, info["why"])
+
+    items: list[dict] = []
+    if info["state"] == "connected":
+        sp = info["switch_port"]
+        out["switch_port"] = {"port_id": sp["id"], "label": workplace.label(sp)} if sp else None
+        if sp and cfg:
+            items.append({"action": "configure", "port_a_id": sp["id"], "port_b_id": None, "cfg": cfg, "cfg_port_id": sp["id"],
+                          "text": f"{workplace.label(sp)} umkonfigurieren → {portcfg.describe(cfg)}"})
+        elif not body.dry_run:
+            raise HTTPException(400, "Die Dose ist bereits verbunden – für eine Änderung ein Profil oder VLAN wählen")
+    else:
+        pp = info["patch_point"]
+        out["patch_point"] = {"port_id": pp["id"], "label": workplace.label(pp)}
+        out["candidates"] = workplace.candidates(pp, me)
+        sw_id = body.switch_port_id or (out["candidates"][0]["port_id"] if out["candidates"] else None)
+        if not sw_id:
+            if body.dry_run:
+                out["warnings"].append("Kein freier Switchport am Standort gefunden")
+                return {"dry_run": True, **out}
+            raise HTTPException(409, "Kein freier Switchport am Standort gefunden – Switchport bitte auswählen")
+        sp = workplace._port(sw_id)
+        if not sp or sp["type"] not in portcfg.SWITCH_TYPES:
+            raise HTTPException(400, "Der gewählte Port gehört zu keinem Switch/Router/Firewall")
+        out["switch_port"] = {"port_id": sp["id"], "label": workplace.label(sp)}
+        items.append({"action": "connect", "port_a_id": pp["id"], "port_b_id": sp["id"], "cfg": cfg, "cfg_port_id": sp["id"] if cfg else None,
+                      "patch_cable": True, "text": f"{workplace.label(pp)} ↔ {workplace.label(sp)}" + (f" · VLAN: {portcfg.describe(cfg)}" if cfg else "")})
+    if body.endpoint_port_id:
+        ep = workplace._port(body.endpoint_port_id)
+        if not ep:
+            raise HTTPException(404, "Endgerät-Port nicht gefunden")
+        items.append({"action": "connect", "port_a_id": user_port["id"], "port_b_id": ep["id"], "cfg": None, "cfg_port_id": None,
+                      "text": f"{workplace.label(user_port)} ↔ {workplace.label(ep)} (Endgerät)"})
+    out["items"] = [{"action": i["action"], "text": i["text"]} for i in items]
+
+    # Rechte und Prüfungen wie bei den anderen Assistenten
+    site = user_port["site_id"]
+    if me.kind != "user" or not me.has_at(site, "planer"):
+        raise HTTPException(403, "Für Patchaufträge ist die Rolle „Planer“ am Standort nötig")
+    ports = [p for i in items if i["action"] == "connect" for p in (i["port_a_id"], i["port_b_id"])]
+    reservations.check(ports, use_reserved=body.use_reserved, by=me.name, workorder_id=body.workorder_id, dry_run=body.dry_run)
+    busy = workorders.port_conflicts(ports)
+    if busy:
+        raise workorders.conflict_error("port_busy", workorders.busy_message(busy).split(". Alten Patch")[0] + ". Bitte einen anderen Port wählen.", busy)
+    ctype = check_cable_type(body.cable_type)
+    wo = None
+    if body.workorder_id:
+        wo = workorders._wo_or_404(body.workorder_id, me)
+        if wo["status"] not in ("draft", "rework"):
+            raise HTTPException(409, "Positionen können nur in Entwürfen oder zurückgewiesenen Aufträgen ergänzt werden")
+        workorders._require_role(me, ["planer", "admin"], wo)
+    title = body.workorder_title.strip() or f"Arbeitsplatz {workplace.label(user_port)}"
+    out["workorder"] = {"existing": wo["number"]} if wo else {"new": title}
+    if body.dry_run:
+        return {"dry_run": True, **out}
+
+    now = time.time()
+    if wo:
+        wid = wo["id"]
+    else:
+        wid = db.execute("""INSERT INTO workorders(number, title, description, status, priority, location_id, note, openplan_project, openplan_task,
+                                                   openplan_link, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                         (workorders._next_number(), title, f"Arbeitsplatz-Assistent: {workplace.label(user_port)}", "draft", "normal",
+                          user_port["location_id"], "", "", "", "", me.name, now, now))
+    for i in items:
+        if i.get("patch_cable"):                                         # Kabeldaten gehören zum Patchkabel Patchfeld ↔ Switch
+            cable = {"cable_label": body.cable_label.strip(), "cable_type": ctype, "length_m": body.length_m, "color": body.color.strip()}
+        else:
+            cable = {"cable_type": ctype if i["action"] == "connect" else "other"}
+        workorders._add_item_raw(wid, i["action"], port_a_id=i["port_a_id"], port_b_id=i["port_b_id"], note=body.note.strip(),
+                                 cfg=workplace.cfg_json(i["cfg"]), cfg_port_id=i["cfg_port_id"], **cable)
+    w = db.row("SELECT id, number, title FROM workorders WHERE id = ?", (wid,))
+    audit.log(me.name, "wizard.workplace", "workorder", wid, f"{w['number']}: " + "; ".join(i["text"] for i in items))
+    return {**out, "dry_run": False, "workorder": {"id": w["id"], "number": w["number"], "title": w["title"], "new": not wo}}
