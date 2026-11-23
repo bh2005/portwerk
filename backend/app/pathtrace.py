@@ -6,13 +6,13 @@ from __future__ import annotations
 
 from typing import Optional
 
-from . import access, db, reservations
+from . import access, db, portcfg, reservations
 from .auth import Principal
 from .compare import THROUGH_TYPES, norm_port, short_host
 
 MAX_STEPS = 60
 ACTIVE_FIRST = ("switch", "router", "firewall")                     # diese Seite steht links, wenn nur ein Ende so ein Gerät ist
-ACTION_LABELS = {"connect": "herstellen", "disconnect": "trennen", "move": "umstecken"}
+ACTION_LABELS = {"connect": "herstellen", "disconnect": "trennen", "move": "umstecken", "configure": "umkonfigurieren"}
 
 
 def _port(pid: int) -> Optional[dict]:
@@ -63,7 +63,7 @@ def _planned(port_ids: list[int]) -> dict[int, list[dict]]:
     out: dict[int, list[dict]] = {}
     for r in db.rows(f"""SELECT i.action, i.port_a_id, i.port_b_id, i.old_port_b_id, w.id, w.number, w.status FROM workitems i
                          JOIN workorders w ON w.id = i.workorder_id
-                         WHERE i.action IN ('connect', 'disconnect', 'move') AND w.status IN ({",".join("?" * len(reservations.PLANNING_STATES))})
+                         WHERE i.action IN ('connect', 'disconnect', 'move', 'configure') AND w.status IN ({",".join("?" * len(reservations.PLANNING_STATES))})
                            AND (i.port_a_id IN ({ph}) OR i.port_b_id IN ({ph}) OR i.old_port_b_id IN ({ph}))
                          ORDER BY w.id""", (*reservations.PLANNING_STATES, *ids, *ids, *ids)):
         for pid in {r["port_a_id"], r["port_b_id"], r["old_port_b_id"]} & set(ids):
@@ -118,6 +118,7 @@ def trace(port_id: int, me: Principal, at: Optional[float] = None) -> dict:
     node_links: list[dict] = []
     for i, p in enumerate(ports):
         port_out = {"id": p["id"], "name": p["name"], "start": p["id"] == port_id, "planned": planned.get(p["id"], []),
+                    "config": portcfg.describe(portcfg.current(p["id"]), portcfg.vlan_names(p["site_id"])) if visible(p) else "",
                     "reservation": res[p["id"]]["purpose"] if p["id"] in res else None}
         if i > 0 and links[i - 1]["kind"] == "through":
             nodes[-1]["ports"].append(port_out)

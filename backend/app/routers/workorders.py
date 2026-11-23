@@ -15,7 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .. import access, audit, cablelog, db, openplan, reservations, verify
+from .. import access, audit, cablelog, db, openplan, portcfg, reservations, verify
 from . import wan
 from ..auth import Principal, current_principal
 from .catalog import check_cable_type
@@ -45,7 +45,8 @@ STATUS_LABELS = {
 
 ACTION_LABELS = {"connect": "Verbindung herstellen", "disconnect": "Verbindung trennen", "move": "Verbindung umstecken",
                  "install_device": "Gerät einbauen", "remove_device": "Gerät zurückbauen",
-                 "wan_activate": "WAN in Betrieb nehmen", "wan_change": "WAN ändern", "wan_terminate": "WAN kündigen"}
+                 "wan_activate": "WAN in Betrieb nehmen", "wan_change": "WAN ändern", "wan_terminate": "WAN kündigen",
+                 "configure": "Port umkonfigurieren"}
 # Vier-Augen-Prinzip: Aktion -> Spalten der Personen, die diese Aktion nicht selbst ausführen dürfen
 FOUR_EYES: dict[str, tuple[str, ...]] = {"approve": ("created_by", "submitted_by"), "confirm": ("finished_by",)}
 ACTOR_COLUMNS = {"submit": "submitted_by", "approve": "approved_by", "finish": "finished_by", "confirm": "confirmed_by"}
@@ -258,6 +259,35 @@ def _check_item_wan(me: Principal, body) -> dict:
     return wan.validate_item(me, body.action, body.wan_link_id, body.wan_patch)
 
 
+def _check_item_cfg(me: Principal, body) -> tuple[str, Optional[int]]:
+    """Ziel-Konfiguration einer Position prüfen; liefert (JSON, Port). Bei „herstellen/umstecken“ standardmäßig das Switch-Ende."""
+    if body.action == "configure":
+        if not body.port_a_id or body.port_b_id:
+            raise HTTPException(400, "Port umkonfigurieren: genau einen Port (Port A) angeben")
+        if not body.cfg:
+            raise HTTPException(400, "Port umkonfigurieren: Ziel-Konfiguration (VLAN oder Profil) angeben")
+        port = body.port_a_id
+    elif body.cfg and body.action in ("connect", "move"):
+        ends = [p for p in (body.port_a_id, body.port_b_id) if p]
+        if body.cfg_port_id:
+            if body.cfg_port_id not in ends:
+                raise HTTPException(400, "Die Konfiguration muss für einen Port dieser Position gelten")
+            port = body.cfg_port_id
+        else:
+            sw = [p for p in ends if (db.row("SELECT d.type FROM ports p JOIN devices d ON d.id = p.device_id WHERE p.id = ?", (p,)) or {}).get("type")
+                  in portcfg.SWITCH_TYPES]
+            if len(sw) != 1:
+                raise HTTPException(400, "Für welchen Port gilt die Konfiguration? Bitte Port wählen (kein eindeutiges Switch-Ende)")
+            port = sw[0]
+    elif body.cfg:
+        raise HTTPException(400, "Eine Ziel-Konfiguration gibt es nur bei herstellen, umstecken und Port umkonfigurieren")
+    else:
+        return "", None
+    if not me.is_global and not me.has_at(access.site_of_port(port), "planer"):
+        raise HTTPException(403, "Der Port liegt außerhalb deines Bereichs")
+    return json.dumps(portcfg.normalize(body.cfg)), port
+
+
 def _check_item_device(me: Principal, body) -> None:
     if body.action not in ("install_device", "remove_device"):
         return
@@ -324,6 +354,9 @@ def _item_out(item: dict) -> dict:
         "port_a":       _port_info(item["port_a_id"]),
         "port_b":       _port_info(item["port_b_id"]),
         "old_port_b":   _port_info(item["old_port_b_id"]),
+        "cfg":          json.loads(item["cfg"]) if item.get("cfg") else None,
+        "cfg_port":     _port_info(item.get("cfg_port_id")),
+        "cfg_text":     _cfg_text(item),
         "cable_label":  item["cable_label"],
         "cable_type":   item["cable_type"],
         "fiber_count":  item["fiber_count"],
@@ -336,6 +369,15 @@ def _item_out(item: dict) -> dict:
         "executed_at":  item["executed_at"],
         "idx":          item["idx"],
     }
+
+
+def _cfg_text(item: dict) -> str:
+    """„Gi1/0/14: Drucker: Access 20 (Drucker)“ – Ziel-Konfiguration einer Position, mit VLAN-Namen des Standorts."""
+    if not item.get("cfg") or not item.get("cfg_port_id"):
+        return ""
+    p = _port_info(item["cfg_port_id"])
+    text = portcfg.describe(json.loads(item["cfg"]), portcfg.vlan_names(access.site_of_port(item["cfg_port_id"]))) or "nicht dokumentiert"
+    return f"{p['device_hostname']}:{p['name']} → {text}" if p else text
 
 
 def _progress(wid: int) -> dict:
@@ -452,6 +494,9 @@ def _apply_workorder(w: dict, me: Principal) -> None:
         elif action == "disconnect" and a_id:
             cablelog.remove_at_ports([a_id, b_id], by=me.name, workorder_id=w["id"], reason="workorder")
 
+        elif action == "configure":
+            pass                                                         # nur Konfiguration (siehe unten)
+
         elif action == "move" and a_id and b_id:
             # alten Zielport lösen, neuen verbinden
             cablelog.remove_at_ports([a_id, item["old_port_b_id"], b_id], by=me.name, workorder_id=w["id"], reason="workorder")
@@ -464,6 +509,9 @@ def _apply_workorder(w: dict, me: Principal) -> None:
                 (lo, hi, item["cable_label"], item["cable_type"], item["fiber_count"], item["length_m"],
                  item["color"], item["note"], me.name, time.time(), w["id"]),
             )
+
+        if item["cfg"] and item["cfg_port_id"] and action in ("connect", "move", "configure"):
+            portcfg.apply(item["cfg_port_id"], json.loads(item["cfg"]), me.name, w["id"], "workorder")   # VLAN/Profil dokumentieren
 
 
 # ── CRUD Aufträge ─────────────────────────────────────────────────────────────
@@ -641,14 +689,15 @@ def add_item(wid: int, body: WorkItemIn, me: Principal = Depends(current_princip
     checked = _check_item_wan(me, body)
     wan_patch = json.dumps(checked, ensure_ascii=False) if body.action == "wan_change" else ""
     body.cable_type = check_cable_type(body.cable_type)
+    cfg, cfg_port = _check_item_cfg(me, body)
     _resolve_item_conflicts(me, w, body)
     iid = db.execute(
         """INSERT INTO workitems(workorder_id, action, device_id, port_a_id, port_b_id, old_port_b_id,
-                                  cable_label, cable_type, fiber_count, length_m, color, note, idx, wan_link_id, wan_patch)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                                  cable_label, cable_type, fiber_count, length_m, color, note, idx, wan_link_id, wan_patch, cfg, cfg_port_id)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (wid, body.action, body.device_id, body.port_a_id, body.port_b_id, body.old_port_b_id,
          body.cable_label.strip(), body.cable_type, body.fiber_count, body.length_m,
-         body.color.strip(), body.note.strip(), body.idx, body.wan_link_id if body.action.startswith("wan_") else None, wan_patch),
+         body.color.strip(), body.note.strip(), body.idx, body.wan_link_id if body.action.startswith("wan_") else None, wan_patch, cfg, cfg_port),
     )
     db.execute("UPDATE workorders SET updated_at = ? WHERE id = ?", (time.time(), wid))
     audit.log(me.name, "workitem.add", "workorder", wid, f"item {iid}")
@@ -669,14 +718,15 @@ def update_item(wid: int, iid: int, body: WorkItemIn, me: Principal = Depends(cu
     checked = _check_item_wan(me, body)
     wan_patch = json.dumps(checked, ensure_ascii=False) if body.action == "wan_change" else ""
     body.cable_type = check_cable_type(body.cable_type)
+    cfg, cfg_port = _check_item_cfg(me, body)
     _resolve_item_conflicts(me, w, body)
     db.execute(
         """UPDATE workitems SET action=?, device_id=?, port_a_id=?, port_b_id=?, old_port_b_id=?,
                                 cable_label=?, cable_type=?, fiber_count=?, length_m=?,
-                                color=?, note=?, idx=?, wan_link_id=?, wan_patch=? WHERE id=?""",
+                                color=?, note=?, idx=?, wan_link_id=?, wan_patch=?, cfg=?, cfg_port_id=? WHERE id=?""",
         (body.action, body.device_id, body.port_a_id, body.port_b_id, body.old_port_b_id,
          body.cable_label.strip(), body.cable_type, body.fiber_count, body.length_m,
-         body.color.strip(), body.note.strip(), body.idx, body.wan_link_id if body.action.startswith("wan_") else None, wan_patch, iid),
+         body.color.strip(), body.note.strip(), body.idx, body.wan_link_id if body.action.startswith("wan_") else None, wan_patch, cfg, cfg_port, iid),
     )
     db.execute("UPDATE workorders SET updated_at = ? WHERE id = ?", (time.time(), wid))
     audit.log(me.name, "workitem.update", "workorder", wid, f"item {iid}")
@@ -784,14 +834,14 @@ def worklist_csv(w: dict) -> str:
     wr = _csv.writer(buf, delimiter=";")
     wr.writerow(["Auftrag", w["number"], w["title"], STATUS_LABELS.get(w["status"], w["status"])])
     wr.writerow([])
-    wr.writerow(["Nr", "Aktion", "Gerät/Port A", "Gerät/Port B", "Kabelnummer", "Kabelart", "Länge (m)", "Farbe", "Notiz", "Status", "Erledigt von", "Erledigt am", "erledigt ☐"])
+    wr.writerow(["Nr", "Aktion", "Gerät/Port A", "Gerät/Port B", "Kabelnummer", "Kabelart", "Länge (m)", "Farbe", "Konfiguration", "Notiz", "Status", "Erledigt von", "Erledigt am", "erledigt ☐"])
     for n, it in enumerate(db.rows("SELECT * FROM workitems WHERE workorder_id = ? ORDER BY idx, id", (w["id"],)), 1):
         o = _item_out(it)
         a = f"{o['port_a']['device_hostname']}:{o['port_a']['name']}" if o["port_a"] else (o["device"]["hostname"] if o["device"] else "")
         b = f"{o['port_b']['device_hostname']}:{o['port_b']['name']}" if o["port_b"] else ""
         done = time.strftime("%d.%m.%Y %H:%M", time.localtime(it["executed_at"])) if it["executed_at"] else ""
         wr.writerow([n, o["action_label"], a, b, it["cable_label"], it["cable_type"] if it["cable_type"] != "other" else "", it["length_m"] or "",
-                     it["color"], it["note"], {"open": "offen", "done": "erledigt", "deviation": "Abweichung"}.get(it["item_status"], ""), it["executed_by"], done, ""])
+                     it["color"], o["cfg_text"], it["note"], {"open": "offen", "done": "erledigt", "deviation": "Abweichung"}.get(it["item_status"], ""), it["executed_by"], done, ""])
     return buf.getvalue()
 
 

@@ -9,7 +9,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from .. import access, audit, cablelog, db, reservations
+from .. import access, audit, cablelog, db, portcfg, reservations
 from ..access import require_writer
 from ..rackmount import check_mount, describe, pending_removal_device_ids, rack_conflicts
 from ..auth import Principal, current_principal, require_master_write
@@ -414,6 +414,7 @@ def _port_with_cable(port: dict) -> dict:
     out["reservation"] = ({"id": r["id"], "purpose": r["purpose"], "reserved_by": r["reserved_by"], "until": r["until"],
                            "workorder": {"id": r["workorder_id"], "number": r["wo_number"]} if r["workorder_id"] else None} if r else None)
     out["planned"] = reservations.planned([port["id"]]).get(port["id"])
+    out["config"] = portcfg.out({k: port.get(k) for k in portcfg.FIELDS}, access.site_of_port(port["id"])) if port.get("port_mode") else None
     return out
 
 

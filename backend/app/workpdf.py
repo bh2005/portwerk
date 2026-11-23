@@ -188,7 +188,7 @@ def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]]
                     b += f"\n(bisher: {x['old_b']})"
                 r.cell(t(b))
                 r.cell(t(_cable(x)))
-                note = x["note"]
+                note = "\n".join(p for p in (f"Konfiguration: {x['cfg_text']}" if x.get("cfg_text") else "", x["note"]) if p)
                 if x["item_status"] == "deviation" and x["deviation_note"]:
                     note = (note + "\n" if note else "") + f"Abweichung: {x['deviation_note']}"
                 elif x["item_status"] == "done" and x["executed_by"]:

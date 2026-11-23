@@ -4,8 +4,8 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 
 ## Offen
 
-- **VLAN/Portprofil als Attribut**
-  Nur dokumentieren, nicht konfigurieren – damit Patchaufträge auch Anweisungen wie „Port auf VLAN 20“ tragen können.
+- **VLAN-Soll/Ist über Checkmk**
+  Manche Switches liefern VLANs im Inventar mit; daraus einen Abgleich mit der dokumentierten Port-Konfiguration bauen (wie beim LLDP-Abgleich).
 - **Webhooks nach außen** (Konzept, Etappe 4)
   Bisher gibt es nur den eingehenden OpenPlan-Webhook. Ereignisse wie „Auftrag bestätigt“ oder „LLDP-Abweichung“ an andere Systeme melden
   (signiert, mit Wiederholung) – nach dem Muster von OpenPlan.
@@ -32,3 +32,4 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Zeitreise (Stand am, Vergleich, Pfad zu einem Zeitpunkt); Zeitzonen-Fehler bei „Stand am“ behoben | #9 |
 | LLDP-Prüfung ausgeführter Aufträge, Vorschlag zur Bestätigung | #10 |
 | README und Konzept auf den aktuellen Stand gebracht | #11 |
+| VLAN/Portprofil als Attribut (Katalog, Profile, Port-Konfiguration mit Historie, Aufträge) | (dieser PR) |

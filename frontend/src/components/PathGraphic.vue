@@ -22,6 +22,7 @@
                 <span class="font-mono text-xs px-1.5 py-0.5 rounded"
                   :class="p.start ? 'bg-ks-600 text-white ring-2 ring-ks-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'">
                   <template v-if="n.passive && n.ports.length > 1">{{ k === 0 ? '◂' : '▸' }} </template>{{ p.name }}</span>
+                <span v-if="p.config" class="text-[10px] px-1 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300" :title="p.config">{{ p.config }}</span>
                 <span v-if="p.reservation" class="text-[10px] px-1 rounded bg-amber-100 text-amber-800" :title="`reserviert: ${p.reservation}`">reserviert</span>
                 <router-link v-for="pl in p.planned" :key="pl.workorder.id + pl.action" :to="`/workorders/${pl.workorder.id}`"
                   class="text-[10px] px-1 rounded bg-sky-100 text-sky-800 hover:underline" @click="$emit('navigate')">{{ pl.workorder.number }}: {{ pl.action }}</router-link>
