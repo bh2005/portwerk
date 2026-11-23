@@ -14,7 +14,7 @@ import json
 import time
 from typing import Optional
 
-from . import audit, db
+from . import audit, db, notifications
 from .compare import THROUGH_TYPES
 from .pathtrace import _lldp, _port, _walk, trace
 
@@ -126,6 +126,8 @@ def refresh(wid: int, actor: str = "system") -> dict:
     if w and w["status"] == "done" and r["status"] != w["lldp_status"] and r["status"] in ("ok", "problem"):
         audit.log(actor, f"workorder.lldp_{r['status']}", "workorder", wid,
                   f"{w['number']}: LLDP-Prüfung {r['label']} ({r['summary']['ok']} stimmen, {r['summary']['problem']} Abweichung)")
+        if r["status"] == "ok":
+            notifications.confirm_suggested(wid, r["summary"])           # Freigeber per E-Mail (nur beim Wechsel auf „stimmt“)
     return {**r, "checked_at": now}
 
 

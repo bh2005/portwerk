@@ -65,6 +65,7 @@ export const api = {
   login:          (username, password) => post('/auth/login', { username, password }),
   logout:         () => post('/auth/logout'),
   me:             () => get('/auth/me'),
+  setMyNotifications: b => put('/auth/me/notifications', b),
   changePassword: (current_password, new_password) => post('/auth/change-password', { current_password, new_password }),
 
   // Übersicht

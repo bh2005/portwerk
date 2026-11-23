@@ -412,6 +412,7 @@ class MailSettingsIn(BaseModel):
     reply_to: Optional[str] = Field(None, max_length=200)
     public_url: Optional[str] = Field(None, max_length=300)
     allowed_domains: Optional[list[str]] = None
+    notify_confirm_suggest: Optional[bool] = None
 
 
 class MailTestIn(BaseModel):

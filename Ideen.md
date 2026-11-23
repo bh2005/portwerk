@@ -14,8 +14,6 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
   Neue Geräte aus Geräte-Rollouts (Hostname, Standort, Typ) übernehmen, damit ein geplanter Switch ohne Doppelerfassung im Bestand erscheint.
 - **Historie für Geräte-Orte und Patchfeld-Paare**
   Historisiert sind nur Verbindungen; Zeitreise und „Pfad am Datum“ zeigen Orte und Durchschleifungen mit dem heutigen Stand.
-- **Benachrichtigung „zur Bestätigung vorgeschlagen“**
-  Wenn die LLDP-Prüfung einen ausgeführten Auftrag als stimmig meldet, die Freigeber per E-Mail informieren (bisher Karte auf der Übersicht).
 
 ## Umgesetzt
 
@@ -35,4 +33,5 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | README und Konzept auf den aktuellen Stand gebracht | #11 |
 | VLAN/Portprofil als Attribut (Katalog, Profile, Port-Konfiguration mit Historie, Aufträge) | #19 |
 | VLAN-Soll/Ist über Checkmk (Access-VLANs, Cisco), „Ist übernehmen“ | #20 |
-| Arbeitsplatz-Assistent (Dose → Patchfeld → freier Switchport, Profil/VLAN, Auftrag) | (dieser PR) |
+| Arbeitsplatz-Assistent (Dose → Patchfeld → freier Switchport, Profil/VLAN, Auftrag) | #21 |
+| E-Mail an Freigeber bei „zur Bestätigung vorgeschlagen“ | (dieser PR) |

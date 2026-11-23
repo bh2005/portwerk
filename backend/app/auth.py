@@ -104,7 +104,13 @@ def public_user(u: dict) -> dict:
         "id": u["id"], "username": u["username"], "full_name": u["full_name"], "email": u["email"],
         "roles": parse_roles(u["roles"]), "scopes": user_scopes(u["id"]), "source": u["source"], "active": bool(u["active"]),
         "created_at": u["created_at"], "last_login": u["last_login"],
+        "notify": _notify_prefs(u),
     }
+
+
+def _notify_prefs(u: dict) -> dict:
+    from .notifications import prefs                                   # spät importieren (notifications nutzt db/mailer)
+    return prefs(u.get("notify_prefs") or "")
 
 
 def check_password_policy(pw: str) -> None:

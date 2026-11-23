@@ -31,6 +31,17 @@
 
         <hr class="border-slate-100 dark:border-slate-700" />
 
+        <div v-if="notify" class="space-y-2">
+          <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">E-Mail-Benachrichtigungen</h3>
+          <label v-for="[k, l] in NOTIFY" :key="k" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
+            <input type="checkbox" :checked="notify[k]" @change="setNotify(k, $event.target.checked)" /> {{ l }}</label>
+          <p class="text-xs text-slate-400">{{ me.email ? `an ${me.email}` : 'Keine E-Mail-Adresse hinterlegt – es kommen keine Mails.' }}
+            Ob überhaupt Mails verschickt werden, legt die Verwaltung fest.</p>
+          <p v-if="notifyMsg" class="text-xs text-green-600">{{ notifyMsg }}</p>
+        </div>
+
+        <hr v-if="notify" class="border-slate-100 dark:border-slate-700" />
+
         <div class="space-y-3">
           <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
             Passwort ändern
@@ -82,6 +93,13 @@ const me = ref({ ...getUser() })
 const current = ref(''), next = ref(''), confirm = ref('')
 const show = ref(false), saving = ref(false), msg = ref(''), msgErr = ref(false)
 const firstField = ref(null)
+const NOTIFY = [['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)'], ['assigned', 'Mir wurde ein Auftrag zugewiesen']]
+const notify = ref(null), notifyMsg = ref('')
+async function setNotify(key, on) {
+  notifyMsg.value = ''
+  try { notify.value = await api.setMyNotifications({ [key]: on }); notifyMsg.value = 'Gespeichert.' }
+  catch (e) { msgErr.value = true; msg.value = errText(e) }
+}
 
 const canSave = computed(() => !saving.value && !!current.value && next.value.length >= MIN_LEN && next.value === confirm.value)
 
@@ -104,7 +122,7 @@ async function save() {
 function onKey(e) { if (e.key === 'Escape') emit('close') }
 onMounted(async () => {
   window.addEventListener('keydown', onKey)
-  try { me.value = { ...me.value, ...(await api.me()) } } catch {}
+  try { const m = await api.me(); me.value = { ...me.value, ...m }; notify.value = m.notify || null } catch {}
   await nextTick()
   firstField.value?.focus()
 })

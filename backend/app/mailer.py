@@ -25,7 +25,8 @@ RATE_LIMIT = (10, 600)                       # höchstens 10 Versände je Benutz
 _EMAIL_RE = re.compile(r"^[^@\s<>,;\"']+@[^@\s<>,;\"']+\.[^@\s<>,;\"']+$")
 
 DEFAULTS = {"enabled": False, "host": "", "port": 25, "security": "none", "username": "", "password": "", "from_addr": "",
-            "from_name": "Portwerk", "reply_to": "", "public_url": "", "allowed_domains": []}
+            "from_name": "Portwerk", "reply_to": "", "public_url": "", "allowed_domains": [],
+            "notify_confirm_suggest": True}             # Freigeber informieren, wenn die LLDP-Prüfung einen Auftrag zur Bestätigung vorschlägt
 
 _sent: dict = {}
 _lock = threading.Lock()
