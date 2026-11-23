@@ -29,6 +29,14 @@
     </fieldset>
 
     <fieldset :class="box">
+      <legend :class="legend">Automatische Benachrichtigungen</legend>
+      <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="checkbox" v-model="f.notify_confirm_suggest" />
+        Freigeber informieren, wenn ein ausgeführter Auftrag zur Bestätigung vorgeschlagen wird (LLDP-Prüfung stimmt)</label>
+      <p :class="hint">Empfänger: Benutzer mit der Rolle Freigeber (global oder am Standort des Auftrags) und E-Mail-Adresse, außer wer den Auftrag ausgeführt hat.
+        Versand einmal je Auftrag, wenn die Prüfung auf „stimmt“ wechselt.</p>
+    </fieldset>
+
+    <fieldset :class="box">
       <legend :class="legend">Schutz</legend>
       <div><label :class="lbl">Erlaubte Empfänger-Domains (eine pro Zeile, leer = alle)</label>
         <textarea v-model="domains" rows="3" :class="inp" class="font-mono text-xs" spellcheck="false" placeholder="example.test&#10;corp.example"></textarea>
@@ -61,7 +69,7 @@ const box = 'border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-
 const legend = 'px-2 text-sm font-semibold text-slate-700 dark:text-slate-200'
 const hint = 'text-xs text-slate-400 mt-1'
 
-const f = reactive({ enabled: false, host: '', port: 25, security: 'none', username: '', password: '', clear_password: false, from_addr: '', from_name: 'Portwerk', reply_to: '', public_url: '' })
+const f = reactive({ enabled: false, host: '', port: 25, security: 'none', username: '', password: '', clear_password: false, from_addr: '', from_name: 'Portwerk', reply_to: '', public_url: '', notify_confirm_suggest: true })
 const domains = ref(''), meta = reactive({ password_set: false, configured: false })
 const busy = ref(false), msg = ref(''), err = ref(''), testTo = ref(''), testMsg = ref(''), testOk = ref(false)
 
