@@ -273,6 +273,11 @@ def _auth(cfg: dict, username: str, password: str, trace: Optional[list]) -> Opt
         conn.unbind()
 
 
+def mapping_active(cfg: dict) -> bool:
+    """Sind AD-Gruppen Rollen zugeordnet? Nur dann bestimmt das Verzeichnis die Rollen bei jeder Anmeldung."""
+    return bool(any((cfg.get("group_roles") or {}).values()) or cfg.get("scoped_groups"))
+
+
 def authenticate(username: str, password: str, cfg: Optional[dict] = None) -> Optional[dict]:
     """``{"username", "display", "email", "roles"}`` bei Erfolg, sonst ``None`` (falsch/nicht berechtigt/Fehler)."""
     return _auth(cfg or settings(), username, password, None)

@@ -163,3 +163,16 @@ def test_ldap_users_cannot_change_password_and_test_endpoint(client, admin, ad):
     make_user(client, admin, "v1", roles=("viewer",))
     h = login(client, "v1", "Passwort-123")
     assert client.get("/api/admin/ldap", headers=h).status_code == 403
+
+
+def test_manual_roles_persist_when_no_groups_are_mapped(client, admin, ad):
+    """Ohne Gruppen-Zuordnung liefert das Verzeichnis nur die Anmeldung; vom Administrator vergebene Rollen bleiben nach dem Login erhalten."""
+    client.put("/api/admin/ldap", headers=admin, json={"group_roles": {"admin": "", "planer": ""}, "default_role": "viewer"})
+    assert ldap_login(client, "nogr").json()["user"]["roles"] == ["viewer"]                       # neues Konto: Standardrolle
+    uid = [u for u in client.get("/api/users", headers=admin).json() if u["username"] == "nogr"][0]["id"]
+    assert client.put(f"/api/users/{uid}", headers=admin, json={"roles": ["admin"]}).status_code == 200
+    r = ldap_login(client, "nogr")
+    assert r.status_code == 200 and r.json()["user"]["roles"] == ["admin"]                       # nicht wieder auf „viewer“ gesetzt
+    # sobald Gruppen zugeordnet sind, bestimmt das Verzeichnis die Rollen wieder bei jeder Anmeldung
+    client.put("/api/admin/ldap", headers=admin, json={"group_roles": {"admin": "CN=OPP-Admin,OU=G,DC=example,DC=test", "planer": ""}})
+    assert ldap_login(client, "nogr").json()["user"]["roles"] == ["viewer"]

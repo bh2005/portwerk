@@ -148,6 +148,8 @@ def _login_ldap(username: str, password: str, u: Optional[dict]) -> dict:
         audit.log(username or "?", "auth.login_failed", detail="ldap")
         raise HTTPException(401, "Ungültige Anmeldedaten")
     roles = ",".join(sorted(set(info["roles"]), key=ROLES.index))
+    if u and not ldap_auth.mapping_active(cfg):
+        roles = u["roles"]               # ohne Gruppen-Zuordnung pflegt der Administrator die Rollen selbst; das Verzeichnis liefert nur die Anmeldung
     if u:
         if not u["active"]:
             audit.log(u["username"], "auth.login_failed", detail="ldap: Konto deaktiviert")

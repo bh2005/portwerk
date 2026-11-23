@@ -51,6 +51,7 @@
           <button type="button" class="col-span-1 text-xs text-red-500 hover:text-red-700" @click="f.scoped_groups.splice(i, 1)">✕</button>
         </div>
       </div>
+      <p class="text-xs text-slate-400">Sind oben Gruppen zugeordnet, werden die Rollen bei <b>jeder Anmeldung</b> aus dem Verzeichnis übernommen (manuelle Änderungen an AD-Konten werden dann überschrieben). Ohne Gruppen-Zuordnung liefert das Verzeichnis nur die Anmeldung: neue Konten bekommen die Rolle unten, danach pflegt der Administrator die Rollen unter Benutzer.</p>
       <div class="grid sm:grid-cols-2 gap-3 items-end">
         <div><label :class="lbl">Rolle ohne passende Gruppe</label>
           <select v-model="f.default_role" :class="inp"><option value="">keine – Anmeldung nicht erlaubt</option>

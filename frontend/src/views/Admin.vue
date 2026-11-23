@@ -102,6 +102,7 @@
         <p v-if="userForm.ldapScopes.length" class="text-xs text-slate-400 mt-2">Aus AD-Gruppen (nicht änderbar): {{ userForm.ldapScopes.map(scopeText).join(', ') }}</p>
         <p v-if="!globalAdmin" class="text-xs text-slate-400 mt-1">Du kannst Rechte nur für Standorte vergeben, für die du Administrator bist.</p>
       </div>
+      <p v-if="userForm.source === 'ldap'" class="text-xs text-slate-400">AD-Konto: Sind unter AD / LDAP Gruppen zugeordnet, werden die Rollen bei jeder Anmeldung aus dem Verzeichnis gesetzt; ohne Gruppen-Zuordnung bleiben die hier vergebenen Rollen bestehen.</p>
       <label v-if="userForm.id && !userForm.limited" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="checkbox" v-model="userForm.active" class="rounded text-ks-600" /> Konto aktiv</label>
       <p v-if="userForm.id && userForm.limited" class="text-xs text-slate-400">Dieser Benutzer gehört auch zu anderen Bereichen: Du siehst und änderst nur die Rechte deiner Standorte.</p>
       <template #footer>
