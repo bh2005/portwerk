@@ -107,7 +107,13 @@ def public_user(u: dict) -> dict:
         "created_at": u["created_at"], "last_login": u["last_login"],
         "notify": _notify_prefs(u),
         "prefs": ui_prefs(u.get("ui_prefs") or ""),
+        "absent": _absent(u["id"]),
     }
+
+
+def _absent(uid: int):
+    from .absences import info                                        # spät importieren
+    return info(uid)
 
 
 START_PAGES = ("dashboard", "workorders", "m", "racks", "capacity")

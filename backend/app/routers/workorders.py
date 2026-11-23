@@ -15,7 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .. import access, audit, cablelog, db, notifications, openplan, portcfg, reservations, verify
+from .. import absences, access, audit, cablelog, db, notifications, openplan, portcfg, reservations, verify
 from . import wan
 from ..auth import Principal, current_principal
 from .catalog import check_cable_type
@@ -396,7 +396,7 @@ def _assignee(uid: Optional[int]) -> Optional[dict]:
     if not uid:
         return None
     r = db.row("SELECT id, username, full_name FROM users WHERE id = ?", (uid,))
-    return dict(r) if r else None
+    return {**r, "absent": absences.info(uid)} if r else None
 
 
 def _wo_ref(wid: Optional[int]) -> Optional[dict]:
@@ -524,11 +524,12 @@ def list_workorders(
     me: Principal = Depends(current_principal),
 ):
     where, args = [], []
-    if assigned:                                         # "me" oder Benutzer-ID
+    if assigned:                                         # "me" (inkl. vertretener Personen) oder Benutzer-ID
         uid = me.user_id if assigned == "me" else (int(assigned) if assigned.isdigit() else None)
         if uid is None:
             return []
-        where.append("assigned_to = ?"); args.append(uid)
+        uids = [uid] + ([r["id"] for r in absences.represented_by(uid)] if assigned == "me" else [])
+        where.append(f"assigned_to IN ({','.join('?' * len(uids))})"); args += uids
     if status and status in WORKORDER_STATUSES:
         where.append("status = ?"); args.append(status)
     if q:

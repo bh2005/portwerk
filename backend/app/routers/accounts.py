@@ -71,6 +71,63 @@ def set_my_preferences(body: UiPrefsIn, p: Principal = Depends(require_user)):
     return auth.ui_prefs(json.dumps(prefs))
 
 
+class AbsenceIn(BaseModel):
+    start_date: str
+    end_date: str
+    deputy_id: Optional[int] = None
+    note: str = ""
+
+
+@router.get("/auth/me/absences")
+def my_absences(p: Principal = Depends(require_user)):
+    from .. import absences
+    return {"absences": absences.listing(p.user_id), "represents": absences.represented_by(p.user_id)}
+
+
+@router.post("/auth/me/absences", status_code=201)
+def add_my_absence(body: AbsenceIn, p: Principal = Depends(require_user)):
+    """Abwesenheit eintragen; im Zeitraum gehen Benachrichtigungen an die Vertretung."""
+    from .. import absences
+    a = absences.create(p.user_id, body.start_date, body.end_date, body.deputy_id, body.note, p.name)
+    audit.log(p.name, "user.absence", "user", p.user_id, f"{a['start_date']} – {a['end_date']}" + (f", Vertretung {a['deputy']['username']}" if a["deputy"] else ""))
+    return a
+
+
+@router.delete("/auth/me/absences/{aid}")
+def delete_my_absence(aid: int, p: Principal = Depends(require_user)):
+    if not db.row("SELECT id FROM user_absences WHERE id = ? AND user_id = ?", (aid, p.user_id)):
+        raise HTTPException(404, "Abwesenheit nicht gefunden")
+    db.execute("DELETE FROM user_absences WHERE id = ?", (aid,))
+    audit.log(p.name, "user.absence_delete", "user", p.user_id, str(aid))
+    return {"ok": True}
+
+
+@router.get("/api/users/{uid}/absences")
+def user_absences(uid: int, me: Principal = Depends(require_admin)):
+    from .. import absences
+    return absences.listing(uid)
+
+
+@router.post("/api/users/{uid}/absences", status_code=201)
+def add_user_absence(uid: int, body: AbsenceIn, me: Principal = Depends(require_admin)):
+    """Administratoren tragen Abwesenheiten für andere ein (z. B. Krankheit)."""
+    from .. import absences
+    if not db.row("SELECT id FROM users WHERE id = ?", (uid,)):
+        raise HTTPException(404, "Benutzer nicht gefunden")
+    a = absences.create(uid, body.start_date, body.end_date, body.deputy_id, body.note, me.name)
+    audit.log(me.name, "user.absence", "user", uid, f"{a['start_date']} – {a['end_date']} (eingetragen von {me.name})")
+    return a
+
+
+@router.delete("/api/users/{uid}/absences/{aid}")
+def delete_user_absence(uid: int, aid: int, me: Principal = Depends(require_admin)):
+    if not db.row("SELECT id FROM user_absences WHERE id = ? AND user_id = ?", (aid, uid)):
+        raise HTTPException(404, "Abwesenheit nicht gefunden")
+    db.execute("DELETE FROM user_absences WHERE id = ?", (aid,))
+    audit.log(me.name, "user.absence_delete", "user", uid, str(aid))
+    return {"ok": True}
+
+
 @router.get("/auth/me/sessions")
 def my_sessions(p: Principal = Depends(require_user)):
     return {"active": auth.active_sessions(p.user_id)}

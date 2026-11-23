@@ -25,7 +25,8 @@
           <tbody>
             <tr v-for="u in users" :key="u.id" class="border-t border-slate-100 dark:border-slate-700">
               <td :class="td"><div class="font-medium text-slate-800 dark:text-slate-100">{{ u.username }} <span v-if="u.source === 'ldap'" class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-ks-50 dark:bg-ks-900/30 text-ks-700 dark:text-ks-300 font-normal" title="Anmeldung über Active Directory; Rollen kommen aus den AD-Gruppen">AD</span></div><div class="text-xs text-slate-400">{{ u.full_name }} {{ u.email }}
-                <span v-if="u.notify && Object.values(u.notify).includes(false)" class="ml-1 text-amber-600" :title="optOutText(u.notify)">✉ abbestellt</span></div></td>
+                <span v-if="u.notify && Object.values(u.notify).includes(false)" class="ml-1 text-amber-600" :title="optOutText(u.notify)">✉ abbestellt</span>
+                <span v-if="u.absent" class="ml-1 text-sky-700 dark:text-sky-300">abwesend bis {{ u.absent.until.split('-').reverse().join('.') }}{{ u.absent.deputy ? ` · Vertretung ${u.absent.deputy.username}` : '' }}</span></div></td>
               <td :class="td"><div v-if="u.roles.length">{{ u.roles.map(roleLabel).join(', ') }} <span class="text-[10px] text-slate-400">(global)</span></div>
                 <div class="flex flex-wrap gap-1 mt-0.5"><span v-for="s in u.scopes" :key="s.id" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" :title="s.source === 'ldap' ? 'aus AD-Gruppe' : 'manuell vergeben'">{{ scopeText(s) }}<span v-if="s.source === 'ldap'"> · AD</span></span></div>
                 <div v-if="!u.roles.length && !u.scopes.length" class="text-xs text-slate-400">–</div></td>
@@ -34,6 +35,7 @@
               <td :class="td" class="text-right whitespace-nowrap">
                 <button :class="btnLink" @click="openUser(u)">Bearbeiten</button>
                 <button v-if="u.source !== 'ldap' && !u.limited" :class="btnLink" class="ml-3" @click="openReset(u)">Passwort</button>
+                <button v-if="globalAdmin" :class="btnLink" class="ml-3" @click="absenceFor = u">Abwesenheit</button>
                 <button v-if="!u.limited" :class="btnLink" class="ml-3" @click="revoke(u)">Sitzungen beenden</button>
                 <button v-if="!u.limited" :class="btnDanger" class="ml-3" @click="removeUser(u)">Löschen</button>
               </td>
@@ -132,6 +134,11 @@
       </template>
     </ModalDialog>
 
+    <ModalDialog v-if="absenceFor" wide :title="`Abwesenheit von ${absenceFor.full_name || absenceFor.username}`" @close="absenceFor = null; load()">
+      <AbsenceEditor :user-id="absenceFor.id" />
+      <template #footer><button :class="btnGhost" @click="absenceFor = null; load()">Schließen</button></template>
+    </ModalDialog>
+
     <ModalDialog v-if="resetForm" :title="`Neues Passwort für ${resetForm.username}`" :error="formError" @close="resetForm = null">
       <div><label :class="lbl">Neues Passwort</label><input v-model="resetForm.pw" type="password" autocomplete="new-password" :class="inp" /></div>
       <p class="text-xs text-slate-400">Alle Sitzungen des Benutzers werden beendet.</p>
@@ -160,6 +167,7 @@ import { ref, computed, watch } from 'vue'
 import ModalDialog from '../components/ModalDialog.vue'
 import AdminLdap from '../components/AdminLdap.vue'
 import AdminTls from '../components/AdminTls.vue'
+import AbsenceEditor from '../components/AbsenceEditor.vue'
 import AdminBackup from '../components/AdminBackup.vue'
 import AdminMail from '../components/AdminMail.vue'
 import AdminCheckmk from '../components/AdminCheckmk.vue'
@@ -172,6 +180,7 @@ const globalAdmin = isAdmin()
 const OPT_OUT = { confirm_suggest: 'Aufträge zur Bestätigung vorgeschlagen', assigned: 'Zuweisung von Aufträgen', my_orders: 'Statusänderung eigener Aufträge',
   lldp_problem: 'LLDP-Abweichung bei eigener Ausführung', reservation_expiry: 'Ablauf eigener Reservierungen' }
 const optOutText = n => 'Selbst abbestellte E-Mails: ' + Object.entries(n).filter(([, v]) => !v).map(([k]) => OPT_OUT[k] || k).join(', ')
+const absenceFor = ref(null)
 const tabs = globalAdmin ? [['users', 'Benutzer'], ['tokens', 'API-Zugänge'], ['ldap', 'AD / LDAP'], ['tls', 'Zertifikat (ACME)'], ['backup', 'Sicherung'], ['mail', 'E-Mail'], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan'], ['audit', 'Audit-Log']] : [['users', 'Benutzer']]
 const sites = ref([])
 const siteChoices = () => globalAdmin ? sites.value : sites.value.filter(s => siteAdminIds().includes(s.id))

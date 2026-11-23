@@ -1,6 +1,6 @@
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4" @click.self="$emit('close')">
-    <div class="w-full max-w-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden"
+    <div class="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden"
          role="dialog" aria-modal="true" aria-label="Mein Profil">
 
       <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700">
@@ -41,6 +41,14 @@
         </div>
 
         <hr v-if="notify" class="border-slate-100 dark:border-slate-700" />
+
+        <div v-if="me.id" class="space-y-2">
+          <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Abwesenheit und Vertretung</h3>
+          <p v-if="represents.length" class="text-xs text-sky-700 dark:text-sky-300">Du vertrittst gerade: {{ represents.map(u => u.full_name || u.username).join(', ') }}</p>
+          <AbsenceEditor @changed="refreshMe" />
+        </div>
+
+        <hr v-if="me.id" class="border-slate-100 dark:border-slate-700" />
 
         <div v-if="prefs" class="space-y-2">
           <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Persönliche Einstellungen</h3>
@@ -104,6 +112,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { api, setToken, setUser, getUser, errText } from '../api.js'
 import { inp, lbl, btnPrimary, roleLabel } from '../ui.js'
 import HelpHint from './HelpHint.vue'
+import AbsenceEditor from './AbsenceEditor.vue'
 
 const emit = defineEmits(['close'])
 const MIN_LEN = 8      // wie im Backend (OPP_MIN_PASSWORD_LEN)
@@ -117,7 +126,8 @@ const NOTIFY = [['assigned', 'Mir wurde ein Auftrag zugewiesen'], ['my_orders', 
   ['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)']]
 const START_PAGES = [['', 'automatisch (Übersicht, Techniker am Handy: mobil)'], ['dashboard', 'Übersicht'], ['workorders', 'Patchaufträge'],
   ['m', 'Meine Aufträge (mobil)'], ['racks', 'Racks'], ['capacity', 'Kapazität']]
-const prefs = ref(null), sites = ref([]), sessions = ref(null), prefsMsg = ref('')
+const prefs = ref(null), sites = ref([]), sessions = ref(null), prefsMsg = ref(''), represents = ref([])
+async function refreshMe() { try { const m = await api.me(); me.value = { ...me.value, ...m }; setUser({ ...getUser(), absent: m.absent }) } catch {} }
 async function savePrefs() {
   prefsMsg.value = ''
   try {
@@ -163,6 +173,7 @@ onMounted(async () => {
   try { const m = await api.me(); me.value = { ...me.value, ...m }; notify.value = m.notify || null; prefs.value = { ...m.prefs } } catch {}
   try { sites.value = await api.sites() } catch {}
   try { sessions.value = await api.mySessions() } catch {}
+  try { represents.value = (await api.myAbsences()).represents } catch {}
   await nextTick()
   firstField.value?.focus()
 })
