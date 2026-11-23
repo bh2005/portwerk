@@ -33,7 +33,7 @@
       <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="checkbox" v-model="f.notify_confirm_suggest" />
         Freigeber informieren, wenn ein ausgeführter Auftrag zur Bestätigung vorgeschlagen wird (LLDP-Prüfung stimmt)</label>
       <p :class="hint">Empfänger: Benutzer mit der Rolle Freigeber (global oder am Standort des Auftrags) und E-Mail-Adresse, außer wer den Auftrag ausgeführt hat.
-        Versand einmal je Auftrag, wenn die Prüfung auf „stimmt“ wechselt.</p>
+        Versand einmal je Auftrag, wenn die Prüfung auf „stimmt“ wechselt. Jeder Benutzer kann das für sich unter „Mein Profil“ abbestellen; dieser Schalter ist der Hauptschalter.</p>
     </fieldset>
 
     <fieldset :class="box">

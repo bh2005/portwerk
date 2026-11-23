@@ -7,7 +7,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import access, audit, auth, db, mailer
+from .. import access, audit, auth, db, mailer, notifications
 from ..auth import Principal, current_principal, require_admin, require_user
 from ..schemas import AssignIn, MailSettingsIn, MailTestIn, PatchlistSendIn, SendIn
 from . import documents, masterdata, patchlists, workorders
@@ -209,6 +209,8 @@ def assign_workorder(wid: int, body: AssignIn, me: Principal = Depends(current_p
             out["notify_note"] = "E-Mail-Versand ist nicht eingerichtet – keine Benachrichtigung gesendet"
         elif not u["email"]:
             out["notify_note"] = f"{u['username']} hat keine E-Mail-Adresse hinterlegt – keine Benachrichtigung gesendet"
+        elif not notifications.wants(u, "assigned"):
+            out["notify_note"] = f"{u['username']} hat E-Mails bei Zuweisung abbestellt – keine Benachrichtigung gesendet"
         else:
             try:
                 mailer.check_recipients([u["email"]], cfg)

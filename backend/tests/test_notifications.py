@@ -81,3 +81,24 @@ def test_disallowed_domains_are_skipped(client, admin, lab, fake_smtp):  # noqa:
     client.put("/api/admin/mail", headers=admin, json={"allowed_domains": ["corp.example"]})
     assert notifications.confirm_suggested(lab["wo"]["id"], {"ok": 1}) == 0                # alle Empfänger außerhalb der Positivliste
     assert fake_smtp.sent == []
+
+
+def test_personal_opt_out(client, admin, lab, fake_smtp):  # noqa: F811
+    h = login(client, "frei", "Passwort-123")
+    assert client.get("/auth/me", headers=h).json()["notify"] == {"confirm_suggest": True, "assigned": True}     # Standard: an
+    r = client.put("/auth/me/notifications", headers=h, json={"confirm_suggest": False})
+    assert r.status_code == 200 and r.json() == {"confirm_suggest": False, "assigned": True}
+    assert next(u for u in client.get("/api/users", headers=admin).json() if u["username"] == "frei")["notify"]["confirm_suggest"] is False
+    fake_smtp.sent.clear()
+    lldp_ok(client, admin, lab["wo"]["id"])
+    assert [m["To"] for m in fake_smtp.sent] == ["frei-s1@example.test"]                # „frei“ hat abbestellt
+
+
+def test_assignment_mail_respects_opt_out(client, admin, lab, fake_smtp):  # noqa: F811
+    h = login(client, "frei", "Passwort-123")
+    client.put("/auth/me/notifications", headers=h, json={"assigned": False})
+    uid = next(u for u in client.get("/api/users", headers=admin).json() if u["username"] == "frei")["id"]
+    fake_smtp.sent.clear()
+    r = client.post(f"/api/workorders/{lab['wo']['id']}/assign", headers=admin, json={"user_id": uid, "notify": True}).json()
+    assert r["notified"] is False and "abbestellt" in r["notify_note"] and fake_smtp.sent == []
+    assert client.put("/auth/me/notifications", headers=admin, json={"assigned": True}).status_code == 200          # auch Admins

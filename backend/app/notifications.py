@@ -6,6 +6,7 @@ Vier-Augen-Prinzips nicht bestätigen). Nicht freigegebene Domains werden übers
 """
 from __future__ import annotations
 
+import json
 import logging
 import threading
 
@@ -16,17 +17,33 @@ from . import audit, db, mailer
 log = logging.getLogger("opp.notifications")
 SEND_IN_BACKGROUND = True                    # Tests schalten das ab (synchroner Versand)
 
+# Persönliche Benachrichtigungen (je Benutzer abbestellbar, „Mein Profil“); der zentrale Schalter in den E-Mail-Einstellungen bleibt Hauptschalter
+PREFS = {"confirm_suggest": "Aufträge zur Bestätigung vorgeschlagen", "assigned": "Mir wurde ein Auftrag zugewiesen"}
+
+
+def prefs(raw: str) -> dict:
+    """Gespeicherte Einstellungen eines Benutzers; fehlende Schlüssel = an."""
+    try:
+        stored = json.loads(raw) if raw else {}
+    except ValueError:
+        stored = {}
+    return {k: bool(stored.get(k, True)) for k in PREFS}
+
+
+def wants(user: dict, key: str) -> bool:
+    return prefs(user.get("notify_prefs") or "")[key]
+
 
 def approvers(wid: int) -> list[dict]:
     w = db.row("SELECT w.finished_by, l.site_id FROM workorders w LEFT JOIN locations l ON l.id = w.location_id WHERE w.id = ?", (wid,))
     if not w:
         return []
-    rows = db.rows("""SELECT DISTINCT u.id, u.username, u.full_name, u.email FROM users u
+    rows = db.rows("""SELECT DISTINCT u.id, u.username, u.full_name, u.email, u.notify_prefs FROM users u
                       WHERE u.active = 1 AND u.email <> ''
                         AND ((',' || u.roles || ',') LIKE '%,freigeber,%'
                              OR EXISTS (SELECT 1 FROM user_scopes s WHERE s.user_id = u.id AND s.role = 'freigeber' AND s.site_id = ?))""",
                    (w["site_id"],))
-    return [u for u in rows if u["username"].casefold() != (w["finished_by"] or "").casefold()]
+    return [u for u in rows if u["username"].casefold() != (w["finished_by"] or "").casefold() and wants(u, "confirm_suggest")]
 
 
 def _allowed(emails: list[str], cfg: dict) -> list[str]:

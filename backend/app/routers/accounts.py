@@ -1,12 +1,14 @@
 """Anmeldung, Benutzerverwaltung, API-Zugänge und Audit-Log."""
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
 import time
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Security
+from pydantic import BaseModel
 
 from .. import audit, auth, db
 from ..auth import Principal, current_principal, require_admin, require_user, require_user_admin, session_header
@@ -38,6 +40,23 @@ def auth_me(p: Principal = Depends(current_principal)):
         return {"kind": "token", "name": p.name, "scope": p.scope}
     u = db.row("SELECT * FROM users WHERE id = ?", (p.user_id,))
     return {"kind": "user", **auth.public_user(u)}
+
+
+class NotifyPrefsIn(BaseModel):
+    confirm_suggest: Optional[bool] = None
+    assigned: Optional[bool] = None
+
+
+@router.put("/auth/me/notifications")
+def set_my_notifications(body: NotifyPrefsIn, p: Principal = Depends(require_user)):
+    """Eigene E-Mail-Benachrichtigungen an/aus (der zentrale Schalter in Verwaltung → E-Mail bleibt Hauptschalter)."""
+    from .. import notifications
+    u = db.row("SELECT * FROM users WHERE id = ?", (p.user_id,))
+    cur = notifications.prefs(u["notify_prefs"])
+    cur.update({k: v for k, v in body.model_dump().items() if v is not None})
+    db.execute("UPDATE users SET notify_prefs = ? WHERE id = ?", (json.dumps(cur), u["id"]))
+    audit.log(p.name, "user.notify_prefs", "user", u["id"], ", ".join(f"{k}={'an' if v else 'aus'}" for k, v in cur.items()))
+    return cur
 
 
 @router.post("/auth/change-password")
