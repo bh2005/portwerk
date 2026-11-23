@@ -34,4 +34,5 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | LLDP-Prüfung ausgeführter Aufträge, Vorschlag zur Bestätigung | #10 |
 | README und Konzept auf den aktuellen Stand gebracht | #11 |
 | VLAN/Portprofil als Attribut (Katalog, Profile, Port-Konfiguration mit Historie, Aufträge) | #19 |
-| VLAN-Soll/Ist über Checkmk (Access-VLANs, Cisco), „Ist übernehmen“ | (dieser PR) |
+| VLAN-Soll/Ist über Checkmk (Access-VLANs, Cisco), „Ist übernehmen“ | #20 |
+| Arbeitsplatz-Assistent (Dose → Patchfeld → freier Switchport, Profil/VLAN, Auftrag) | (dieser PR) |

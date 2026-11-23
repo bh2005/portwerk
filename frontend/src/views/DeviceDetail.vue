@@ -90,6 +90,8 @@
                   <button v-if="p.cable || p.peer_port_id" :class="btnLink" class="ml-2" title="Ganze Strecke über Patchfelder bis zum Endgerät" @click="showPath(p)">Pfad</button>
                   <button :class="btnLink" class="ml-2" title="Frühere Verbindungen dieses Ports" @click="showPortHistory(p)">Historie</button>
                   <button v-if="['switch', 'router', 'firewall'].includes(d.type) || p.config" :class="btnLink" class="ml-2" title="VLAN / Portprofil" @click="openVlan(p)">VLAN</button>
+                  <button v-if="d.type === 'outlet' && canPlan && !p.name.toLowerCase().endsWith('-back')" :class="btnLink" class="ml-2"
+                    title="Dose bis zum Switch patchen und VLAN setzen (als Auftrag)" @click="workplaceFor = { deviceId: d.id, portId: p.id }">Arbeitsplatz</button>
                 </td>
                 <td v-if="canWrite" :class="td" class="text-right whitespace-nowrap">
                   <button :class="btnLink" @click="openPort(p)">Bearbeiten</button>
@@ -151,6 +153,8 @@
         </div>
       </div>
     </template>
+
+    <WorkplaceWizard v-if="workplaceFor" :preset="workplaceFor" @close="workplaceFor = null; load()" />
 
     <ModalDialog v-if="vlanDlg" wide :title="`VLAN / Portprofil – ${d.hostname}:${vlanDlg.port.name}`" :error="formError" @close="vlanDlg = null">
       <p class="text-sm mb-3"><span class="text-slate-500">Aktuell:</span> <b>{{ vlanDlg.port.config ? vlanDlg.port.config.text : 'nicht dokumentiert' }}</b></p>
@@ -322,6 +326,7 @@ import ModalDialog from '../components/ModalDialog.vue'
 import CableWizard from '../components/CableWizard.vue'
 import PathGraphic from '../components/PathGraphic.vue'
 import PortConfigFields from '../components/PortConfigFields.vue'
+import WorkplaceWizard from '../components/WorkplaceWizard.vue'
 import HelpHint from '../components/HelpHint.vue'
 import { cableTypes, countLabel, loadCableTypes } from '../catalog.js'
 import { api, errText, conflictOf, canWriteMaster, hasRole } from '../api.js'
@@ -338,7 +343,7 @@ const portForm = ref(null), bulk = ref(null), peer = ref(null), cableForm = ref(
 const cableWiz = ref(null)
 const hist = reactive({ rows: [], at: '', port: null, error: '' }), histCard = ref(null)
 const canReserve = hasRole('planer'), picked = ref(new Set()), resForm = ref(null), pathDlg = ref(null)
-const vlanDlg = ref(null)
+const vlanDlg = ref(null), workplaceFor = ref(null), canPlan = hasRole('planer')
 /** Kurzform für die Port-Tabelle: Profilname bzw. VLAN-Nummern (voller Text im Tooltip). */
 const shortCfg = c => c.profile ? c.profile.name
   : c.port_mode === 'access' ? `VLAN ${c.access_vid}${c.voice_vid ? ' + V' + c.voice_vid : ''}` : `Trunk ${c.allowed_vids || 'alle'}`

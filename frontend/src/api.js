@@ -125,6 +125,7 @@ export const api = {
   // Assistenten
   deviceWizard:     b => post('/api/wizards/device', b),
   cableWizard:      b => post('/api/wizards/cable', b),
+  workplaceWizard:  b => post('/api/wizards/workplace', b),
   portList:         spec => post('/api/wizards/port-list', spec),
   bulkCables:       b => post('/api/wizards/bulk-cables', b),
   bulkParse:        text => post('/api/wizards/bulk-cables/parse', { text }),

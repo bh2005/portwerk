@@ -5,6 +5,7 @@
       <div class="flex gap-2 items-center">
         <button :class="btnGhost" :disabled="!picked.size" :title="picked.size ? '' : 'Aufträge in der Liste ankreuzen'" @click="openPatchlist">Patchliste aus Auswahl<template v-if="picked.size"> ({{ picked.size }})</template></button>
         <button v-if="ops.enabled && canCreate" :class="btnGhost" :disabled="!picked.size" :title="picked.size ? '' : 'Aufträge in der Liste ankreuzen'" @click="bulkOpen = true">In OpenPlan …</button>
+        <button v-if="canCreate" :class="btnGhost" title="Dose bis zum Switch patchen und VLAN setzen" @click="showWorkplace = true">+ Arbeitsplatz</button>
         <button v-if="canCreate" :class="btnPrimary" @click="openNew">+ Neuer Auftrag</button>
       </div>
     </div>
@@ -98,10 +99,12 @@
         </div>
       </div>
     </Teleport>
+    <WorkplaceWizard v-if="showWorkplace" @close="showWorkplace = false; load()" />
   </div>
 </template>
 
 <script setup>
+import WorkplaceWizard from '../components/WorkplaceWizard.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import OpenPlanBulkDialog from '../components/OpenPlanBulkDialog.vue'
@@ -145,6 +148,7 @@ const dialog = ref(false)
 const dialogErr = ref('')
 const saving = ref(false)
 const canCreate = hasRole('planer', 'admin')
+const showWorkplace = ref(false)
 const router = useRouter()
 
 const form = ref({ title: '', description: '', priority: 'normal', planned_from: '', planned_to: '' })
