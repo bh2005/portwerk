@@ -42,6 +42,25 @@
 
         <hr v-if="notify" class="border-slate-100 dark:border-slate-700" />
 
+        <div v-if="prefs" class="space-y-2">
+          <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Persönliche Einstellungen</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label :class="lbl">Standard-Standort</label>
+              <select v-model="prefs.default_site_id" :class="inp" @change="savePrefs"><option :value="null">keiner (alle)</option>
+                <option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select></div>
+            <div><label :class="lbl">Startseite</label>
+              <select v-model="prefs.start_page" :class="inp" @change="savePrefs"><option v-for="[k, l] in START_PAGES" :key="k" :value="k">{{ l }}</option></select></div>
+          </div>
+          <p class="text-xs text-slate-400">Der Standard-Standort belegt die Filter in Kapazität, Soll/Ist, Zeitreise und VLANs vor. Gilt auf allen Geräten.</p>
+          <div v-if="sessions" class="flex items-center justify-between gap-2 text-sm pt-1">
+            <span class="text-slate-600 dark:text-slate-300">{{ sessions.active }} aktive Anmeldung(en)</span>
+            <button type="button" class="text-xs text-red-600 hover:underline" :disabled="sessions.active < 2" @click="logoutOthers">Alle anderen abmelden</button>
+          </div>
+          <p v-if="prefsMsg" class="text-xs text-green-600">{{ prefsMsg }}</p>
+        </div>
+
+        <hr v-if="prefs" class="border-slate-100 dark:border-slate-700" />
+
         <div class="space-y-3">
           <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
             Passwort ändern
@@ -82,7 +101,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { api, setToken, getUser, errText } from '../api.js'
+import { api, setToken, setUser, getUser, errText } from '../api.js'
 import { inp, lbl, btnPrimary, roleLabel } from '../ui.js'
 import HelpHint from './HelpHint.vue'
 
@@ -93,7 +112,26 @@ const me = ref({ ...getUser() })
 const current = ref(''), next = ref(''), confirm = ref('')
 const show = ref(false), saving = ref(false), msg = ref(''), msgErr = ref(false)
 const firstField = ref(null)
-const NOTIFY = [['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)'], ['assigned', 'Mir wurde ein Auftrag zugewiesen']]
+const NOTIFY = [['assigned', 'Mir wurde ein Auftrag zugewiesen'], ['my_orders', 'Mein Auftrag wurde freigegeben, abgelehnt, auf Nacharbeit gesetzt oder bestätigt'],
+  ['lldp_problem', 'LLDP meldet eine Abweichung bei einem Auftrag, den ich ausgeführt habe'], ['reservation_expiry', 'Meine Reservierung läuft in 3 Tagen ab'],
+  ['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)']]
+const START_PAGES = [['', 'automatisch (Übersicht, Techniker am Handy: mobil)'], ['dashboard', 'Übersicht'], ['workorders', 'Patchaufträge'],
+  ['m', 'Meine Aufträge (mobil)'], ['racks', 'Racks'], ['capacity', 'Kapazität']]
+const prefs = ref(null), sites = ref([]), sessions = ref(null), prefsMsg = ref('')
+async function savePrefs() {
+  prefsMsg.value = ''
+  try {
+    const p = await api.setMyPreferences({ default_site_id: prefs.value.default_site_id || null, start_page: prefs.value.start_page })
+    prefs.value = p; setUser({ ...getUser(), prefs: p }); prefsMsg.value = 'Gespeichert.'
+  } catch (e) { msgErr.value = true; msg.value = errText(e) }
+}
+async function logoutOthers() {
+  if (!confirm('Alle anderen Anmeldungen (andere Geräte und Browser) beenden?')) return
+  try {
+    const r = await api.logoutOthers(); setToken(r.token)
+    sessions.value = { active: 1 }; prefsMsg.value = r.ended ? `${r.ended} andere Anmeldung(en) beendet.` : 'Es gab keine anderen Anmeldungen.'
+  } catch (e) { msgErr.value = true; msg.value = errText(e) }
+}
 const notify = ref(null), notifyMsg = ref('')
 async function setNotify(key, on) {
   notifyMsg.value = ''
@@ -122,7 +160,9 @@ async function save() {
 function onKey(e) { if (e.key === 'Escape') emit('close') }
 onMounted(async () => {
   window.addEventListener('keydown', onKey)
-  try { const m = await api.me(); me.value = { ...me.value, ...m }; notify.value = m.notify || null } catch {}
+  try { const m = await api.me(); me.value = { ...me.value, ...m }; notify.value = m.notify || null; prefs.value = { ...m.prefs } } catch {}
+  try { sites.value = await api.sites() } catch {}
+  try { sessions.value = await api.mySessions() } catch {}
   await nextTick()
   firstField.value?.focus()
 })

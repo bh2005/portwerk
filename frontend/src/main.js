@@ -24,14 +24,14 @@ import TimeTravel from './views/TimeTravel.vue'
 import VlanAdmin from './views/VlanAdmin.vue'
 import MobileHome from './views/mobile/MobileHome.vue'
 import MobileOrder from './views/mobile/MobileOrder.vue'
-import { isLoggedIn, isAdmin, canAdministerUsers } from './api.js'
+import { isLoggedIn, isAdmin, canAdministerUsers, startPage } from './api.js'
 import { helpContext } from './content/helpContext.js'
 import './style.css'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/',            redirect: '/dashboard' },
+    { path: '/',            redirect: () => startPage() },
     { path: '/login',       component: LoginView, meta: { public: true } },
     { path: '/dashboard',   component: Dashboard },
     { path: '/sites',       component: Sites },

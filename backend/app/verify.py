@@ -128,6 +128,8 @@ def refresh(wid: int, actor: str = "system") -> dict:
                   f"{w['number']}: LLDP-Prüfung {r['label']} ({r['summary']['ok']} stimmen, {r['summary']['problem']} Abweichung)")
         if r["status"] == "ok":
             notifications.confirm_suggested(wid, r["summary"])           # Freigeber per E-Mail (nur beim Wechsel auf „stimmt“)
+        else:
+            notifications.lldp_problem(wid, r["items"])                  # Ausführender per E-Mail (nur beim Wechsel auf „Abweichung“)
     return {**r, "checked_at": now}
 
 

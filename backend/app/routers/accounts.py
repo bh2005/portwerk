@@ -45,6 +45,45 @@ def auth_me(p: Principal = Depends(current_principal)):
 class NotifyPrefsIn(BaseModel):
     confirm_suggest: Optional[bool] = None
     assigned: Optional[bool] = None
+    my_orders: Optional[bool] = None
+    lldp_problem: Optional[bool] = None
+    reservation_expiry: Optional[bool] = None
+
+
+class UiPrefsIn(BaseModel):
+    default_site_id: Optional[int] = None            # None = kein Standard-Standort
+    start_page: str = ""                              # leer = Übersicht (am Handy für Techniker: mobile Ansicht)
+
+
+@router.put("/auth/me/preferences")
+def set_my_preferences(body: UiPrefsIn, p: Principal = Depends(require_user)):
+    """Standard-Standort und Startseite (gelten auf allen Geräten)."""
+    from .. import access
+    if body.start_page and body.start_page not in auth.START_PAGES:
+        raise HTTPException(400, "Startseite unbekannt")
+    if body.default_site_id is not None:
+        if not db.row("SELECT id FROM sites WHERE id = ?", (body.default_site_id,)):
+            raise HTTPException(404, "Standort nicht gefunden")
+        access.require_read(p, body.default_site_id, "Standort")
+    prefs = {"default_site_id": body.default_site_id, "start_page": body.start_page}
+    db.execute("UPDATE users SET ui_prefs = ? WHERE id = ?", (json.dumps(prefs), p.user_id))
+    audit.log(p.name, "user.ui_prefs", "user", p.user_id, json.dumps(prefs))
+    return auth.ui_prefs(json.dumps(prefs))
+
+
+@router.get("/auth/me/sessions")
+def my_sessions(p: Principal = Depends(require_user)):
+    return {"active": auth.active_sessions(p.user_id)}
+
+
+@router.post("/auth/me/logout-others")
+def logout_others(p: Principal = Depends(require_user)):
+    """Alle anderen Anmeldungen beenden (z. B. nach Verlust eines Geräts); diese Sitzung bekommt ein neues Token."""
+    before = auth.active_sessions(p.user_id)
+    auth.revoke_sessions(p.user_id)
+    token = auth.new_session(p.user_id)
+    audit.log(p.name, "auth.logout_others", "user", p.user_id, f"{max(0, before - 1)} andere Anmeldung(en) beendet")
+    return {"token": token, "ended": max(0, before - 1)}
 
 
 @router.put("/auth/me/notifications")

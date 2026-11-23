@@ -85,9 +85,9 @@ def test_disallowed_domains_are_skipped(client, admin, lab, fake_smtp):  # noqa:
 
 def test_personal_opt_out(client, admin, lab, fake_smtp):  # noqa: F811
     h = login(client, "frei", "Passwort-123")
-    assert client.get("/auth/me", headers=h).json()["notify"] == {"confirm_suggest": True, "assigned": True}     # Standard: an
+    assert all(client.get("/auth/me", headers=h).json()["notify"].values())                                  # Standard: alles an
     r = client.put("/auth/me/notifications", headers=h, json={"confirm_suggest": False})
-    assert r.status_code == 200 and r.json() == {"confirm_suggest": False, "assigned": True}
+    assert r.status_code == 200 and r.json()["confirm_suggest"] is False and r.json()["assigned"] is True
     assert next(u for u in client.get("/api/users", headers=admin).json() if u["username"] == "frei")["notify"]["confirm_suggest"] is False
     fake_smtp.sent.clear()
     lldp_ok(client, admin, lab["wo"]["id"])

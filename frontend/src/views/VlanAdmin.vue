@@ -88,11 +88,11 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { api, errText, canWriteMaster, isAdmin } from '../api.js'
+import { api, errText, canWriteMaster, isAdmin, defaultSite } from '../api.js'
 import { inp, lbl, card, th, td, btnPrimary, btnGhost, btnLink, btnDanger } from '../ui.js'
 
 const canWrite = canWriteMaster(), canAdmin = isAdmin()
-const sites = ref([]), vlans = ref([]), profiles = ref([]), usage = ref({}), err = ref(''), siteFilter = ref(null)
+const sites = ref([]), vlans = ref([]), profiles = ref([]), usage = ref({}), err = ref(''), siteFilter = ref(defaultSite())
 const VF = { id: null, vid: null, name: '', site_id: null, note: '' }
 const PF = { id: null, name: '', port_mode: 'access', access_vid: null, voice_vid: null, native_vid: null, allowed_vids: '', note: '' }
 const vf = reactive({ ...VF }), pf = reactive({ ...PF })

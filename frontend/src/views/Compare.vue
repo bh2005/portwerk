@@ -54,7 +54,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { api, errText, getToken } from '../api.js'
+import { api, errText, getToken, defaultSite } from '../api.js'
 import { inp, card, btnGhost, th, td } from '../ui.js'
 import VlanCompare from '../components/VlanCompare.vue'
 
@@ -63,7 +63,7 @@ const route = useRoute(), router = useRouter()
 const tab = ref(route.query.tab === 'vlan' ? 'vlan' : 'lldp')
 function setTab(k) { tab.value = k; router.replace({ query: k === 'vlan' ? { tab: 'vlan' } : {} }) }
 
-const res = ref(null), sites = ref([]), fSite = ref(''), q = ref(''), error = ref('')
+const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref('')
 const active = ref(new Set(['mismatch', 'port_mismatch', 'undocumented', 'not_seen', 'unmapped']))
 const chips = [['mismatch', 'anderes Gerät'], ['port_mismatch', 'anderer Port'], ['undocumented', 'nicht dokumentiert'], ['not_seen', 'nicht gesehen'], ['unmapped', 'Port unbekannt'], ['unknown', 'keine Daten'], ['ok', 'stimmt']]
 const chipClass = s => ({ ok: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', mismatch: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',

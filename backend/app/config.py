@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     static_dir: str = ""                # gebaute Oberfläche (leer = frontend/dist bzw. /app/static automatisch suchen)
     cors_origins: str = ""              # kommagetrennt, nur für die Entwicklung (Vite-Dev-Server)
     backup_background: bool = True      # tägliche automatische Sicherung im Hintergrund (in Tests aus)
+    notify_background: bool = True      # tägliche Erinnerungen (Reservierungen laufen ab) im Hintergrund (in Tests aus)
 
 
 settings = Settings()

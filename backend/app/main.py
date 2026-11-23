@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
-from . import acme_client, auth, backup
+from . import acme_client, auth, backup, notifications
 from .config import settings
 from .routers import accounts, backups, catalog, compare, documents, history, imports, labels, portreservations, vlans, masterdata, notify, openplan, overview, patchlists, search, serverconfig, wan, wizards, workorders
 from .static import find_static_dir, register_static
@@ -85,6 +85,7 @@ async def startup() -> None:
         logger.warning("Start-Admin '%s' angelegt mit generiertem Passwort: %s (bitte nach der Anmeldung ändern)",
                        settings.admin_username, generated)
     # Sync-Routen laufen in einem Thread-Pool; die Obergrenze verhindert, dass viele parallele Anfragen eine kleine VM überlasten.
+    notifications.start_background()          # tägliche Erinnerungen (Reservierungen laufen ab)
     backup.start_background()                # tägliche automatische Sicherung (Einstellung in der Verwaltung)
     acme_client.start_background()           # prüft regelmäßig, ob das Server-Zertifikat erneuert werden muss
     anyio.to_thread.current_default_thread_limiter().total_tokens = 8

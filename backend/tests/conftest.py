@@ -9,6 +9,7 @@ os.environ["OPP_DATA_DIR"] = _TMP
 os.environ["OPP_ADMIN_USERNAME"] = "admin"
 os.environ["OPP_ADMIN_PASSWORD"] = "Start-Passwort-1"
 os.environ["OPP_BACKUP_BACKGROUND"] = "0"
+os.environ["OPP_NOTIFY_BACKGROUND"] = "0"
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 ADMIN_PW = "Start-Passwort-1"
