@@ -185,6 +185,7 @@ export const api = {
   createToken:    b => post('/api/tokens', b),
   revokeToken:    id => del(`/api/tokens/${id}`),
   audit:          params => get('/api/audit', params),
+  auditFacets:    () => get('/api/audit/facets'),
   ldapSettings:     () => get('/api/admin/ldap'),
   saveLdapSettings: b => put('/api/admin/ldap', b),
   testLdap:         (settings, username, password) => post('/api/admin/ldap/test', { settings, username, password }),
