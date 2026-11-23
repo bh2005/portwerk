@@ -137,8 +137,9 @@ def reserve(body: ReservationIn, me: Principal = Depends(current_principal)):
 def update(rid: int, body: ReservationUpdate, me: Principal = Depends(current_principal)):
     r = _row_or_404(rid, me)
     _may_change(me, r)
-    db.execute("UPDATE port_reservations SET purpose = ?, until = ?, workorder_id = ? WHERE id = ?",
-               (body.purpose.strip(), _check_until(body.until), _check_workorder(me, body.workorder_id), rid))
+    until = _check_until(body.until)
+    db.execute("UPDATE port_reservations SET purpose = ?, until = ?, workorder_id = ?, reminded_at = CASE WHEN until IS ? THEN reminded_at ELSE NULL END WHERE id = ?",
+               (body.purpose.strip(), until, _check_workorder(me, body.workorder_id), until, rid))      # neue Frist = neue Erinnerung
     audit.log(me.name, "reservation.update", "port", r["port_id"], f"„{body.purpose.strip()}“")
     return _out(db.row(f"{LIST_SQL} WHERE r.id = ?", (rid,)))
 

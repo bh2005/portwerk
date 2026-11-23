@@ -15,7 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .. import access, audit, cablelog, db, openplan, portcfg, reservations, verify
+from .. import access, audit, cablelog, db, notifications, openplan, portcfg, reservations, verify
 from . import wan
 from ..auth import Principal, current_principal
 from .catalog import check_cable_type
@@ -652,6 +652,7 @@ def transition(wid: int, action: str, body: Optional[TransitionIn] = None, me: P
         audit.log(me.name, "workorder.four_eyes_override", "workorder", wid, f"{w['number']} – {override}")
     audit.log(me.name, f"workorder.{action}", "workorder", wid, w["number"])
     openplan.schedule_sync(wid, me.name)
+    notifications.order_status(wid, action, me.name)                     # Ersteller: freigegeben/abgelehnt/Nacharbeit/bestätigt
     if action == "finish":
         verify.refresh(wid, me.name)                                     # erste LLDP-Prüfung (meist „wartet auf frische Daten“)
     return _wo_out(db.row("SELECT * FROM workorders WHERE id = ?", (wid,)), with_items=True)

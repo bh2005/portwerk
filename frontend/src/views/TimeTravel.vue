@@ -91,7 +91,7 @@
 <script setup>
 import { h, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { api, errText } from '../api.js'
+import { api, errText, defaultSite } from '../api.js'
 import { inp, lbl, card, th, td, btnLink, fmtTime } from '../ui.js'
 
 const MODES = [['diff', 'Vergleich'], ['snapshot', 'Stand am']]
@@ -115,7 +115,7 @@ const pad = n => String(n).padStart(2, '0')
 const local = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return local(d) }
 
-const mode = ref('diff'), sites = ref([]), siteId = ref(null), q = ref(''), err = ref(''), loading = ref(false)
+const mode = ref('diff'), sites = ref([]), siteId = ref(defaultSite()), q = ref(''), err = ref(''), loading = ref(false)
 const at = ref(local(new Date())), from = ref(daysAgo(30)), to = ref('')
 const snap = ref(null), dif = ref(null)
 

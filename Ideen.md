@@ -12,6 +12,8 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
   (signiert, mit Wiederholung) – nach dem Muster von OpenPlan.
 - **Geräte aus OpenPlan als Importquelle** (Konzept, Abschnitt 6, Richtung 3)
   Neue Geräte aus Geräte-Rollouts (Hostname, Standort, Typ) übernehmen, damit ein geplanter Switch ohne Doppelerfassung im Bestand erscheint.
+- **Abwesenheit und Vertretung**
+  „Abwesend vom 1. bis 14., Vertretung Anna“: Zuweisungen und Bestätigungs-Mails gehen in der Zeit an die Vertretung (OpenPlan kennt Abwesenheiten).
 - **Historie für Geräte-Orte und Patchfeld-Paare**
   Historisiert sind nur Verbindungen; Zeitreise und „Pfad am Datum“ zeigen Orte und Durchschleifungen mit dem heutigen Stand.
 
@@ -34,4 +36,5 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | VLAN/Portprofil als Attribut (Katalog, Profile, Port-Konfiguration mit Historie, Aufträge) | #19 |
 | VLAN-Soll/Ist über Checkmk (Access-VLANs, Cisco), „Ist übernehmen“ | #20 |
 | Arbeitsplatz-Assistent (Dose → Patchfeld → freier Switchport, Profil/VLAN, Auftrag) | #21 |
-| E-Mail an Freigeber bei „zur Bestätigung vorgeschlagen“ | (dieser PR) |
+| E-Mail an Freigeber bei „zur Bestätigung vorgeschlagen“, persönliche Benachrichtigungen | #22 |
+| Profil: weitere Benachrichtigungen, Standard-Standort, Startseite, alle anderen abmelden | (dieser PR) |

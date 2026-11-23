@@ -73,7 +73,7 @@
 
 <script setup>
 import { computed, h, onMounted, ref } from 'vue'
-import { api, errText } from '../api.js'
+import { api, errText, defaultSite } from '../api.js'
 import { inp, card, th, td, btnLink, kindLabel } from '../ui.js'
 
 const COLORS = { used: '#64748b', planned: '#0ea5e9', reserved: '#f59e0b', free: '#22c55e' }
@@ -100,7 +100,7 @@ const UnitBar = (p) => h('div', { class: 'flex h-2 rounded-full overflow-hidden 
 ])
 UnitBar.props = ['u', 'warn']
 
-const data = ref(null), err = ref(''), warn = ref(10), siteId = ref(null), allSites = ref([]), onlyIssues = ref(false), showAll = ref(false)
+const data = ref(null), err = ref(''), warn = ref(10), siteId = ref(defaultSite()), allSites = ref([]), onlyIssues = ref(false), showAll = ref(false)
 const open = ref(new Set())
 
 function hasIssue(n) { return n.warn.length > 0 || n.children.some(hasIssue) }

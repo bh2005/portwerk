@@ -10,6 +10,16 @@ export function setUser(u)   { localStorage.setItem(USER_KEY, JSON.stringify(u |
 export function getUser()    { try { return JSON.parse(localStorage.getItem(USER_KEY) || '{}') } catch { return {} } }
 export function clearToken() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY) }
 export function isLoggedIn() { return !!getToken() }
+/** Persönliche Einstellungen aus „Mein Profil“ (gelten auf allen Geräten). */
+export function userPrefs()  { return getUser().prefs || {} }
+export function defaultSite() { return userPrefs().default_site_id || null }
+const START = { dashboard: '/dashboard', workorders: '/workorders', m: '/m', racks: '/racks', capacity: '/capacity' }
+/** Startseite: eigene Wahl, sonst Techniker am Handy die mobile Ansicht, sonst die Übersicht. */
+export function startPage() {
+  const p = START[userPrefs().start_page]
+  if (p) return p
+  return window.matchMedia?.('(max-width: 640px)').matches && hasRole('techniker') ? '/m' : '/dashboard'
+}
 export function isAdmin()    { return (getUser().roles || []).includes('admin') }                       // globaler Administrator
 export function isGlobal()   { return (getUser().roles || []).length > 0 }                              // mindestens eine globale Rolle: sieht alles
 export function scopesOf()   { return getUser().scopes || [] }                                          // Rollen nur für bestimmte Standorte
@@ -66,6 +76,9 @@ export const api = {
   logout:         () => post('/auth/logout'),
   me:             () => get('/auth/me'),
   setMyNotifications: b => put('/auth/me/notifications', b),
+  setMyPreferences: b => put('/auth/me/preferences', b),
+  mySessions:       () => get('/auth/me/sessions'),
+  logoutOthers:     () => post('/auth/me/logout-others'),
   changePassword: (current_password, new_password) => post('/auth/change-password', { current_password, new_password }),
 
   // Übersicht

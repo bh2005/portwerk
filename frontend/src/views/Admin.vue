@@ -169,7 +169,8 @@ import { api, errText, isAdmin, siteAdminIds } from '../api.js'
 import { inp, lbl, card, th, td, btnPrimary, btnGhost, btnDanger, btnLink, ROLES, roleLabel, fmtTime } from '../ui.js'
 
 const globalAdmin = isAdmin()
-const OPT_OUT = { confirm_suggest: 'Aufträge zur Bestätigung vorgeschlagen', assigned: 'Zuweisung von Aufträgen' }
+const OPT_OUT = { confirm_suggest: 'Aufträge zur Bestätigung vorgeschlagen', assigned: 'Zuweisung von Aufträgen', my_orders: 'Statusänderung eigener Aufträge',
+  lldp_problem: 'LLDP-Abweichung bei eigener Ausführung', reservation_expiry: 'Ablauf eigener Reservierungen' }
 const optOutText = n => 'Selbst abbestellte E-Mails: ' + Object.entries(n).filter(([, v]) => !v).map(([k]) => OPT_OUT[k] || k).join(', ')
 const tabs = globalAdmin ? [['users', 'Benutzer'], ['tokens', 'API-Zugänge'], ['ldap', 'AD / LDAP'], ['tls', 'Zertifikat (ACME)'], ['backup', 'Sicherung'], ['mail', 'E-Mail'], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan'], ['audit', 'Audit-Log']] : [['users', 'Benutzer']]
 const sites = ref([])

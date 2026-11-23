@@ -45,11 +45,11 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { api, errText, canWriteMaster, isSiteAdmin } from '../api.js'
+import { api, errText, canWriteMaster, isSiteAdmin, defaultSite } from '../api.js'
 import { inp, card, th, td, btnPrimary, btnLink } from '../ui.js'
 
 const canWrite = canWriteMaster() || isSiteAdmin()
-const res = ref(null), sites = ref([]), fSite = ref(''), q = ref(''), error = ref(''), msg = ref(''), picked = ref(new Set())
+const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), picked = ref(new Set())
 const active = ref(new Set(['mismatch', 'undocumented', 'not_reported']))
 const chips = [['mismatch', 'abweichend'], ['undocumented', 'nicht dokumentiert'], ['not_reported', 'nicht gemeldet'], ['unrated', 'nicht bewertbar'],
   ['plausible', 'plausibel (Trunk)'], ['ok', 'stimmt']]

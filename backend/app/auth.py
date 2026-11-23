@@ -11,6 +11,7 @@ Rollen (kombinierbar): admin (alles), planer, freigeber, techniker, viewer.
 from __future__ import annotations
 
 import secrets
+import json
 import time
 from dataclasses import dataclass, field
 from typing import Optional
@@ -105,7 +106,27 @@ def public_user(u: dict) -> dict:
         "roles": parse_roles(u["roles"]), "scopes": user_scopes(u["id"]), "source": u["source"], "active": bool(u["active"]),
         "created_at": u["created_at"], "last_login": u["last_login"],
         "notify": _notify_prefs(u),
+        "prefs": ui_prefs(u.get("ui_prefs") or ""),
     }
+
+
+START_PAGES = ("dashboard", "workorders", "m", "racks", "capacity")
+
+
+def ui_prefs(raw: str) -> dict:
+    """Persönliche Bedienung: Standard-Standort (Filter vorbelegen) und Startseite nach dem Login."""
+    try:
+        d = json.loads(raw) if raw else {}
+    except ValueError:
+        d = {}
+    return {"default_site_id": d.get("default_site_id") if isinstance(d.get("default_site_id"), int) else None,
+            "start_page": d.get("start_page") if d.get("start_page") in START_PAGES else ""}
+
+
+def active_sessions(user_id: int) -> int:
+    u = db.row("SELECT token_version FROM users WHERE id = ?", (user_id,))
+    now = time.time()
+    return sum(1 for s in _sessions.values() if s["uid"] == user_id and s["exp"] > now and u and s["tv"] == u["token_version"])
 
 
 def _notify_prefs(u: dict) -> dict:
