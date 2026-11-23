@@ -7,7 +7,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import access, audit, auth, db, mailer, notifications
+from .. import absences, access, audit, auth, db, mailer, notifications
 from ..auth import Principal, current_principal, require_admin, require_user
 from ..schemas import AssignIn, MailSettingsIn, MailTestIn, PatchlistSendIn, SendIn
 from . import documents, masterdata, patchlists, workorders
@@ -65,7 +65,8 @@ def directory(workorder_id: Optional[int] = None, me: Principal = Depends(requir
         if workorder_id and not _user_has_access(u, site):
             continue
         roles = auth.parse_roles(u["roles"]) or sorted({r["role"] for r in db.rows("SELECT role FROM user_scopes WHERE user_id = ? AND site_id IS ?", (u["id"], site))})
-        out.append({"id": u["id"], "username": u["username"], "full_name": u["full_name"], "has_email": bool(u["email"]), "roles": roles})
+        out.append({"id": u["id"], "username": u["username"], "full_name": u["full_name"], "has_email": bool(u["email"]), "roles": roles,
+                    "absent": absences.info(u["id"])})
     return out
 
 
@@ -209,6 +210,23 @@ def assign_workorder(wid: int, body: AssignIn, me: Principal = Depends(current_p
             out["notify_note"] = "E-Mail-Versand ist nicht eingerichtet – keine Benachrichtigung gesendet"
         elif not u["email"]:
             out["notify_note"] = f"{u['username']} hat keine E-Mail-Adresse hinterlegt – keine Benachrichtigung gesendet"
+        elif (dep := absences.deputy_for(u["id"])) and dep["email"] and _user_has_access(dep, _site_of_order(w)):
+            # abwesend mit Vertretung: die Mail geht an die Vertretung (die Zuweisung bleibt bei der gewählten Person)
+            try:
+                mailer.check_recipients([dep["email"]], cfg)
+                mailer.rate_check(me.name)
+                n = db.row("SELECT COUNT(*) AS n FROM workitems WHERE workorder_id = ?", (wid,))["n"]
+                until = absences.current(u["id"])["end_date"]
+                meta = [("Auftrag", f"{w['number']} – {w['title']}"), ("Zugewiesen an", f"{u['full_name'] or u['username']} (abwesend bis {until})"), ("Positionen", str(n))]
+                text, html = _compose(me, f"hat den Patchauftrag {w['number']} {u['full_name'] or u['username']} zugewiesen – du erhältst die Nachricht in Vertretung.",
+                                      body.message, meta, _link(cfg, f"/workorders/{wid}"), [], n, False)
+                if notifications.wants(dep, "assigned"):
+                    mailer.send(cfg, [dep["email"]], f"[Portwerk] In Vertretung: {w['number']} {w['title']}", text, html)
+                    out["notified"] = True
+                out["notify_note"] = f"{u['username']} ist abwesend bis {until} – " + (f"E-Mail an die Vertretung {dep['username']} gesendet" if out["notified"]
+                                                                                       else f"die Vertretung {dep['username']} hat diese E-Mails abbestellt")
+            except HTTPException as e:
+                out["notify_note"] = f"Zugewiesen, aber E-Mail an die Vertretung nicht gesendet: {e.detail}"
         elif not notifications.wants(u, "assigned"):
             out["notify_note"] = f"{u['username']} hat E-Mails bei Zuweisung abbestellt – keine Benachrichtigung gesendet"
         else:

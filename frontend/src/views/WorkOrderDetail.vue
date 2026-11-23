@@ -28,7 +28,8 @@
 
     <!-- Metadaten -->
     <div :class="card" class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-      <div><span :class="metaLbl">Zugewiesen an</span><span class="text-slate-700 dark:text-slate-200">{{ wo.assigned_to ? (wo.assigned_to.full_name || wo.assigned_to.username) : '–' }}</span></div>
+      <div><span :class="metaLbl">Zugewiesen an</span><span class="text-slate-700 dark:text-slate-200">{{ wo.assigned_to ? (wo.assigned_to.full_name || wo.assigned_to.username) : '–' }}</span>
+        <span v-if="wo.assigned_to?.absent" class="block text-xs text-sky-700 dark:text-sky-300">abwesend bis {{ wo.assigned_to.absent.until.split('-').reverse().join('.') }}{{ wo.assigned_to.absent.deputy ? ` · Vertretung ${wo.assigned_to.absent.deputy.full_name || wo.assigned_to.absent.deputy.username}` : '' }}</span></div>
       <div><span :class="metaLbl">Erstellt von</span><span class="text-slate-700 dark:text-slate-200">{{ wo.created_by }}</span></div>
       <div><span :class="metaLbl">Erstellt am</span><span class="text-slate-700 dark:text-slate-200">{{ fmtTime(wo.created_at) }}</span></div>
       <div v-if="wo.planned_from"><span :class="metaLbl">Geplant von</span><span class="text-slate-700 dark:text-slate-200">{{ wo.planned_from }}</span></div>
@@ -205,7 +206,7 @@
     <ModalDialog v-if="assignForm" :title="`${wo.number} zuweisen`" :error="assignErr" @close="assignForm = null">
       <div><label :class="lbl">Benutzer</label>
         <select v-model="assignForm.user_id" :class="inp"><option :value="null">(niemand – Zuweisung aufheben)</option>
-          <option v-for="u in assignUsers" :key="u.id" :value="u.id">{{ u.full_name || u.username }} ({{ u.username }}){{ u.has_email ? '' : ' – keine E-Mail' }}</option></select>
+          <option v-for="u in assignUsers" :key="u.id" :value="u.id">{{ u.full_name || u.username }} ({{ u.username }}){{ u.has_email ? '' : ' – keine E-Mail' }}{{ u.absent ? ` – abwesend bis ${u.absent.until.split('-').reverse().join('.')}${u.absent.deputy ? ', Vertretung ' + u.absent.deputy.username : ''}` : '' }}</option></select>
         <p class="text-[11px] text-slate-400 mt-1">Der Auftrag erscheint beim Benutzer unter „Meine Aufgaben“. Es werden nur Benutzer angeboten, die ihn sehen dürfen.</p></div>
       <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="assignForm.notify" /> per E-Mail benachrichtigen</label>
       <div v-if="assignForm.notify"><label :class="lbl">Nachricht (optional)</label><textarea v-model="assignForm.message" rows="2" :class="inp"></textarea></div>

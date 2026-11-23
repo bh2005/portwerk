@@ -18,6 +18,7 @@
         <li v-for="w in tasks" :key="w.id" class="py-1.5 flex items-center gap-3">
           <router-link :to="`/workorders/${w.id}`" class="font-mono font-medium text-ks-700 dark:text-ks-400 hover:underline">{{ w.number }}</router-link>
           <span class="flex-1 truncate text-slate-700 dark:text-slate-200">{{ w.title }}</span>
+          <span v-if="w.assigned_to && w.assigned_to.username !== myName" class="text-xs text-sky-700 dark:text-sky-300 whitespace-nowrap">in Vertretung für {{ w.assigned_to.full_name || w.assigned_to.username }}</span>
           <span class="text-xs text-slate-400 whitespace-nowrap">{{ w.status_label }} · {{ w.progress.done }}/{{ w.progress.total }}</span>
         </li>
       </ul>
@@ -76,8 +77,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import StatCard from '../components/StatCard.vue'
-import { api, errText, hasRole } from '../api.js'
+import { api, errText, hasRole, getUser } from '../api.js'
 import { card, th, td, typeLabel, statusLabel, sourceLabel, fmtTime } from '../ui.js'
+
+const myName = getUser().username
 
 const s = ref(null), error = ref(''), tasks = ref([]), cap = ref(null), ready = ref([])
 const sorted = o => Object.entries(o || {}).sort((a, b) => b[1] - a[1])

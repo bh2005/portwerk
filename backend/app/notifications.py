@@ -21,7 +21,7 @@ from typing import Iterable, Optional
 
 from fastapi import HTTPException
 
-from . import audit, db, mailer
+from . import absences, audit, db, mailer
 from .config import settings
 
 log = logging.getLogger("opp.notifications")
@@ -52,7 +52,7 @@ def wants(user: dict, key: str) -> bool:
 def _user(username: Optional[str]) -> Optional[dict]:
     if not username:
         return None
-    return db.row("SELECT id, username, full_name, email, notify_prefs FROM users WHERE username = ? COLLATE NOCASE AND active = 1", (username,))
+    return db.row("SELECT id, username, full_name, email, notify_prefs, roles FROM users WHERE username = ? COLLATE NOCASE AND active = 1", (username,))
 
 
 def _allowed(emails: Iterable[str], cfg: dict) -> list[str]:
@@ -69,29 +69,75 @@ def _link(cfg: dict, path: str) -> str:
     return f"{cfg['public_url']}{path}" if cfg.get("public_url") else ""
 
 
-def _deliver(users: list[dict], key: str, subject: str, lines: list[str], link: str, action: str, entity: str, entity_id) -> int:
-    """Gemeinsamer Versand: Hauptschalter, persönliche Einstellung, Domain-Filter, Hintergrund, Audit-Log."""
+def can_see(u: dict, site_id: Optional[int]) -> bool:
+    """Globale Rolle oder irgendeine Rolle an diesem Standort."""
+    if (u.get("roles") or "").strip(","):
+        return True
+    return site_id is not None and bool(db.row("SELECT 1 AS x FROM user_scopes WHERE user_id = ? AND site_id = ?", (u["id"], site_id)))
+
+
+def can_approve(u: dict, site_id: Optional[int]) -> bool:
+    roles = set((u.get("roles") or "").split(","))
+    if roles & {"freigeber", "admin"}:
+        return True
+    return site_id is not None and bool(db.row("SELECT 1 AS x FROM user_scopes WHERE user_id = ? AND site_id = ? AND role IN ('freigeber', 'admin')",
+                                               (u["id"], site_id)))
+
+
+def _route(users: list, key: str, eligible) -> tuple[list[dict], dict[int, tuple[dict, list[dict]]]]:
+    """Empfänger nach Abwesenheit aufteilen: (direkt, {Vertretung-ID: (Vertretung, [vertretene Personen])}).
+    Abwesend mit berechtigter Vertretung → an die Vertretung (nach deren Einstellung); sonst wie bisher an die Person selbst."""
+    direct, deputies = [], {}
+    for u in users:
+        if not u:
+            continue
+        d = absences.deputy_for(u["id"])
+        if d and d["email"] and (eligible is None or eligible(d)):
+            if wants(d, key):
+                deputies.setdefault(d["id"], (d, []))[1].append(u)
+            continue
+        if u.get("email") and wants(u, key):
+            direct.append(u)
+    return direct, deputies
+
+
+def _deliver(users: list, key: str, subject: str, lines: list[str], link: str, action: str, entity: str, entity_id, eligible=None) -> int:
+    """Gemeinsamer Versand: Hauptschalter, Abwesenheit/Vertretung, persönliche Einstellung, Domain-Filter, Hintergrund, Audit-Log.
+    ``eligible(vertretung)``: darf die Vertretung diese Nachricht bekommen (Standort, Rolle)?"""
     cfg = mailer.settings()
     if not cfg["enabled"]:
         return 0
-    to = _allowed([u["email"] for u in users if u and u.get("email") and wants(u, key)], cfg)
-    if not to:
+    direct, deputies = _route(users, key, eligible)
+    jobs = []                                                            # (Empfänger, Zeilen)
+    to = _allowed([u["email"] for u in direct], cfg)
+    if to:
+        jobs.append((to, lines))
+    direct_ids = {u["id"] for u in direct}
+    for d, absent in deputies.values():
+        if d["id"] in direct_ids:
+            continue                                                     # Vertretung bekommt die Nachricht ohnehin selbst
+        dto = _allowed([d["email"]], cfg)
+        if dto:
+            who = ", ".join(f"{a['full_name'] or a['username']} (abwesend bis {absences.current(a['id'])['end_date']})" for a in absent)
+            jobs.append((dto, [f"Du erhältst diese Nachricht in Vertretung für {who}.", *lines]))
+    if not jobs:
         return 0
-    text = "\n".join(lines) + (f"\n\n{link}\n" if link else "\n")
-    html = "".join(f"<p>{_h.escape(x)}</p>" for x in lines if x) + (f'<p><a href="{_h.escape(link)}">In Portwerk öffnen</a></p>' if link else "")
 
     def send() -> None:
-        try:
-            mailer.send(cfg, to, subject, text, html)
-            audit.log("system", f"mail.{action}", entity, entity_id, f"{subject} an {', '.join(to)}"[:500])
-        except Exception as e:                                           # Versandfehler darf den Vorgang nie stören
-            log.warning("Benachrichtigung %s fehlgeschlagen: %s", action, e)
-            audit.log("system", f"mail.{action}_failed", entity, entity_id, str(e)[:300])
+        for rcpt, ls in jobs:
+            text = "\n".join(ls) + (f"\n\n{link}\n" if link else "\n")
+            html = "".join(f"<p>{_h.escape(x)}</p>" for x in ls if x) + (f'<p><a href="{_h.escape(link)}">In Portwerk öffnen</a></p>' if link else "")
+            try:
+                mailer.send(cfg, rcpt, subject, text, html)
+                audit.log("system", f"mail.{action}", entity, entity_id, f"{subject} an {', '.join(rcpt)}"[:500])
+            except Exception as e:                                       # Versandfehler darf den Vorgang nie stören
+                log.warning("Benachrichtigung %s fehlgeschlagen: %s", action, e)
+                audit.log("system", f"mail.{action}_failed", entity, entity_id, str(e)[:300])
     if SEND_IN_BACKGROUND:
         threading.Thread(target=send, daemon=True, name=f"mail-{action}").start()
     else:
         send()
-    return len(to)
+    return sum(len(r) for r, _ in jobs)
 
 
 # ── Freigeber: zur Bestätigung vorgeschlagen ──────────────────────────────────
@@ -100,26 +146,29 @@ def approvers(wid: int) -> list[dict]:
     w = db.row("SELECT w.finished_by, l.site_id FROM workorders w LEFT JOIN locations l ON l.id = w.location_id WHERE w.id = ?", (wid,))
     if not w:
         return []
-    rows = db.rows("""SELECT DISTINCT u.id, u.username, u.full_name, u.email, u.notify_prefs FROM users u
+    rows = db.rows("""SELECT DISTINCT u.id, u.username, u.full_name, u.email, u.notify_prefs, u.roles FROM users u
                       WHERE u.active = 1 AND u.email <> ''
                         AND ((',' || u.roles || ',') LIKE '%,freigeber,%'
                              OR EXISTS (SELECT 1 FROM user_scopes s WHERE s.user_id = u.id AND s.role = 'freigeber' AND s.site_id = ?))""",
                    (w["site_id"],))
-    return [u for u in rows if u["username"].casefold() != (w["finished_by"] or "").casefold() and wants(u, "confirm_suggest")]
+    return [u for u in rows if u["username"].casefold() != (w["finished_by"] or "").casefold()
+            and (wants(u, "confirm_suggest") or absences.deputy_for(u["id"]))]
 
 
 def confirm_suggested(wid: int, summary: dict) -> int:
     cfg = mailer.settings()
     if not cfg.get("notify_confirm_suggest", True):
         return 0
-    w = db.row("SELECT id, number, title, finished_by FROM workorders WHERE id = ?", (wid,))
+    w = db.row("SELECT w.id, w.number, w.title, w.finished_by, l.site_id FROM workorders w LEFT JOIN locations l ON l.id = w.location_id WHERE w.id = ?", (wid,))
     if not w:
         return 0
+    fin = (w["finished_by"] or "").casefold()
     return _deliver(approvers(wid), "confirm_suggest", f"[Portwerk] {w['number']} zur Bestätigung vorgeschlagen – LLDP stimmt",
                     [f"Der Patchauftrag {w['number']} „{w['title']}“ ist ausgeführt" + (f" (von {w['finished_by']})" if w["finished_by"] else "") + ".",
                      f"Die LLDP-Prüfung nach dem letzten Checkmk-Import stimmt: {summary.get('ok', 0)} Position(en) bestätigt, keine Abweichung.",
                      "Bitte prüfen und bestätigen – erst dann wird der Bestand fortgeschrieben."],
-                    _link(cfg, f"/workorders/{wid}"), "confirm_suggest", "workorder", wid)
+                    _link(cfg, f"/workorders/{wid}"), "confirm_suggest", "workorder", wid,
+                    eligible=lambda d: can_approve(d, w["site_id"]) and d["username"].casefold() != fin)
 
 
 # ── Ersteller: Statuswechsel seines Auftrags ──────────────────────────────────
@@ -132,20 +181,20 @@ STATUS_TEXT = {"approve": ("freigegeben", "Er kann jetzt ausgeführt werden."), 
 def order_status(wid: int, action: str, actor: str) -> int:
     if action not in STATUS_TEXT:
         return 0
-    w = db.row("SELECT id, number, title, created_by FROM workorders WHERE id = ?", (wid,))
+    w = db.row("SELECT w.id, w.number, w.title, w.created_by, l.site_id FROM workorders w LEFT JOIN locations l ON l.id = w.location_id WHERE w.id = ?", (wid,))
     if not w or (w["created_by"] or "").casefold() == (actor or "").casefold():
         return 0                                                         # eigene Aktion: keine Mail an sich selbst
     word, hint = STATUS_TEXT[action]
     cfg = mailer.settings()
     return _deliver([_user(w["created_by"])], "my_orders", f"[Portwerk] {w['number']} {word}",
                     [f"Dein Patchauftrag {w['number']} „{w['title']}“ wurde von {actor} {word}.", hint],
-                    _link(cfg, f"/workorders/{wid}"), "order_status", "workorder", wid)
+                    _link(cfg, f"/workorders/{wid}"), "order_status", "workorder", wid, eligible=lambda d: can_see(d, w["site_id"]))
 
 
 # ── Techniker: LLDP-Abweichung ────────────────────────────────────────────────
 
 def lldp_problem(wid: int, items: list[dict]) -> int:
-    w = db.row("SELECT id, number, title, finished_by FROM workorders WHERE id = ?", (wid,))
+    w = db.row("SELECT w.id, w.number, w.title, w.finished_by, l.site_id FROM workorders w LEFT JOIN locations l ON l.id = w.location_id WHERE w.id = ?", (wid,))
     if not w:
         return 0
     probs = [i.get("text") or i.get("label", "") for i in items if i.get("status") == "problem"]
@@ -153,7 +202,7 @@ def lldp_problem(wid: int, items: list[dict]) -> int:
     return _deliver([_user(w["finished_by"])], "lldp_problem", f"[Portwerk] {w['number']}: LLDP meldet eine Abweichung",
                     [f"Bei deinem ausgeführten Patchauftrag {w['number']} „{w['title']}“ passt die LLDP-Meldung nicht zur Planung:",
                      *[f"• {p}" for p in probs[:20]], "Bitte prüfen – sonst wird der Auftrag voraussichtlich auf Nacharbeit gesetzt."],
-                    _link(cfg, f"/workorders/{wid}"), "lldp_problem", "workorder", wid)
+                    _link(cfg, f"/workorders/{wid}"), "lldp_problem", "workorder", wid, eligible=lambda d: can_see(d, w["site_id"]))
 
 
 # ── Reservierungen: Erinnerung vor Ablauf ─────────────────────────────────────
@@ -161,8 +210,8 @@ def lldp_problem(wid: int, items: list[dict]) -> int:
 def reservation_reminders(today: Optional[date] = None) -> int:
     """Reservierungen, die in höchstens REMIND_DAYS Tagen ablaufen und noch nicht erinnert wurden: eine Mail je Person."""
     today = today or date.today()
-    rows = db.rows("""SELECT r.id, r.purpose, r.until, r.reserved_by, p.name AS port, d.hostname FROM port_reservations r
-                      JOIN ports p ON p.id = r.port_id JOIN devices d ON d.id = p.device_id
+    rows = db.rows("""SELECT r.id, r.purpose, r.until, r.reserved_by, p.name AS port, d.hostname, l.site_id FROM port_reservations r
+                      JOIN ports p ON p.id = r.port_id JOIN devices d ON d.id = p.device_id LEFT JOIN locations l ON l.id = d.location_id
                       WHERE r.reminded_at IS NULL AND r.until IS NOT NULL AND r.until >= ? AND r.until <= ?
                       ORDER BY r.reserved_by, r.until, d.hostname, p.name""",
                    (today.isoformat(), (today + timedelta(days=REMIND_DAYS)).isoformat()))
@@ -176,7 +225,8 @@ def reservation_reminders(today: Optional[date] = None) -> int:
                  *[f"• {r['hostname']}:{r['port']} – „{r['purpose']}“ bis {r['until']}" for r in res[:50]],
                  "Verlängern oder freigeben unter „Reservierungen“. Abgelaufene Reservierungen blockieren nichts mehr."]
         sent += _deliver([_user(username)], "reservation_expiry", f"[Portwerk] {len(res)} Reservierung(en) laufen bald ab", lines,
-                         _link(cfg, "/reservations"), "reservation_expiry", "port", ",".join(str(r["id"]) for r in res[:50])) > 0
+                         _link(cfg, "/reservations"), "reservation_expiry", "port", ",".join(str(r["id"]) for r in res[:50]),
+                         eligible=lambda d, sites={r["site_id"] for r in res}: all(can_see(d, s) for s in sites)) > 0
     if rows:
         db.execute(f"UPDATE port_reservations SET reminded_at = ? WHERE id IN ({','.join('?' * len(rows))})", (time.time(), *[r["id"] for r in rows]))
     return sent
