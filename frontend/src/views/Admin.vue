@@ -113,9 +113,10 @@
         <div class="flex items-center justify-between"><label :class="lbl" class="!mb-0">Rechte pro Standort <span class="normal-case text-slate-300">– Benutzer ohne globale Rolle sehen nur diese Standorte</span></label>
           <button type="button" :class="btnLink" @click="addScope">+ Standort-Recht</button></div>
         <p v-if="!userForm.scopes.length && !userForm.ldapScopes.length" class="text-xs text-slate-400 mt-1">Keine Standort-Rechte.</p>
-        <div v-for="(sc, i) in userForm.scopes" :key="i" class="flex gap-2 mt-1.5">
+        <div v-for="(sc, i) in userForm.scopes" :key="i" class="flex gap-2 mt-1.5 items-center">
           <select v-model="sc.role" :class="inp" class="!w-44"><option v-for="[k, l] in ROLES" :key="k" :value="k">{{ l }}</option></select>
-          <select v-model="sc.site_id" :class="inp"><option :value="null" disabled>Standort wählen …</option><option v-for="s in siteChoices()" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
+          <label v-if="globalAdmin" class="flex items-center gap-1.5 text-xs whitespace-nowrap text-slate-600 dark:text-slate-300" title="Rolle gilt für alle Standorte (wird als globale Rolle gespeichert)"><input type="checkbox" v-model="sc.all" class="rounded text-ks-600" /> alle Standorte</label>
+          <select v-model="sc.site_id" :class="inp" :disabled="sc.all"><option :value="null" disabled>Standort wählen …</option><option v-for="s in siteChoices()" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
           <button type="button" :class="btnDanger" @click="userForm.scopes.splice(i, 1)">✕</button>
         </div>
         <p v-if="userForm.ldapScopes.length" class="text-xs text-slate-400 mt-2">Aus AD-Gruppen (nicht änderbar): {{ userForm.ldapScopes.map(scopeText).join(', ') }}</p>
@@ -209,14 +210,14 @@ watch(tab, t => { helpContext.value = t; load() }, { immediate: true })
 function openUser(u) {
   formError.value = ''
   userForm.value = u
-    ? { ...u, roles: [...u.roles], scopes: u.scopes.filter(s => s.source === 'manual').map(s => ({ role: s.role, site_id: s.site_id })), ldapScopes: u.scopes.filter(s => s.source === 'ldap') }
+    ? { ...u, roles: [...u.roles], scopes: u.scopes.filter(s => s.source === 'manual').map(s => ({ role: s.role, site_id: s.site_id, all: false })), ldapScopes: u.scopes.filter(s => s.source === 'ldap') }
     : { username: '', password: '', full_name: '', email: '', roles: globalAdmin ? ['viewer'] : [], scopes: [], ldapScopes: [] }
 }
-function addScope() { userForm.value.scopes.push({ role: 'viewer', site_id: null }) }
+function addScope() { userForm.value.scopes.push({ role: 'viewer', site_id: null, all: false }) }
 const canSave = computed(() => {
   const f = userForm.value
   if (!f) return false
-  const scopes = f.scopes.filter(s => s.site_id)
+  const scopes = f.scopes.filter(s => s.site_id || s.all)
   if (f.scopes.length !== scopes.length) return false                                   // unvollständige Zeile
   if (!f.id && (!f.username || !f.password)) return false
   return f.roles.length > 0 || scopes.length > 0 || f.ldapScopes.length > 0 || (f.id && f.source === 'ldap')
@@ -224,8 +225,10 @@ const canSave = computed(() => {
 async function saveUser() {
   try {
     const f = userForm.value
-    const body = { roles: globalAdmin ? f.roles : undefined, scopes: f.scopes.filter(s => s.site_id), full_name: f.full_name, email: f.email }
-    f.id ? await api.updateUser(f.id, { ...body, active: f.limited ? undefined : f.active }) : await api.createUser({ ...body, roles: globalAdmin ? f.roles : [], username: f.username, password: f.password })
+    const allRoles = f.scopes.filter(s => s.all).map(s => s.role)                       // „alle Standorte“ = globale Rolle
+    const roles = globalAdmin ? [...new Set([...f.roles, ...allRoles])] : f.roles
+    const body = { roles: globalAdmin ? roles : undefined, scopes: f.scopes.filter(s => s.site_id && !s.all).map(s => ({ role: s.role, site_id: s.site_id })), full_name: f.full_name, email: f.email }
+    f.id ? await api.updateUser(f.id, { ...body, active: f.limited ? undefined : f.active }) : await api.createUser({ ...body, roles: globalAdmin ? roles : [], username: f.username, password: f.password })
     userForm.value = null; await load()
   } catch (e) { formError.value = errText(e) }
 }
