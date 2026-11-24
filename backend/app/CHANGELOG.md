@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.7.1 – 2026-11-24
+- Dark Mode, Korrektur: Die Standard-Textfarbe aus 0.7.0 griff in der App nicht (die Klasse `dark` sitzt auf dem Wurzel-Element der App, nicht auf `html`). Tabellen im Audit-Log, in der Übersicht, bei den Geräten und in der Verwaltung sind jetzt im Dark Mode lesbar; geprüft in 14 Ansichten mit dem echten Dark-Mode-Schalter.
+
 ## 0.7.0 – 2026-11-24
 - Externe Sicherungsziele: Sicherungen lassen sich zusätzlich auf ein eingehängtes Verzeichnis (NAS per NFS/SMB), einen S3-kompatiblen Speicher oder WebDAV ablegen – automatisch nach jeder Sicherung, manuell über „Extern ablegen“. Je Ziel eigene Aufbewahrung, Test, Status und Liste der Sicherungen; Wiederherstellung direkt vom Ziel.
 - Verschlüsselung der externen Sicherungen: Optional mit Passphrase (AES-256-GCM) vor der Übertragung.

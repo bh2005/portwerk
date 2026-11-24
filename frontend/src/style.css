@@ -3,7 +3,10 @@
 @tailwind utilities;
 
 /* Standard-Textfarbe: ohne sie erben Tabellenzellen u. Ä. im Dark Mode eine dunkle Farbe (unlesbar).
-   Werte wie im RSYSLOG-Manager: Text #e2e8f0, gedämpft #94a3b8. Eigene text-*-Klassen überschreiben das. */
+   Die Klasse „dark“ sitzt auf dem Wurzel-div der App (App.vue), nicht auf html, und Tailwinds dark:-Varianten wirken nur auf Nachfahren
+   dieses Elements – deshalb die Farbe hier direkt auf „.dark“. Werte wie im RSYSLOG-Manager: Text #e2e8f0, gedämpft #94a3b8.
+   Eigene text-*-Klassen überschreiben das. */
 @layer base {
-  body { @apply text-slate-800 dark:text-slate-200; }
+  body { @apply text-slate-800; }
+  .dark { color: theme('colors.slate.200'); }
 }
