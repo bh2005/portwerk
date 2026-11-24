@@ -180,6 +180,7 @@ export const api = {
   checkmkCreateHost: b => post('/api/checkmk/hosts', b),
   adoptDevice:    b => post('/api/compare/adopt-device', b),
   moveCableEnd:   (cableId, b) => post(`/api/cables/${cableId}/move-end`, b),
+  routePlan:      b => post('/api/routing/plan', b),
   insertStation:  (cableId, b) => post(`/api/cables/${cableId}/insert-station`, b),
   removeStation:  b => post('/api/stations/remove', b),
   adoptConnection: portId => post('/api/compare/adopt', { port_id: portId }),

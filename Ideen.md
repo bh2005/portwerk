@@ -52,6 +52,7 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Checkmk-REST-Anbindung: Host prüfen, mit Ping und Standort-Tag anlegen (Aktivierung in Checkmk) | #26 |
 | Strecken-Editor: ganze Strecke als Seitenleiste, Kabel bearbeiten, Zwischenstationen einfügen/entfernen | #26 |
 | Dokumentation der Abläufe mit Beispielen (`docs/workflows/`) | #26 |
+| Autorouting: fehlende Patchungen zwischen Quell- und Zielport automatisch planen, neues Gerät als „geplant“ anlegen | (dieser PR) |
 | Strecken-Editor: Umstecken (Ziel ändern) | (dieser PR) |
 | Externe Sicherungsziele (NAS-Verzeichnis, S3, WebDAV), optional verschlüsselt, Wiederherstellung vom Ziel | (dieser PR) |
 | Filter für Locations bei Racks & Schränke und bei den Standorten | (dieser PR) |

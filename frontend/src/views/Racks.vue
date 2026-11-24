@@ -8,6 +8,7 @@
             class="px-3 py-1.5 text-sm transition-colors"
             :class="view === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'">{{ l }}</button>
         </div>
+        <button v-if="canPlace" type="button" :class="btnGhost" title="Neues Gerät als geplant anlegen und die Patchungen zum Ziel automatisch planen" @click="autoRoute = true">Autorouting</button>
         <select v-model="rackId" :class="inp" class="!w-72" @change="changeRack">
           <option :value="null" disabled>Rack wählen …</option>
           <option v-for="r in shownRacks" :key="r.id" :value="r.id">{{ kindLabel(r.kind) }}: {{ r.path }}<template v-if="r.rack_units"> ({{ r.rack_units }} HE)</template></option>
@@ -168,6 +169,7 @@
 
     <CableWizard v-if="cableWiz" :preset-device-id="selected.id" :preset-port-id="cableWiz.portId" @close="cableWiz = null" @done="cableDone" />
 
+    <AutoRouteWizard :open="autoRoute" start-new :preset-location-id="rackId" @close="autoRoute = false" @done="load" />
     <DeviceWizard v-if="wizard" :kind="wizard.kind" :location-id="rackId" :rack-position="wizard.u" :mount-side="view" :side-slot="wizard.slot || ''"
       :title="{ switch: 'Assistent: Gerät platzieren', patchpanel: 'Assistent: Patchfeld platzieren', placeholder: 'Assistent: Platzhalter einplanen', vertical: 'Assistent: Hochkant-Gerät (PDU …) platzieren' }[wizard.kind]"
       @close="wizard = null" @done="wizardDone" />
@@ -179,6 +181,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
 import DeviceWizard from '../components/DeviceWizard.vue'
+import AutoRouteWizard from '../components/AutoRouteWizard.vue'
 import CableWizard from '../components/CableWizard.vue'
 import { api, errText, canWriteMaster, hasRole } from '../api.js'
 import { checkmkUrl, loadCheckmk } from '../checkmk.js'
@@ -186,7 +189,7 @@ import { inp, card, th, td, btnPrimary, btnGhost, btnLink, typeLabel, fmtSpeed, 
 
 const UNIT = 26                      // Pixel pro Höheneinheit
 const view = ref('front')            // Ansicht: Vorderseite oder Rückseite
-const racks = ref([]), rackId = ref(null), devices = ref([])
+const racks = ref([]), rackId = ref(null), devices = ref([]), autoRoute = ref(false)
 const sites = ref([]), fSite = ref(''), fKind = ref(''), fText = ref('')
 const siteChoices = computed(() => sites.value.filter(s => racks.value.some(r => r.site_id === s.id)))
 const kindChoices = computed(() => [...new Set(racks.value.map(r => r.kind))])

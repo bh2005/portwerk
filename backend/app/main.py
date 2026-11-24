@@ -11,7 +11,7 @@ from fastapi.responses import RedirectResponse
 
 from . import acme_client, auth, backup, notifications, releases
 from .config import settings
-from .routers import accounts, backups, catalog, compare, documents, history, imports, labels, portreservations, stations, vlans, masterdata, notify, openplan, overview, patchlists, releases as releases_router, search, serverconfig, wan, wizards, workorders
+from .routers import accounts, backups, catalog, compare, documents, history, imports, labels, portreservations, routing as routing_router, stations, vlans, masterdata, notify, openplan, overview, patchlists, releases as releases_router, search, serverconfig, wan, wizards, workorders
 from .static import find_static_dir, register_static
 
 logger = logging.getLogger("opp")
@@ -70,6 +70,7 @@ app.include_router(openplan.router)
 app.include_router(wan.router)
 app.include_router(compare.router)
 app.include_router(stations.router)
+app.include_router(routing_router.router)
 app.include_router(releases_router.router)
 app.include_router(search.router)
 app.include_router(history.router)

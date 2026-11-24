@@ -2,6 +2,10 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.9.0 – 2026-11-24
+- Autorouting: Von einem Quellport (z. B. NIC eines neuen Servers) zu einem Zielport (z. B. Switchport) schlägt Portwerk die fehlenden Patchungen vor – über vorhandene Kabel, Patchfelder und Dosen (bis zu 3 Stationen), neue Patchkabel nur zwischen freien Ports im selben Raum (im selben Rack bevorzugt). Bis zu drei Vorschläge; daraus entsteht ein Patchauftrag, die Ports sind verplant.
+- Neues Gerät wird bei Bedarf mit angelegt: Als „geplant“ samt Einbau-Position im Auftrag; es gilt nach der Bestätigung als eingebaut. Aufruf in der Rack-Ansicht („Autorouting“) und am Port im Gerätedetail.
+
 ## 0.8.1 – 2026-11-24
 - Hinweis-Mail bei neuen Benutzern: Meldet sich ein Konto ohne Rechte erstmals an, erhalten die globalen Administratoren eine Mail („Neuer Benutzer wartet auf Freischaltung“); abbestellbar im Profil. Die Hinweisseite des Benutzers nennt, dass die Administratoren informiert wurden – nur wenn die Mail tatsächlich versendet wurde.
 

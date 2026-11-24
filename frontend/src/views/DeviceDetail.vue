@@ -91,6 +91,7 @@
                   <router-link v-if="p.planned" :to="`/workorders/${p.planned.id}`" class="ml-1 inline-block px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 hover:underline"
                     :title="p.planned.title">verplant: {{ p.planned.number }}</router-link>
                   <button v-if="p.cable || p.peer_port_id" :class="btnLink" class="ml-2" title="Ganze Strecke über Patchfelder bis zum Endgerät" @click="showPath(p)">Pfad</button>
+                  <button v-if="canPlan && !p.cable && !['patchpanel', 'outlet'].includes(d.type)" :class="btnLink" class="ml-2" title="Patchungen zu einem Zielport automatisch planen" @click="autoRoute = { portId: p.id }">Autorouting</button>
                   <button :class="btnLink" class="ml-2" title="Frühere Verbindungen dieses Ports" @click="showPortHistory(p)">Historie</button>
                   <button v-if="['switch', 'router', 'firewall'].includes(d.type) || p.config" :class="btnLink" class="ml-2" title="VLAN / Portprofil" @click="openVlan(p)">VLAN</button>
                   <button v-if="d.type === 'outlet' && canPlan && !p.name.toLowerCase().endsWith('-back')" :class="btnLink" class="ml-2"
@@ -199,6 +200,7 @@
       </template>
     </ModalDialog>
 
+    <AutoRouteWizard :open="!!autoRoute" :preset-port-id="autoRoute?.portId ?? null" :preset-device-id="d?.id ?? null" @close="autoRoute = null" @done="load" />
     <PathEditor :open="!!strecke" :port-id="strecke?.id ?? null" @close="strecke = null" @changed="load" />
 
     <ModalDialog v-if="peer" :title="`Gegenseite von ${peer.port.name}`" :error="formError" @close="peer = null">
@@ -225,6 +227,7 @@ import ModalDialog from '../components/ModalDialog.vue'
 import CableWizard from '../components/CableWizard.vue'
 import CableHistoryPanel from '../components/CableHistoryPanel.vue'
 import PathEditor from '../components/PathEditor.vue'
+import AutoRouteWizard from '../components/AutoRouteWizard.vue'
 import PathGraphic from '../components/PathGraphic.vue'
 import PortConfigFields from '../components/PortConfigFields.vue'
 import WorkplaceWizard from '../components/WorkplaceWizard.vue'
@@ -240,7 +243,7 @@ const canWrite = canWriteMaster()
 const d = ref(null), locations = ref([])
 const form = reactive({})
 const error = ref(''), msg = ref(''), msgErr = ref(false), formError = ref('')
-const portForm = ref(null), bulk = ref(null), peer = ref(null), strecke = ref(null)
+const portForm = ref(null), bulk = ref(null), peer = ref(null), strecke = ref(null), autoRoute = ref(null)
 const cableWiz = ref(null)
 const hist = reactive({ open: false, port: null })
 const canReserve = hasRole('planer'), picked = ref(new Set()), resForm = ref(null), pathDlg = ref(null)
