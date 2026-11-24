@@ -2,6 +2,10 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.11.0 – 2026-11-24
+- Abwesenheiten aus OpenPlan: Ist der Abgleich eingeschaltet (Verwaltung → OpenPlan), übernimmt Portwerk stündlich die persönlichen Abwesenheiten aus OpenPlan für ein Jahr im Voraus. Die Zuordnung läuft über den Benutzernamen, sonst über die E-Mail-Adresse. Übernommene Einträge sind in Portwerk nur lesbar; „krank“ erscheint nur als „abwesend“. Voraussetzung: OpenPlan ab 0.15.0, API-Zugang mit Freigabe „Abwesenheiten“.
+- Standard-Vertretung im Profil: Sie gilt für Abwesenheiten aus OpenPlan und wird beim Eintragen einer Abwesenheit vorgeschlagen. Administratoren können sie auch für andere setzen.
+
 ## 0.10.0 – 2026-11-24
 - Aufräumen: Neue Seite sammelt Stellen, die nachgepflegt werden sollten – vorläufige Kabel aus dem Soll/Ist-Abgleich (mit Alter, Absprung in den Strecken-Editor), dokumentierte Verbindungen, die LLDP nicht sieht (mögliche tote Patchung), abgelaufene Reservierungen (gesammelt löschbar), offene Aufträge ohne Änderung seit X Tagen und geplante Geräte ohne Auftrag. Filter nach Standort, Schwelle für „alt“ wählbar.
 - Wöchentlicher Aufräumbericht: Montags eine Zusammenfassung per E-Mail an die globalen Administratoren (nur wenn es offene Punkte gibt; abbestellbar im Profil, „Bericht mailen“ sendet sofort).

@@ -4,7 +4,8 @@ Portwerk spricht die REST-API von OpenPlan mit einem API-Token (Dienstkonto ``op
 * ``GET /api/projects``, ``GET /api/projects/{pid}`` – Projekte und Vorgänge finden,
 * ``POST /api/projects/{pid}/tasks`` – Vorgang für einen Patchauftrag anlegen,
 * ``POST /api/tasks/{tid}/events`` – Status/Fortschritt/Notiz und die externe Referenz ``portwerk`` (PA-Nummer mit Link) setzen,
-* ``POST /api/projects/wizard`` – Projekt aus der Vorlage „Einbau Patchfelder / Verkabelung“ anlegen.
+* ``POST /api/projects/wizard`` – Projekt aus der Vorlage „Einbau Patchfelder / Verkabelung“ anlegen,
+* ``GET /api/absences`` – Abwesenheiten aller Benutzer (optional, Token braucht in OpenPlan die Freigabe „Abwesenheiten“).
 Rückrichtung (optional): OpenPlan-Webhook ``task.status`` -> ``POST /api/integrations/openplan/webhook`` (Signatur HMAC-SHA256).
 Standardmäßig aus; die Einstellungen pflegt die Verwaltung (Schlüssel ``openplan`` in ``app_settings``).
 """
@@ -30,7 +31,7 @@ SYSTEM = "portwerk"                    # Name der externen Referenz in OpenPlan
 SYNC_IN_BACKGROUND = True                       # Tests schalten das ab (synchroner Abgleich)
 
 DEFAULTS = {"enabled": False, "base_url": "", "token": "", "default_project_id": "", "ca_pem": "", "verify_tls": True,
-            "auto_sync": True, "own_url": "", "webhook_secret": "", "account": "", "link_url": ""}
+            "auto_sync": True, "sync_absences": False, "own_url": "", "webhook_secret": "", "account": "", "link_url": ""}
 URL_KEYS = ("base_url", "own_url", "link_url")
 
 
@@ -50,6 +51,7 @@ def settings() -> dict:
 def public() -> dict:
     s = settings()
     out = {k: v for k, v in s.items() if k not in ("token", "webhook_secret")}
+    out["absences_status"] = absences_status()
     out["token_set"], out["webhook_secret_set"] = bool(s["token"]), bool(s["webhook_secret"])
     out["webhook_url"] = f"{own_url(s)}/api/integrations/openplan/webhook" if own_url(s) else ""
     return out
@@ -267,3 +269,72 @@ def _duration(w: dict) -> int:
         n += d.weekday() < 5
         d += dt.timedelta(days=1)
     return max(1, n)
+
+
+# ── Abwesenheiten übernehmen ──────────────────────────────────────────────────
+
+ABSENCE_STATUS_KEY = "openplan_absences"
+ABSENCE_DAYS = 365                                  # so weit in die Zukunft übernehmen
+KIND_LABELS = {"vacation": "Urlaub", "training": "Schulung", "other": "abwesend"}
+
+
+def absences_status() -> dict:
+    r = db.row("SELECT value FROM app_settings WHERE key = ?", (ABSENCE_STATUS_KEY,))
+    return json.loads(r["value"]) if r else {}
+
+
+def _match_users() -> tuple[dict, dict]:
+    users = db.rows("SELECT id, username, email FROM users WHERE active = 1")
+    by_name = {u["username"].lower(): u["id"] for u in users}
+    mails: dict[str, list[int]] = {}
+    for u in users:
+        if u["email"]:
+            mails.setdefault(u["email"].strip().lower(), []).append(u["id"])
+    return by_name, {m: ids[0] for m, ids in mails.items() if len(ids) == 1}           # E-Mail nur, wenn eindeutig
+
+
+def sync_absences(actor: str = "system", force: bool = False) -> dict:
+    """Abwesenheiten aus OpenPlan übernehmen: Zuordnung über den Benutzernamen, sonst über die (eindeutige) E-Mail-Adresse.
+    Alle bisher übernommenen Einträge werden ersetzt; in Portwerk eingetragene bleiben unberührt. Bei einem Fehler bleibt der alte Stand.
+    ``force``: auch wenn „Abwesenheiten übernehmen“ aus ist (Knopf „jetzt abgleichen“). Liefert den Status (auch gespeichert)."""
+    from datetime import date, timedelta
+    cfg = settings()
+    if not cfg["enabled"] or not (force or cfg.get("sync_absences")):
+        return absences_status()
+    start = date.today()
+    st: dict = {"at": time.time(), "ok": False}
+    try:
+        data = request("GET", f"/api/absences?start={start.isoformat()}&end={(start + timedelta(days=ABSENCE_DAYS)).isoformat()}", None, cfg)
+    except OpenPlanError as e:
+        hint = " – in OpenPlan unter Verwaltung → API-Zugänge die Freigabe „Abwesenheiten“ setzen" if e.status == 403 else ""
+        st["error"] = e.message + hint
+        db.put_settings({ABSENCE_STATUS_KEY: json.dumps(st)})
+        if actor != "system":
+            audit.log(actor, "openplan.absences_failed", "settings", "openplan", st["error"][:300])
+        return st
+    by_name, by_mail = _match_users()
+    rows, unmatched = [], set()
+    for a in data.get("absences", []):
+        uid = by_name.get(str(a.get("username", "")).lower()) or by_mail.get(str(a.get("email", "")).strip().lower())
+        if not uid:
+            unmatched.add(a.get("username", "?"))
+            continue
+        rows.append((uid, a["start_date"], a["end_date"], KIND_LABELS.get(a.get("kind"), "abwesend") + " (OpenPlan)", str(a.get("id", ""))))
+    now = time.time()
+    with db.transaction() as c:
+        c.execute("DELETE FROM user_absences WHERE source = 'openplan'")
+        c.executemany("""INSERT INTO user_absences(user_id, start_date, end_date, note, created_by, created_at, source, external_id)
+                         VALUES (?,?,?,?, 'openplan', ?, 'openplan', ?)""", [(u, s, e, n, now, x) for u, s, e, n, x in rows])
+    st.update(ok=True, received=len(data.get("absences", [])), imported=len(rows), users=len({r[0] for r in rows}), unmatched=sorted(unmatched)[:50])
+    db.put_settings({ABSENCE_STATUS_KEY: json.dumps(st)})
+    if actor != "system":
+        audit.log(actor, "openplan.absences", "settings", "openplan", f"{len(rows)} Abwesenheit(en) übernommen, {len(unmatched)} Benutzer ohne Zuordnung")
+    return st
+
+
+def clear_absences() -> int:
+    """Übernommene Abwesenheiten entfernen (Abgleich ausgeschaltet)."""
+    n = db.row("SELECT COUNT(*) AS n FROM user_absences WHERE source = 'openplan'")["n"]
+    db.execute("DELETE FROM user_absences WHERE source = 'openplan'")
+    db.execute("DELETE FROM app_settings WHERE key = ?", (ABSENCE_STATUS_KEY,))
+    return n

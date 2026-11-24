@@ -12,8 +12,6 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
   (signiert, mit Wiederholung) – nach dem Muster von OpenPlan.
 - **Geräte aus OpenPlan als Importquelle** (Konzept, Abschnitt 6, Richtung 3)
   Neue Geräte aus Geräte-Rollouts (Hostname, Standort, Typ) übernehmen, damit ein geplanter Switch ohne Doppelerfassung im Bestand erscheint.
-- **Abwesenheiten aus OpenPlan übernehmen**
-  OpenPlan führt Abwesenheiten (Urlaub, Schulung, Krankheit); diese könnten in Portwerk automatisch gelten, statt sie doppelt einzutragen.
 - **Historie für Geräte-Orte und Patchfeld-Paare**
   Historisiert sind nur Verbindungen; Zeitreise und „Pfad am Datum“ zeigen Orte und Durchschleifungen mit dem heutigen Stand.
 - **Checkmk-Anbindung über HTTPS**
@@ -56,4 +54,5 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Filter für Locations bei Racks & Schränke und bei den Standorten | #26 |
 | Dark Mode: Standard-Textfarbe, Audit-Log lesbar | #26 |
 | Checkmk: ausstehende Änderungen anzeigen und aus Portwerk aktivieren (nur ohne fremde Änderungen) | #26 |
-| Aufräumen: vorläufige Kabel, von LLDP nicht gesehene Verbindungen, abgelaufene Reservierungen, liegengebliebene Aufträge, geplante Geräte ohne Auftrag; wöchentlicher Bericht an die Admins | (dieser PR) |
+| Aufräumen: vorläufige Kabel, von LLDP nicht gesehene Verbindungen, abgelaufene Reservierungen, liegengebliebene Aufträge, geplante Geräte ohne Auftrag; wöchentlicher Bericht an die Admins | #27 |
+| Abwesenheiten aus OpenPlan übernehmen, Standard-Vertretung (OpenPlan: `GET /api/absences`, Token-Freigabe „Abwesenheiten“) | (dieser PR) |

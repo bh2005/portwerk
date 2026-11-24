@@ -33,7 +33,12 @@ def get_settings(_: Principal = Depends(require_admin)):
 
 @router.put("/api/admin/openplan")
 def put_settings(body: OpenPlanSettingsIn, me: Principal = Depends(require_admin)):
+    was = openplan.settings().get("sync_absences")
     out = openplan.save(body.model_dump(exclude_unset=True))
+    if was and not out["sync_absences"]:
+        n = openplan.clear_absences()                                              # ausgeschaltet: übernommene Einträge wieder entfernen
+        audit.log(me.name, "openplan.absences_cleared", "settings", "openplan", f"{n} übernommene Abwesenheit(en) entfernt")
+        out = openplan.public()
     audit.log(me.name, "settings.openplan.save", "settings", "openplan", f"aktiv={out['enabled']}, {out['base_url']}, Standard-Projekt {out['default_project_id'] or '-'}, Webhook={'ja' if out['webhook_secret_set'] else 'nein'}")
     return out
 
@@ -50,6 +55,16 @@ def test_connection(me: Principal = Depends(require_admin)):
     audit.log(me.name, "openplan.test", "settings", "openplan", f"Konto {who.get('username')}, {len(projects)} Projekte")
     return {"ok": True, "account": who.get("username", ""), "role": who.get("role", ""), "projects": [{"id": p["id"], "name": p["name"], "access": p.get("access", "")} for p in projects[:100]],
             "webhook_url": openplan.public()["webhook_url"]}
+
+
+@router.post("/api/admin/openplan/absences/sync")
+def sync_absences(me: Principal = Depends(require_admin)):
+    """Abwesenheiten jetzt aus OpenPlan übernehmen (sonst stündlich, wenn eingeschaltet)."""
+    openplan.require_enabled()
+    st = openplan.sync_absences(me.name, force=True)
+    if not st.get("ok"):
+        raise HTTPException(502, st.get("error") or "Abgleich fehlgeschlagen")
+    return st
 
 
 # ── Auswahl ───────────────────────────────────────────────────────────────────
