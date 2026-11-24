@@ -4,7 +4,7 @@
       <router-link to="/dashboard" class="text-xs underline text-white/80">Vollansicht</router-link>
     </MobileBar>
     <div class="max-w-2xl mx-auto p-3 space-y-4">
-      <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
+      <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
       <p v-if="loading" class="text-sm text-slate-400">Suche …</p>
 
       <template v-if="r">
@@ -18,7 +18,7 @@
           <p class="text-xs text-slate-400 mt-2">{{ [c.cable_type !== 'other' ? c.cable_type : '', c.length_m ? `${c.length_m} m` : '', c.color].filter(Boolean).join(' · ') }}</p>
           <button v-if="!paths[c.cable_id]" class="mt-3 w-full py-2 rounded-xl border border-ks-600 text-ks-700 dark:text-ks-300 font-medium" @click="loadPath(c)">Ganzen Pfad anzeigen</button>
           <div v-else class="mt-3 border-t border-slate-100 dark:border-slate-700 pt-3">
-            <p v-if="paths[c.cable_id].error" class="text-sm text-red-500">{{ paths[c.cable_id].error }}</p>
+            <p v-if="paths[c.cable_id].error" class="text-sm text-red-500 dark:text-red-400">{{ paths[c.cable_id].error }}</p>
             <PathGraphic v-else-if="paths[c.cable_id].data" :path="paths[c.cable_id].data" />
           </div>
         </div>

@@ -14,7 +14,7 @@
         <button :class="btnPrimary" @click="print">Drucken</button>
       </div>
     </div>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <SendDialog v-if="sendOpen" title="Patchliste senden" :submit="b => api.sendPatchlist({ ...b, ids: data.orders.map(o => o.id), group, only_open: onlyOpen })" @close="sendOpen = false" />
 
     <!-- Kopf (auch im Ausdruck) -->
@@ -40,7 +40,7 @@
       <button :class="btnGhost" :disabled="!selected.size || busy" @click="act('reopen')">Zurücksetzen</button>
       <button :class="btnLink" @click="selectOpen">alle offenen wählen</button>
       <button v-if="selected.size" :class="btnLink" @click="selected = new Set()">Auswahl aufheben</button>
-      <span v-if="note" class="text-sm text-green-600">{{ note }}</span>
+      <span v-if="note" class="text-sm text-green-600 dark:text-green-400">{{ note }}</span>
     </div>
 
     <div v-if="data" :class="card" class="overflow-x-auto print:shadow-none print:border-0">

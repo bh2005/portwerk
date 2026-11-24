@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-5xl space-y-5">
     <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Übersicht</h1>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <div v-if="ready.length" :class="card" class="p-4 border-l-4 border-l-green-500">
       <h2 class="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400 mb-2">Zur Bestätigung vorgeschlagen ({{ ready.length }}) – LLDP stimmt</h2>
       <ul class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
@@ -38,7 +38,7 @@
           <span class="text-xs text-ks-600 dark:text-ks-400">Kapazität öffnen →</span>
         </div>
         <ul class="mt-2 text-sm space-y-0.5">
-          <li v-for="(a, i) in cap.worst" :key="i"><span class="text-red-600 font-medium tabular-nums">{{ a.free_pct }} %</span>
+          <li v-for="(a, i) in cap.worst" :key="i"><span class="text-red-600 font-medium tabular-nums dark:text-red-400">{{ a.free_pct }} %</span>
             <span class="ml-2 text-slate-700 dark:text-slate-200">{{ a.label }}</span><span class="ml-1 text-slate-500">· {{ a.path }}</span></li>
         </ul>
       </router-link>
@@ -65,7 +65,7 @@
               <td :class="td">{{ fmtTime(r.started_at) }}</td>
               <td :class="td">{{ sourceLabel(r.source) }}</td>
               <td :class="td">{{ r.dry_run ? 'Trockenlauf' : (r.stats.applied ? 'angewendet' : 'nicht angewendet') }}</td>
-              <td :class="td" class="text-slate-500">{{ r.stats.created }} neu · {{ r.stats.updated }} geändert · {{ r.stats.unchanged }} gleich<span v-if="r.stats.errors" class="text-red-500"> · {{ r.stats.errors }} Fehler</span></td>
+              <td :class="td" class="text-slate-500">{{ r.stats.created }} neu · {{ r.stats.updated }} geändert · {{ r.stats.unchanged }} gleich<span v-if="r.stats.errors" class="text-red-500 dark:text-red-400"> · {{ r.stats.errors }} Fehler</span></td>
             </tr>
           </tbody>
         </table>

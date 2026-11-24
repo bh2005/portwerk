@@ -6,7 +6,7 @@
     </div>
     <p class="text-xs text-slate-400">Nach jeder Sicherung (automatisch und manuell) werden die aktiven Ziele bedient. Ein Fehler an einem Ziel stört die Sicherung nicht, er steht im Status.
       Verzeichnis (NAS/NFS/SMB, eingehängt), S3 und WebDAV sind möglich. Je Ziel werden automatische Sicherungen nach Anzahl aufbewahrt, manuelle bleiben.</p>
-    <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
+    <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
     <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
     <p v-if="!items.length" class="text-sm text-slate-400">Noch kein externes Ziel eingerichtet.</p>
     <div v-else class="overflow-x-auto">
@@ -24,7 +24,7 @@
               <span v-if="t.last_ok === null" class="text-slate-400">noch nie</span>
               <template v-else>
                 <span :class="t.last_ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">{{ t.last_ok ? '✓' : '✗' }} {{ fmtTime(t.last_at) }}</span>
-                <div v-if="!t.last_ok" class="text-red-500 break-words max-w-xs">{{ t.last_msg }}</div>
+                <div v-if="!t.last_ok" class="text-red-500 break-words max-w-xs dark:text-red-400">{{ t.last_msg }}</div>
                 <div v-else class="text-slate-400 font-mono break-all">{{ t.last_name }}</div>
               </template></td>
             <td :class="td" class="text-right whitespace-nowrap">
@@ -105,7 +105,7 @@ volumes:
               bewahren Sie sie zusätzlich getrennt auf, sonst ist eine Wiederherstellung auf einem neuen Server nicht möglich.</p></div>
           <p v-else class="text-xs text-slate-400">Die Sicherung enthält Passwort-Hashes, Zugangsdaten und das Server-Zertifikat. Ohne Verschlüsselung muss das Ziel entsprechend geschützt sein.</p>
         </div>
-        <p v-if="form.error" class="text-sm text-red-500">{{ form.error }}</p>
+        <p v-if="form.error" class="text-sm text-red-500 dark:text-red-400">{{ form.error }}</p>
       </template>
       <template #footer>
         <div class="flex justify-end gap-2"><button :class="btnGhost" @click="form = null">Abbrechen</button>
@@ -116,7 +116,7 @@ volumes:
     <!-- Sicherungen auf dem Ziel -->
     <SidePanel :open="!!remote" :title="remote ? 'Sicherungen auf ' + remote.t.name : ''" @close="remote = null">
       <template v-if="remote">
-        <p v-if="remote.error" class="text-sm text-red-500">{{ remote.error }}</p>
+        <p v-if="remote.error" class="text-sm text-red-500 dark:text-red-400">{{ remote.error }}</p>
         <p v-else-if="remote.loading" class="text-sm text-slate-400">Lade …</p>
         <p v-else-if="!remote.items.length" class="text-sm text-slate-400">Auf diesem Ziel liegt noch keine Sicherung.</p>
         <ul v-else class="space-y-2">

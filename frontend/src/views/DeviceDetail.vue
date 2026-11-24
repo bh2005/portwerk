@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-6xl space-y-4">
     <router-link to="/devices" class="text-xs text-ks-600 dark:text-ks-400 hover:underline">← Alle Geräte</router-link>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
 
     <template v-if="d">
       <div class="flex items-start justify-between">
@@ -82,7 +82,7 @@
                     title="Aus dem Soll/Ist-Abgleich übernommen – Dosen und Patchfelder sind noch nicht dokumentiert">vorläufig
                     <button v-if="canWrite" class="ml-1 underline" title="Strecke ist vollständig dokumentiert" @click="completeCable(p)">vollständig</button></span>
                   <span v-if="p.cable && p.cable.measurement_ok === true" class="ml-1 text-green-500" title="Messung bestanden">✓</span>
-                  <span v-if="p.cable && p.cable.measurement_ok === false" class="ml-1 text-red-500" title="Messung nicht bestanden">✗</span>
+                  <span v-if="p.cable && p.cable.measurement_ok === false" class="ml-1 text-red-500 dark:text-red-400" title="Messung nicht bestanden">✗</span>
                   <span v-if="!p.cable && !p.reservation && !p.planned" class="text-slate-400">–</span>
                   <span v-if="p.reservation" class="ml-1 inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
                     :title="`reserviert von ${p.reservation.reserved_by}` + (p.reservation.workorder ? ` für ${p.reservation.workorder.number}` : '')">

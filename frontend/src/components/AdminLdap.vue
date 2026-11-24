@@ -11,7 +11,7 @@
       <legend :class="legend">Server</legend>
       <div><label :class="lbl">LDAP-URL</label><input v-model="f.url" :class="inp" placeholder="ldaps://dc01.example.test:636 ldaps://dc02.example.test:636" />
         <p :class="hint">Mehrere Server mit Leerzeichen oder Komma trennen: Der nächste wird nur bei Verbindungsproblemen versucht (nie bei falschem Passwort).</p></div>
-      <p v-if="unencrypted" class="text-xs text-amber-600">⚠ ldap:// überträgt Passwörter unverschlüsselt – bitte ldaps:// verwenden.</p>
+      <p v-if="unencrypted" class="text-xs text-amber-600 dark:text-amber-400">⚠ ldap:// überträgt Passwörter unverschlüsselt – bitte ldaps:// verwenden.</p>
       <div><label :class="lbl">Base-DN</label><input v-model="f.base_dn" :class="inp" placeholder="DC=example,DC=test" /></div>
       <div><label :class="lbl">CA-Zertifikat für LDAPS (PEM, optional)</label>
         <textarea v-model="f.ca_pem" rows="4" :class="inp" class="font-mono text-xs" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----&#10;…&#10;-----END CERTIFICATE-----" />
@@ -48,7 +48,7 @@
           <input v-model="x.group" :class="inp" class="col-span-6" placeholder="CN=Standort-A-Admins,OU=Groups,DC=example,DC=test" />
           <select v-model="x.role" :class="inp" class="col-span-2"><option v-for="[k, l] in ROLES" :key="k" :value="k">{{ l }}</option></select>
           <select v-model="x.site_id" :class="inp" class="col-span-3"><option :value="null" disabled>Standort …</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }}</option></select>
-          <button type="button" class="col-span-1 text-xs text-red-500 hover:text-red-700" @click="f.scoped_groups.splice(i, 1)">✕</button>
+          <button type="button" class="col-span-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400" @click="f.scoped_groups.splice(i, 1)">✕</button>
         </div>
       </div>
       <p class="text-xs text-slate-400">Sind oben Gruppen zugeordnet, werden die Rollen bei <b>jeder Anmeldung</b> aus dem Verzeichnis übernommen (manuelle Änderungen an AD-Konten werden dann überschrieben). Ohne Gruppen-Zuordnung liefert das Verzeichnis nur die Anmeldung: neue Konten bekommen die Rolle unten, danach pflegt der Administrator die Rollen unter Benutzer.</p>
@@ -65,7 +65,7 @@
 
     <div class="flex items-center gap-3">
       <button :class="btnPrimary" :disabled="busy">Speichern</button>
-      <span v-if="msg" class="text-sm text-green-600">{{ msg }}</span><span v-if="err" class="text-sm text-red-500">{{ err }}</span>
+      <span v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</span><span v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</span>
     </div>
 
     <fieldset :class="box">

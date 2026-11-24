@@ -10,7 +10,7 @@
         class="px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors"
         :class="tab === k ? 'border-ks-600 text-ks-700 dark:text-ks-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'">{{ l }}</button>
     </div>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
 
     <!-- Gerätemodelle -->
     <div v-if="tab === 'models'" class="space-y-3">

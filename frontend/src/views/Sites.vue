@@ -7,7 +7,7 @@
         <button @click="openSite()" :class="btnGhost">+ Standort (einfach)</button>
       </div>
     </div>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
 
     <div class="grid md:grid-cols-3 gap-4">
       <div :class="card" class="p-2 md:col-span-1">

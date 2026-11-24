@@ -12,7 +12,7 @@
     <template v-else>
     <p class="text-sm text-slate-500 dark:text-slate-400">Vergleicht die dokumentierte Verkabelung (Soll, auch über Patchfelder hinweg) mit den per LLDP/CDP gemeldeten Nachbarn (Ist).
       <template v-if="res"> Grundlage: {{ res.devices }} Gerät(e) mit Nachbardaten.</template></p>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
 
     <div class="flex flex-wrap gap-2 items-center">
@@ -33,7 +33,7 @@
             <td :class="td" class="text-xs">
               <template v-if="r.soll?.label"><span class="font-mono text-slate-700 dark:text-slate-200">{{ r.soll.label }}</span>
                 <span v-if="r.soll.via.length" class="block text-slate-400">über {{ r.soll.via.join(' → ') }}</span></template>
-              <span v-else-if="r.soll?.why" class="text-amber-600">{{ r.soll.why }}</span>
+              <span v-else-if="r.soll?.why" class="text-amber-600 dark:text-amber-400">{{ r.soll.why }}</span>
               <span v-else class="text-slate-400">nicht dokumentiert</span>
             </td>
             <td :class="td" class="text-xs">
@@ -73,7 +73,7 @@
           <div class="flex items-center justify-between"><span :class="lbl" class="!mb-0">Checkmk</span>
             <button :class="btnLink" @click="checkCmk">neu prüfen</button></div>
           <p v-if="dev.cmk.loading" class="text-slate-400">Prüfe …</p>
-          <p v-else-if="dev.cmk.error" class="text-red-500">{{ dev.cmk.error }}</p>
+          <p v-else-if="dev.cmk.error" class="text-red-500 dark:text-red-400">{{ dev.cmk.error }}</p>
           <p v-else-if="dev.cmk.created" class="text-green-600 dark:text-green-400">In Checkmk angelegt (nur Ping) in {{ dev.cmk.folder }}. Die Änderung ist noch nicht aktiv.</p>
           <CheckmkActivate v-if="dev.cmk.created" />
           <p v-else-if="dev.cmk.exists" class="text-green-600 dark:text-green-400">In Checkmk vorhanden<span class="text-slate-500 dark:text-slate-400"> · {{ dev.cmk.folder || '/' }}<template v-if="dev.cmk.ipaddress"> · {{ dev.cmk.ipaddress }}</template></span></p>
@@ -88,7 +88,7 @@
             <p class="text-xs text-slate-400">Host mit reinem Host-Check, ohne Agent und SNMP; wird als ausstehende Änderung angelegt.</p>
           </template>
         </div>
-        <p v-if="dev.error" class="text-sm text-red-500">{{ dev.error }}</p>
+        <p v-if="dev.error" class="text-sm text-red-500 dark:text-red-400">{{ dev.error }}</p>
       </template>
       <template #footer>
         <div class="flex justify-end gap-2"><button :class="btnGhost" @click="dev = null">Abbrechen</button>

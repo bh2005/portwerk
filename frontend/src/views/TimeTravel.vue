@@ -30,7 +30,7 @@
       </template>
       <div class="ml-auto"><label :class="lbl">Filter</label><input v-model="q" :class="inp" class="!w-56" placeholder="Gerät, Port, Kabel …" /></div>
     </div>
-    <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
+    <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
     <p v-if="loading" class="text-sm text-slate-400">Lade …</p>
 
     <!-- Stand am -->
@@ -46,7 +46,7 @@
             <td :class="td" class="text-xs">{{ cable(c) }}</td>
             <td :class="td" class="text-xs whitespace-nowrap">{{ fmtTime(c.valid_from) }} <Who :name="c.created_by" :wo="c.workorder" /></td>
             <td :class="td" class="text-xs whitespace-nowrap">
-              <span v-if="!c.valid_to" class="text-green-600">steckt noch</span>
+              <span v-if="!c.valid_to" class="text-green-600 dark:text-green-400">steckt noch</span>
               <template v-else>{{ fmtTime(c.valid_to) }} <Who :name="c.ended_by" :wo="c.ended_workorder" /></template>
             </td>
           </tr>
@@ -96,8 +96,8 @@ import { inp, lbl, card, th, td, btnLink, fmtTime } from '../ui.js'
 
 const MODES = [['diff', 'Vergleich'], ['snapshot', 'Stand am']]
 const PRESETS = [[7, '7 Tage'], [30, '30 Tage'], [90, '90 Tage'], ['year', 'seit Jahresbeginn']]
-const SUMMARY = [['added', 'neu', 'text-green-600'], ['removed', 'entfernt', 'text-red-600'], ['moved', 'umgesteckt', 'text-amber-600'],
-  ['changed', 'geändert', 'text-sky-600'], ['temporary', 'zwischenzeitlich', 'text-slate-500']]
+const SUMMARY = [['added', 'neu', 'text-green-600 dark:text-green-400'], ['removed', 'entfernt', 'text-red-600 dark:text-red-400'], ['moved', 'umgesteckt', 'text-amber-600 dark:text-amber-400'],
+  ['changed', 'geändert', 'text-sky-600 dark:text-sky-400'], ['temporary', 'zwischenzeitlich', 'text-slate-500 dark:text-slate-400']]
 const LISTS = [['added', 'Neu', 'text-green-700 dark:text-green-400', '+'], ['removed', 'Entfernt', 'text-red-700 dark:text-red-400', '−'],
   ['temporary', 'Nur zwischenzeitlich gesteckt', 'text-slate-600 dark:text-slate-300', '~']]
 

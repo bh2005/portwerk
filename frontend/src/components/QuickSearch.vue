@@ -10,7 +10,7 @@
         </div>
 
         <div class="max-h-[60vh] overflow-y-auto">
-          <p v-if="error" class="px-4 py-3 text-sm text-red-500">{{ error }}</p>
+          <p v-if="error" class="px-4 py-3 text-sm text-red-500 dark:text-red-400">{{ error }}</p>
           <p v-else-if="q.trim().length < 2" class="px-4 py-6 text-sm text-slate-400 text-center">Mindestens 2 Zeichen eingeben – z. B. den Namen eines Switches, um zu sehen, wo er steht.</p>
           <p v-else-if="!busy && !flat.length" class="px-4 py-6 text-sm text-slate-400 text-center">Nichts gefunden.</p>
 

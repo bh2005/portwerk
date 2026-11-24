@@ -33,8 +33,8 @@
         <PortPicker label="Ende A" v-model="form.port_a_id" :allowed="allowed" :preset-device-id="presetDeviceId" :preset-port-id="presetPortId" :locked="!!presetPortId" @select="a = $event" />
         <PortPicker label="Ende B" v-model="form.port_b_id" :allowed="allowed" @select="b = $event" />
       </div>
-      <p v-if="a && b && a.id === b.id" class="text-xs text-red-500">Ein Port kann nicht mit sich selbst verbunden werden.</p>
-      <p v-for="w in mediumHints" :key="w" class="text-xs text-amber-600">⚠ {{ w }}</p>
+      <p v-if="a && b && a.id === b.id" class="text-xs text-red-500 dark:text-red-400">Ein Port kann nicht mit sich selbst verbunden werden.</p>
+      <p v-for="w in mediumHints" :key="w" class="text-xs text-amber-600 dark:text-amber-400">⚠ {{ w }}</p>
       <p class="text-[11px] text-slate-400">Belegte Ports sind wählbar: Der Assistent fragt dann, ob der alte Patch zurückgebaut werden soll.</p>
     </div>
 
@@ -82,7 +82,7 @@
         <div class="text-slate-500">{{ preview.cable.type }}<template v-if="preview.cable.label"> · Kabelnummer {{ preview.cable.label }}</template><template v-if="form.length_m"> · {{ form.length_m }} m</template> · {{ preview.cable.via }}</div>
         <div v-if="preview.workorder" class="text-slate-500">Patchauftrag: {{ preview.workorder.existing ? `Position in ${preview.workorder.existing}` : `neu „${preview.workorder.new}“` }}</div>
         <div v-if="preview.removals" class="text-amber-700 dark:text-amber-400">Rückbau ({{ preview.removals.via }}): {{ preview.removals.cables.join(', ') }}<span v-if="form.mode === 'workorder'"> – der neue Auftrag startet erst nach bestätigtem Rückbau.</span></div>
-        <div v-for="w in preview.warnings" :key="w" class="text-amber-600">⚠ {{ w }}</div>
+        <div v-for="w in preview.warnings" :key="w" class="text-amber-600 dark:text-amber-400">⚠ {{ w }}</div>
       </div>
     </div>
 

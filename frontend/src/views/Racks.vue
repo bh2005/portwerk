@@ -23,8 +23,8 @@
       <span class="text-xs text-slate-400">{{ shownRacks.length }} von {{ racks.length }}</span>
     </div>
     <p v-if="loaded && racks.length && !shownRacks.length" class="text-sm text-slate-400">Keine Racks oder Schränke für diese Filter.</p>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
-    <p v-if="notice" class="text-sm text-green-600">{{ notice }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
+    <p v-if="notice" class="text-sm text-green-600 dark:text-green-400">{{ notice }}</p>
     <p v-if="loaded && !racks.length" class="text-sm text-slate-400">Noch kein Rack, Schaltschrank oder keine Anlage angelegt. Lege unter „Standorte“ eine passende Location an.</p>
 
     <div v-if="rack" class="grid lg:grid-cols-5 gap-4">

@@ -25,7 +25,7 @@
             <input type="radio" :value="t.id" v-model="taskId" /> <span class="text-xs text-slate-400 w-10">{{ t.wbs }}</span>
             <span class="text-slate-800 dark:text-slate-100 flex-1 truncate">{{ t.name }}</span>
             <span class="text-[11px] text-slate-400">{{ t.status }}<template v-if="t.percent"> · {{ t.percent }}%</template></span>
-            <span v-if="t.refs.portwerk" class="text-[11px] text-amber-600">schon {{ t.refs.portwerk }}</span></label>
+            <span v-if="t.refs.portwerk" class="text-[11px] text-amber-600 dark:text-amber-400">schon {{ t.refs.portwerk }}</span></label>
           <p v-if="!leaves.length" class="px-3 py-3 text-sm text-slate-400">Keine Aufgaben gefunden.</p>
         </div>
       </template>

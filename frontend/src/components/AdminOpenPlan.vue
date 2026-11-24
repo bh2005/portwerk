@@ -38,12 +38,12 @@
     <div class="flex items-center gap-3">
       <button :class="btnPrimary" :disabled="busy">Speichern</button>
       <button type="button" :class="btnGhost" :disabled="busy" @click="test">Verbindung testen</button>
-      <span v-if="msg" class="text-sm text-green-600">{{ msg }}</span><span v-if="err" class="text-sm text-red-500">{{ err }}</span>
+      <span v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</span><span v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</span>
     </div>
     <div v-if="result" class="rounded-lg border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 p-3 text-sm space-y-1">
       <p class="text-green-700 dark:text-green-300">✓ Verbunden als <b>{{ result.account }}</b> ({{ result.role }}) – {{ result.projects.length }} Projekt(e) sichtbar:</p>
       <ul class="text-xs text-slate-600 dark:text-slate-300 list-disc pl-5"><li v-for="p in result.projects.slice(0, 12)" :key="p.id">{{ p.name }} <span class="text-slate-400">(ID {{ p.id }}, {{ p.access }})</span></li></ul>
-      <p v-if="!result.projects.length" class="text-amber-600">Das Dienstkonto sieht noch kein Projekt – bitte in OpenPlan als Mitglied eintragen.</p>
+      <p v-if="!result.projects.length" class="text-amber-600 dark:text-amber-400">Das Dienstkonto sieht noch kein Projekt – bitte in OpenPlan als Mitglied eintragen.</p>
     </div>
   </form>
 </template>

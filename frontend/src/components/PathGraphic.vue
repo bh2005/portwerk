@@ -13,7 +13,7 @@
           <!-- Station -->
           <div class="w-full md:w-40 shrink-0 rounded-xl border-2 p-3 bg-white dark:bg-slate-800"
             :class="n.passive ? 'border-slate-300 dark:border-slate-600 border-dashed' : 'border-slate-400 dark:border-slate-500'">
-            <div class="text-[10px] uppercase tracking-wide text-slate-400">{{ typeLabel(n.device.type) }}<span v-if="n.device.status === 'planned'" class="ml-1 text-sky-600">· geplant</span><span v-if="n.device.status === 'retired'" class="ml-1 text-red-500">· außer Betrieb</span></div>
+            <div class="text-[10px] uppercase tracking-wide text-slate-400">{{ typeLabel(n.device.type) }}<span v-if="n.device.status === 'planned'" class="ml-1 text-sky-600">· geplant</span><span v-if="n.device.status === 'retired'" class="ml-1 text-red-500 dark:text-red-400">· außer Betrieb</span></div>
             <router-link v-if="n.device.id" :to="`/devices/${n.device.id}`" class="block font-semibold text-ks-700 dark:text-ks-300 hover:underline break-all" @click="$emit('navigate')">{{ n.device.hostname }}</router-link>
             <div v-else class="font-semibold text-slate-400 italic">{{ n.device.hostname }}</div>
             <div v-if="n.device.location || n.device.unit" class="text-xs text-slate-500">{{ [n.device.location, n.device.unit ? `HE ${n.device.unit}` : ''].filter(Boolean).join(' · ') }}</div>

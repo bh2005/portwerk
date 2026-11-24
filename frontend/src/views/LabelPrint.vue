@@ -8,7 +8,7 @@
           <button :class="btnPrimary" :disabled="!sheets.length" @click="print">Drucken</button>
         </div>
       </div>
-      <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
+      <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
 
       <div :class="card" class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div class="md:col-span-2"><label :class="lbl">Format</label>

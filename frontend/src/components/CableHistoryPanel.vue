@@ -9,7 +9,7 @@
       <button v-if="at" :class="btnLink" @click="at = ''; load()">alle Zeitpunkte</button>
       <button v-if="portId && deviceId" :class="btnLink" @click="$emit('all-ports')">alle Ports des Geräts</button>
     </div>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <p v-else-if="loading" class="text-sm text-slate-400">Lade …</p>
     <p v-else-if="!rows.length" class="text-sm text-slate-400">{{ at ? 'Zu diesem Zeitpunkt war nichts verbunden.' : 'Noch keine Verbindungen.' }}</p>
     <ul v-else class="space-y-2">

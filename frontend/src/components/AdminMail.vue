@@ -45,7 +45,7 @@
 
     <div class="flex items-center gap-3">
       <button :class="btnPrimary" :disabled="busy">Speichern</button>
-      <span v-if="msg" class="text-sm text-green-600">{{ msg }}</span><span v-if="err" class="text-sm text-red-500">{{ err }}</span>
+      <span v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</span><span v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</span>
     </div>
 
     <fieldset :class="box">

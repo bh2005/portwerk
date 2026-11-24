@@ -47,7 +47,7 @@
           <div><label :class="lbl">SFP+-Ports</label><input v-model.number="custom.sfpp" type="number" min="0" max="64" :class="inp" /></div>
         </div>
       </template>
-      <p v-if="selection" class="text-sm text-green-600">Gewählt: {{ selection }}</p>
+      <p v-if="selection" class="text-sm text-green-600 dark:text-green-400">Gewählt: {{ selection }}</p>
     </div>
 
     <!-- 2: Ort -->
@@ -69,7 +69,7 @@
           <select v-model="form.side_slot" :class="inp" @change="mountChanged"><option value="left">links</option><option value="right">rechts</option></select>
           <p class="text-[11px] text-slate-400 mt-1">aus Sicht der {{ form.mount_side === 'rear' ? 'Rückseite' : 'Vorderseite' }}</p></div>
       </div>
-      <p v-if="form.orientation === 'vertical' && form.location_id && loc?.kind !== 'rack'" class="text-xs text-red-500">Hochkant-Geräte brauchen ein Rack.</p>
+      <p v-if="form.orientation === 'vertical' && form.location_id && loc?.kind !== 'rack'" class="text-xs text-red-500 dark:text-red-400">Hochkant-Geräte brauchen ein Rack.</p>
       <div v-if="isRack">
         <label :class="lbl">{{ form.orientation === 'vertical' ? 'Beginnt bei HE (Länge höchstens bis zur Rackhöhe)' : 'Position im Rack (unterste HE)' }}</label>
         <div class="flex gap-3 items-center flex-wrap">
@@ -88,7 +88,7 @@
     <div v-if="stepKey === 'device'" class="space-y-3">
       <div class="grid grid-cols-2 gap-3">
         <div><label :class="lbl">Hostname {{ passive ? '(optional)' : '*' }}</label><input v-model="form.hostname" :class="inp" :placeholder="passive ? 'leer = automatischer Name (z. B. KF-R1-HE5)' : (isPanel ? 'z. B. PF-R1-HE1' : 'z. B. sw-eg-01')" />
-          <p v-if="nameTaken" class="text-xs text-red-500 mt-1">Dieser Hostname existiert bereits.</p></div>
+          <p v-if="nameTaken" class="text-xs text-red-500 mt-1 dark:text-red-400">Dieser Hostname existiert bereits.</p></div>
         <div v-if="!passive && !isPanel"><label :class="lbl">Mgmt-IP</label><input v-model="form.mgmt_ip" :class="inp" /></div>
         <div v-if="!passive && !isPanel"><label :class="lbl">Seriennummer</label><input v-model="form.serial" :class="inp" /></div>
         <div><label :class="lbl">Status</label>

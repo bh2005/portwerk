@@ -5,7 +5,7 @@
       Nur Dokumentation – Portwerk konfiguriert keine Switches. Am Port legst du VLAN bzw. Profil auf der Geräteseite fest („VLAN“ in der Portzeile);
       im Ablauf gibt es die Auftragsaktion <b>Port umkonfigurieren</b> und eine Ziel-Konfiguration bei „herstellen“/„umstecken“.
     </p>
-    <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
+    <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
 
     <!-- VLAN-Katalog -->
     <section :class="card" class="p-4 space-y-3">

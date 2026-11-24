@@ -21,7 +21,7 @@
       <button :class="btnGhost" @click="load">Suchen</button>
     </div>
 
-    <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
+    <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
 
     <div :class="card" class="overflow-hidden">
       <p v-if="!rows.length" class="p-6 text-sm text-slate-400">Keine Aufträge gefunden.</p>
@@ -47,8 +47,8 @@
             <td :class="td" class="font-mono font-medium text-ks-700 dark:text-ks-400">{{ w.number }}</td>
             <td :class="td" class="font-medium text-slate-800 dark:text-slate-200 max-w-xs truncate">{{ w.title }}</td>
             <td :class="td"><span :class="statusClass(w.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">{{ w.status_label }}</span>
-              <span v-if="w.status === 'done' && w.lldp_status === 'ok'" class="ml-1 text-xs text-green-600 font-medium" title="LLDP-Prüfung stimmt – Vorschlag: bestätigen">LLDP ✓</span>
-              <span v-else-if="['done', 'in_progress'].includes(w.status) && w.lldp_status === 'problem'" class="ml-1 text-xs text-red-600 font-medium" title="LLDP meldet eine Abweichung">LLDP ⚠</span></td>
+              <span v-if="w.status === 'done' && w.lldp_status === 'ok'" class="ml-1 text-xs text-green-600 font-medium dark:text-green-400" title="LLDP-Prüfung stimmt – Vorschlag: bestätigen">LLDP ✓</span>
+              <span v-else-if="['done', 'in_progress'].includes(w.status) && w.lldp_status === 'problem'" class="ml-1 text-xs text-red-600 font-medium dark:text-red-400" title="LLDP meldet eine Abweichung">LLDP ⚠</span></td>
             <td :class="td"><span :class="prioClass(w.priority)" class="text-xs font-medium">{{ prioLabel(w.priority) }}</span></td>
             <td :class="td" class="text-slate-500 text-xs">{{ w.assigned_to ? (w.assigned_to.full_name || w.assigned_to.username) : '–' }}</td>
             <td :class="td" class="text-slate-500 whitespace-nowrap">{{ w.progress.done }}/{{ w.progress.total }}
@@ -91,7 +91,7 @@
             <label :class="lbl">Zeitraum bis</label>
             <input v-model="form.planned_to" type="date" :class="inp" />
           </div>
-          <p v-if="dialogErr" class="text-sm text-red-500">{{ dialogErr }}</p>
+          <p v-if="dialogErr" class="text-sm text-red-500 dark:text-red-400">{{ dialogErr }}</p>
           <div class="flex justify-end gap-2">
             <button :class="btnGhost" @click="dialog=false">Abbrechen</button>
             <button :class="btnPrimary" @click="save" :disabled="saving">{{ saving ? 'Speichere…' : 'Anlegen' }}</button>

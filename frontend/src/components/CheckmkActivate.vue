@@ -5,7 +5,7 @@
       <button :class="btnLink" :disabled="busy" @click="load">neu prüfen</button>
     </div>
     <p v-if="loading" class="text-slate-400">Prüfe …</p>
-    <p v-else-if="error" class="text-red-500">{{ error }}</p>
+    <p v-else-if="error" class="text-red-500 dark:text-red-400">{{ error }}</p>
     <template v-else-if="p">
       <p v-if="!p.count" class="text-slate-500">Keine ausstehenden Änderungen.</p>
       <template v-else>

@@ -5,7 +5,7 @@
       <p class="text-xs text-slate-500 dark:text-slate-400 truncate font-mono">{{ data?.summary || '' }}</p>
     </template>
 
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
     <p v-if="loading && !data" class="text-sm text-slate-400">Lade …</p>
 
@@ -46,8 +46,8 @@
             <span class="font-medium text-slate-700 dark:text-slate-200">{{ links[i].label || 'Kabel' }}</span>
             <span class="text-xs text-slate-500">{{ cableText(links[i]) }}</span>
             <span v-if="links[i].provisional" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" title="Aus dem Soll/Ist-Abgleich übernommen – Dosen und Patchfelder fehlen ggf. noch">vorläufig</span>
-            <span v-if="links[i].measurement_ok === true" class="text-green-600" title="Messung bestanden">✓</span>
-            <span v-if="links[i].measurement_ok === false" class="text-red-500" title="Messung nicht bestanden">✗</span>
+            <span v-if="links[i].measurement_ok === true" class="text-green-600 dark:text-green-400" title="Messung bestanden">✓</span>
+            <span v-if="links[i].measurement_ok === false" class="text-red-500 dark:text-red-400" title="Messung nicht bestanden">✗</span>
           </div>
           <p v-if="links[i].note" class="text-xs text-slate-400 mt-0.5">{{ links[i].note }}</p>
           <div v-if="canWrite" class="flex gap-3 mt-1">
@@ -71,7 +71,7 @@
             <PortPicker :key="'mv' + i + mv.end" v-model="mv.portId" label="Neuer Port" @select="p => mv.sel = p" />
             <p v-if="mv.sel" class="text-xs text-slate-500">Danach: <span class="font-mono">{{ mv.end === 'left' ? mv.sel.device.hostname + ':' + mv.sel.name : endName(i, false) }}</span> →
               <span class="font-mono">{{ mv.end === 'left' ? endName(i, true) : mv.sel.device.hostname + ':' + mv.sel.name }}</span></p>
-            <p v-if="mv.sel?.cable" class="text-xs text-red-500">Der Port ist bereits verbunden ({{ mv.sel.cable.device_hostname }}:{{ mv.sel.cable.port_name }}). Zuerst dort lösen.</p>
+            <p v-if="mv.sel?.cable" class="text-xs text-red-500 dark:text-red-400">Der Port ist bereits verbunden ({{ mv.sel.cable.device_hostname }}:{{ mv.sel.cable.port_name }}). Zuerst dort lösen.</p>
             <p class="text-xs text-slate-400">Das Kabel behält alle Angaben; in der Historie endet die alte Verbindung, die neue beginnt.</p>
             <div class="flex gap-2 justify-end"><button :class="btnGhost" @click="mv = null">Abbrechen</button>
               <button :class="btnPrimary" :disabled="busy || !mv.sel || !!mv.sel.cable" @click="moveEnd(i)">Umstecken</button></div>
@@ -81,7 +81,7 @@
           <div v-if="ins?.i === i" class="mt-2 rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">
             <PortPicker v-model="ins.portId" label="Patchfeld / Dose und Port" @select="p => ins.sel = p" />
             <template v-if="ins.sel">
-              <p v-if="!stationOk(ins.sel)" class="text-xs text-red-500">{{ ins.sel.device.hostname }} ist kein Patchfeld und keine Dose, oder der Port hat keine Gegenseite (vorn ↔ hinten).</p>
+              <p v-if="!stationOk(ins.sel)" class="text-xs text-red-500 dark:text-red-400">{{ ins.sel.device.hostname }} ist kein Patchfeld und keine Dose, oder der Port hat keine Gegenseite (vorn ↔ hinten).</p>
               <template v-else>
                 <p class="text-xs text-slate-500">Reihenfolge: <span class="font-mono">{{ endName(i, ins.swap) }}</span> → <span class="font-mono">{{ ins.sel.name }}</span> ⇄
                   <span class="font-mono">{{ ins.sel.peer_port_name || '?' }}</span> → <span class="font-mono">{{ endName(i, !ins.swap) }}</span></p>

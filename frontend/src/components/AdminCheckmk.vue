@@ -11,7 +11,7 @@
     <div class="flex items-center gap-3">
       <button :class="btnPrimary" :disabled="busy">Speichern</button>
       <a v-if="f.base_url" :href="f.base_url + '/check_mk/'" target="_blank" rel="noopener" :class="btnLink">Site öffnen ↗</a>
-      <span v-if="msg" class="text-sm text-green-600">{{ msg }}</span><span v-if="err" class="text-sm text-red-500">{{ err }}</span>
+      <span v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</span><span v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</span>
     </div>
     <div class="text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 pt-3 max-w-2xl space-y-1">
       <p><b>Soll/Ist-Abgleich:</b> Die LLDP-/CDP-Nachbarn kommen mit dem Checkmk-Import (<code>tools/checkmk_export.py</code> auf dem Checkmk-Server; Beschreibung in <code>docs/checkmk-import.md</code>).
@@ -41,7 +41,7 @@
     <div class="flex items-center gap-3">
       <button :class="btnPrimary" :disabled="busyApi">Speichern</button>
       <button type="button" :class="btnLink" :disabled="busyApi || !a.secret_set" @click="testApi">Verbindung testen</button>
-      <span v-if="msgApi" class="text-sm text-green-600">{{ msgApi }}</span><span v-if="errApi" class="text-sm text-red-500">{{ errApi }}</span>
+      <span v-if="msgApi" class="text-sm text-green-600 dark:text-green-400">{{ msgApi }}</span><span v-if="errApi" class="text-sm text-red-500 dark:text-red-400">{{ errApi }}</span>
     </div>
     <div v-if="a.enabled && a.secret_set" class="max-w-xl space-y-2">
       <CheckmkActivate />

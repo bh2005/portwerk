@@ -5,8 +5,8 @@
       Sie liegt im Datenverzeichnis unter <code>backups/</code>. Lade sie herunter und bewahre sie außerhalb des Servers auf.
       <b>Sie enthält Passwort-Hashes und Zugangsdaten</b> – vertraulich behandeln.
     </p>
-    <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
-    <p v-if="msg" class="text-sm text-green-600">{{ msg }}</p>
+    <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
+    <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
 
     <section :class="box">
       <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
@@ -20,7 +20,7 @@
         <tbody>
           <tr v-for="b in items" :key="b.name" class="border-t border-slate-100 dark:border-slate-700">
             <td :class="td" class="whitespace-nowrap" :title="b.name">{{ fmtTime(b.created_at) }}</td>
-            <td :class="td">{{ b.kind_label }}<span v-if="b.damaged" class="ml-1 text-red-500">(beschädigt)</span></td>
+            <td :class="td">{{ b.kind_label }}<span v-if="b.damaged" class="ml-1 text-red-500 dark:text-red-400">(beschädigt)</span></td>
             <td :class="td" class="text-slate-500">{{ b.created_by || '–' }}</td>
             <td :class="td" class="whitespace-nowrap">{{ size(b.size) }}</td>
             <td :class="td" class="text-slate-500">{{ b.version || '–' }}</td>

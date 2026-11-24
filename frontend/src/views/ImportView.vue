@@ -33,7 +33,7 @@
         <p class="text-xs text-slate-400">{{ csv.preview.rows }} Zeilen erkannt. Ordne den Feldern Spalten zu:</p>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div v-for="fld in csv.preview.fields" :key="fld">
-            <label :class="lbl">{{ fld }}<span v-if="csv.preview.required.includes(fld)" class="text-red-500"> *</span></label>
+            <label :class="lbl">{{ fld }}<span v-if="csv.preview.required.includes(fld)" class="text-red-500 dark:text-red-400"> *</span></label>
             <select v-model="csv.mapping[fld]" :class="inp"><option value="">(nicht importieren)</option>
               <option v-for="h in csv.preview.headers" :key="h" :value="h">{{ h }}</option></select>
           </div>
@@ -84,13 +84,13 @@
           <tr v-for="r in runs" :key="r.id" class="border-t border-slate-100 dark:border-slate-700">
             <td :class="td">{{ fmtTime(r.started_at) }}</td><td :class="td">{{ sourceLabel(r.source) }}</td><td :class="td">{{ r.actor || '–' }}</td>
             <td :class="td">{{ r.dry_run ? 'Trockenlauf' : (r.stats.applied ? 'angewendet' : 'nicht angewendet') }}</td>
-            <td :class="td" class="text-slate-500">{{ r.stats.created }} neu · {{ r.stats.updated }} geändert · {{ r.stats.unchanged }} gleich<span v-if="r.stats.errors" class="text-red-500"> · {{ r.stats.errors }} Fehler</span></td>
+            <td :class="td" class="text-slate-500">{{ r.stats.created }} neu · {{ r.stats.updated }} geändert · {{ r.stats.unchanged }} gleich<span v-if="r.stats.errors" class="text-red-500 dark:text-red-400"> · {{ r.stats.errors }} Fehler</span></td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
 
     <!-- Ergebnis -->
     <div v-if="result && tab !== 'runs'" :class="card" class="p-4 space-y-3">
