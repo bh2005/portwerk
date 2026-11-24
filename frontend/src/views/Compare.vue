@@ -68,6 +68,21 @@
         <div><label :class="lbl">Port am neuen Gerät</label><input v-model="dev.neighbor_port" :class="inp" placeholder="leer = keinen Port anlegen" /></div>
         <label class="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"><input v-model="dev.create_cable" type="checkbox" class="mt-1" :disabled="!dev.neighbor_port.trim()" />
           <span>Verbindung zu {{ dev.row.device }}:{{ dev.row.port }} als vorläufiges Direktkabel dokumentieren<span v-if="!dev.row.port_id" class="block text-xs text-slate-400">Der lokale Port ist noch nicht im Bestand und wird mit angelegt.</span></span></label>
+        <div v-if="cmkOn" class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2 text-sm">
+          <div class="flex items-center justify-between"><span :class="lbl" class="!mb-0">Checkmk</span>
+            <button :class="btnLink" @click="checkCmk">neu prüfen</button></div>
+          <p v-if="dev.cmk.loading" class="text-slate-400">Prüfe …</p>
+          <p v-else-if="dev.cmk.error" class="text-red-500">{{ dev.cmk.error }}</p>
+          <p v-else-if="dev.cmk.created" class="text-green-600 dark:text-green-400">In Checkmk angelegt (nur Ping) in {{ dev.cmk.folder }}. Die Änderung ist noch nicht aktiv – bitte in Checkmk aktivieren.</p>
+          <p v-else-if="dev.cmk.exists" class="text-green-600 dark:text-green-400">In Checkmk vorhanden<span class="text-slate-500 dark:text-slate-400"> · {{ dev.cmk.folder || '/' }}<template v-if="dev.cmk.ipaddress"> · {{ dev.cmk.ipaddress }}</template></span></p>
+          <template v-else-if="dev.cmk.exists === false">
+            <p class="text-amber-600 dark:text-amber-400">Nicht in Checkmk vorhanden.</p>
+            <div><label :class="lbl">Ordner in Checkmk</label>
+              <select v-model="dev.cmk.folder" :class="inp"><option v-for="f in cmkFolders" :key="f.path" :value="f.path">{{ f.path }} · {{ f.title }}</option></select></div>
+            <button :class="btnGhost" :disabled="dev.cmk.busy || !dev.hostname.trim()" @click="createCmk">In Checkmk anlegen (nur Ping)</button>
+            <p class="text-xs text-slate-400">Host mit reinem Host-Check, ohne Agent und SNMP; wird als ausstehende Änderung angelegt.</p>
+          </template>
+        </div>
         <p v-if="dev.error" class="text-sm text-red-500">{{ dev.error }}</p>
       </template>
       <template #footer>
@@ -93,7 +108,7 @@ const route = useRoute(), router = useRouter()
 const tab = ref(route.query.tab === 'vlan' ? 'vlan' : 'lldp')
 function setTab(k) { tab.value = k; router.replace({ query: k === 'vlan' ? { tab: 'vlan' } : {} }) }
 
-const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), dev = ref(null)
+const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), dev = ref(null), cmkOn = ref(false), cmkFolders = ref([]), cmkDefault = ref('/')
 const canWrite = canWriteMaster()
 const active = ref(new Set(['mismatch', 'port_mismatch', 'undocumented', 'not_seen', 'unmapped']))
 const chips = [['mismatch', 'anderes Gerät'], ['port_mismatch', 'anderer Port'], ['undocumented', 'nicht dokumentiert'], ['not_seen', 'nicht gesehen'], ['unmapped', 'Port unbekannt'], ['unknown', 'keine Daten'], ['ok', 'stimmt']]
@@ -120,7 +135,24 @@ Die Verbindung wird als „vorläufig“ markiert. Dosen und Patchfelder können
 const isMac = n => /^([0-9a-f]{2}[:.-]?){5}[0-9a-f]{2}$/i.test(n || '')
 function openAdoptDevice(row, ist) {
   dev.value = { row, ist, hostname: String(ist.name).split('.')[0].toLowerCase(), type: ist.type_guess || 'other', mgmt_ip: ist.address || '',
-    neighbor_port: ist.port || '', create_cable: true, error: '', busy: false }
+    neighbor_port: ist.port || '', create_cable: true, error: '', busy: false, cmk: { loading: false, exists: null, error: '', folder: cmkDefault.value, busy: false, created: false } }
+  if (cmkOn.value) checkCmk()
+}
+async function checkCmk() {
+  const c = dev.value?.cmk
+  if (!c) return
+  c.loading = true; c.error = ''; c.created = false
+  try {
+    const r = await api.checkmkHost(dev.value.hostname.trim())
+    c.exists = r.exists; c.folder = r.exists ? r.folder : (c.folder || cmkDefault.value); c.ipaddress = r.ipaddress
+    if (!r.exists && !cmkFolders.value.length) cmkFolders.value = await api.checkmkFolders()
+  } catch (e) { c.error = errText(e) } finally { c.loading = false }
+}
+async function createCmk() {
+  const d = dev.value, c = d.cmk
+  c.busy = true; c.error = ''
+  try { const r = await api.checkmkCreateHost({ hostname: d.hostname.trim(), ip: d.mgmt_ip.trim(), folder: c.folder }); c.created = true; c.exists = true; c.folder = r.folder }
+  catch (e) { c.error = errText(e) } finally { c.busy = false }
 }
 async function adoptDevice() {
   const d = dev.value
@@ -137,5 +169,9 @@ async function downloadCsv() {
   const r = await fetch(`/api/compare/export.csv?status=${sel}${fSite.value ? '&site_id=' + fSite.value : ''}`, { headers: { 'X-Auth-Token': getToken() } })
   const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = 'soll-ist.csv'; a.click(); URL.revokeObjectURL(a.href)
 }
-onMounted(async () => { try { sites.value = await api.sites() } catch { /* ignore */ } await load() })
+onMounted(async () => {
+  try { const s = await api.checkmkStatus(); cmkOn.value = s.enabled; cmkDefault.value = s.default_folder } catch { /* Checkmk-Anbindung optional */ }
+  try { sites.value = await api.sites() } catch { /* ignore */ }
+  await load()
+})
 </script>

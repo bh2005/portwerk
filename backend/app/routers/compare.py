@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 import time
 
-from .. import access, audit, compare, db, reservations
+from .. import access, audit, checkmk_api, compare, db, reservations
 from ..access import require_writer
 from ..auth import Principal, current_principal, require_admin
 from ..schemas import DEVICE_TYPES, DeviceIn, PortIn
@@ -49,6 +49,66 @@ def put_link(body: CheckmkLinkIn, me: Principal = Depends(require_admin)):
     db.put_settings({SETTING_KEY: json.dumps({"base_url": url, "link_all": body.link_all})})
     audit.log(me.name, "checkmk.settings", "settings", 0, url or "aus")
     return get_link(me)
+
+
+class CheckmkApiIn(BaseModel):
+    enabled: Optional[bool] = None
+    api_url: Optional[str] = Field(default=None, max_length=300)       # Site-Adresse ohne /check_mk/api, z. B. http://host/site
+    user: Optional[str] = Field(default=None, max_length=80)
+    secret: Optional[str] = Field(default=None, max_length=200)        # leer/fehlend = unverändert
+    ca_pem: Optional[str] = Field(default=None, max_length=20000)
+    verify_tls: Optional[bool] = None
+    default_folder: Optional[str] = Field(default=None, max_length=300)
+
+
+@router.get("/api/admin/checkmk-api")
+def get_checkmk_api(_: Principal = Depends(require_admin)):
+    return checkmk_api.public()
+
+
+@router.put("/api/admin/checkmk-api")
+def put_checkmk_api(body: CheckmkApiIn, me: Principal = Depends(require_admin)):
+    out = checkmk_api.save(body.model_dump(exclude_none=True))
+    audit.log(me.name, "settings.checkmk_api.save", "settings", 0, f"aktiv={out['enabled']}, {out['api_url']}, User {out['user']}, Standardordner {out['default_folder']}")
+    return out
+
+
+@router.post("/api/admin/checkmk-api/test")
+def test_checkmk_api(_: Principal = Depends(require_admin)):
+    return checkmk_api.check_connection()
+
+
+@router.get("/api/checkmk/status")
+def checkmk_status(_: Principal = Depends(current_principal)):
+    s = checkmk_api.settings()
+    return {"enabled": bool(s["enabled"] and s["api_url"] and s["user"] and s["secret"]), "default_folder": s["default_folder"]}
+
+
+@router.get("/api/checkmk/host")
+def checkmk_host(name: str, _: Principal = Depends(require_writer)):
+    """Ist der Host in Checkmk vorhanden? (Ordner und IP, falls ja)"""
+    return checkmk_api.host(name)
+
+
+@router.get("/api/checkmk/folders")
+def checkmk_folders(_: Principal = Depends(require_writer)):
+    return checkmk_api.folders()
+
+
+class CheckmkHostIn(BaseModel):
+    hostname: str = Field(min_length=1, max_length=120)
+    ip: str = Field(default="", max_length=80)
+    folder: str = Field(default="", max_length=300)                    # leer = Standardordner aus den Einstellungen
+
+
+@router.post("/api/checkmk/hosts", status_code=201)
+def checkmk_create_host(body: CheckmkHostIn, me: Principal = Depends(require_writer)):
+    """Host in Checkmk anlegen – nur mit Host-Check (Ping), als ausstehende Änderung (Aktivierung in Checkmk). Nur mit globaler Berechtigung."""
+    if not me.is_global:
+        raise HTTPException(403, "Hosts in Checkmk anlegen nur mit globaler Berechtigung")
+    res = checkmk_api.create_host(body.hostname, body.ip, body.folder)
+    audit.log(me.name, "checkmk.host.create", "host", 0, f"{res['host_name']} -> {res['folder']} (Ping, Aktivierung ausstehend)")
+    return res
 
 
 @router.get("/api/compare")
