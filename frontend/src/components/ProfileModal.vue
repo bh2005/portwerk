@@ -123,8 +123,10 @@ const show = ref(false), saving = ref(false), msg = ref(''), msgErr = ref(false)
 const firstField = ref(null)
 const NOTIFY = [['assigned', 'Mir wurde ein Auftrag zugewiesen'], ['my_orders', 'Mein Auftrag wurde freigegeben, abgelehnt, auf Nacharbeit gesetzt oder bestätigt'],
   ['lldp_problem', 'LLDP meldet eine Abweichung bei einem Auftrag, den ich ausgeführt habe'], ['reservation_expiry', 'Meine Reservierung läuft in 3 Tagen ab'],
-  ['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)'], ['new_user', 'Ein neuer Benutzer ohne Rechte hat sich angemeldet (globale Administratoren)']]
-const notifyShown = computed(() => NOTIFY.filter(([k]) => k !== 'new_user' || (me.value.roles || []).includes('admin')))     // nur für globale Administratoren
+  ['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)'], ['new_user', 'Ein neuer Benutzer ohne Rechte hat sich angemeldet (globale Administratoren)'],
+  ['cleanup_report', 'Wöchentlicher Aufräumbericht (globale Administratoren)']]
+const ADMIN_ONLY = ['new_user', 'cleanup_report']
+const notifyShown = computed(() => NOTIFY.filter(([k]) => !ADMIN_ONLY.includes(k) || (me.value.roles || []).includes('admin')))     // nur für globale Administratoren
 const START_PAGES = [['', 'automatisch (Übersicht, Techniker am Handy: mobil)'], ['dashboard', 'Übersicht'], ['workorders', 'Patchaufträge'],
   ['m', 'Meine Aufträge (mobil)'], ['racks', 'Racks'], ['capacity', 'Kapazität']]
 const prefs = ref(null), sites = ref([]), sessions = ref(null), prefsMsg = ref(''), represents = ref([])

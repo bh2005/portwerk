@@ -20,6 +20,7 @@ import LabelPrint from './views/LabelPrint.vue'
 import CableLookup from './views/CableLookup.vue'
 import Reservations from './views/Reservations.vue'
 import Capacity from './views/Capacity.vue'
+import Cleanup from './views/Cleanup.vue'
 import TimeTravel from './views/TimeTravel.vue'
 import VlanAdmin from './views/VlanAdmin.vue'
 import MobileHome from './views/mobile/MobileHome.vue'
@@ -47,6 +48,7 @@ const router = createRouter({
     { path: '/labels',      component: LabelPrint },
     { path: '/reservations', component: Reservations },
     { path: '/capacity',    component: Capacity },
+    { path: '/cleanup',     component: Cleanup },
     { path: '/timetravel',  component: TimeTravel },
     { path: '/vlans',       component: VlanAdmin },
     { path: '/q/k/:label',  component: CableLookup, meta: { bare: true } },   // Ziel der QR-Codes auf Kabeletiketten (meist am Handy)
