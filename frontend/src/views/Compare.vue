@@ -13,6 +13,7 @@
     <p class="text-sm text-slate-500 dark:text-slate-400">Vergleicht die dokumentierte Verkabelung (Soll, auch über Patchfelder hinweg) mit den per LLDP/CDP gemeldeten Nachbarn (Ist).
       <template v-if="res"> Grundlage: {{ res.devices }} Gerät(e) mit Nachbardaten.</template></p>
     <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
 
     <div class="flex flex-wrap gap-2 items-center">
       <button v-for="[k, l] in chips" :key="k" type="button" @click="toggle(k)" class="px-3 py-1 rounded-full text-xs font-medium border transition-colors"
@@ -40,7 +41,11 @@
                 <span class="text-slate-400"> · {{ i.protocol.toUpperCase() }}<template v-if="!i.device_id"> · nicht im Bestand</template></span></div>
               <span v-if="!r.ist.length" class="text-slate-400">kein Nachbar gesehen</span>
             </td>
-            <td :class="td" class="text-right"><router-link v-if="r.soll?.label || r.ist[0]?.port_id" class="text-xs text-ks-600 dark:text-ks-400 hover:underline" :to="`/devices/${r.device_id}`">Gerät →</router-link></td>
+            <td :class="td" class="text-right whitespace-nowrap">
+              <button v-if="r.adopt && canWrite" :class="btnLink" class="mr-3" :disabled="busy === r.port_id"
+                :title="`Als Direktkabel zu ${r.adopt.label} dokumentieren (vorläufig – Dosen und Patchfelder später nachtragen)`" @click="adopt(r)">Verbindung übernehmen</button>
+              <button v-if="r.port_id" :class="btnLink" class="mr-3" title="Frühere Verbindungen dieses Ports" @click="hist = { id: r.port_id, name: r.port, hostname: r.device, deviceId: r.device_id }">Historie</button>
+              <router-link v-if="r.soll?.label || r.ist[0]?.port_id" class="text-xs text-ks-600 dark:text-ks-400 hover:underline" :to="`/devices/${r.device_id}`">Gerät →</router-link></td>
           </tr>
           <tr v-if="!shown.length"><td colspan="5" class="px-3 py-6 text-center text-slate-400">
             {{ res && !res.devices ? 'Noch keine Nachbardaten – sie kommen mit dem Checkmk-Import (Verwaltung → Checkmk).' : 'Keine Einträge für diese Auswahl.' }}</td></tr>
@@ -48,14 +53,16 @@
       </table>
     </div>
     </template>
+    <CableHistoryPanel :open="!!hist" :port-id="hist?.id ?? null" :device-id="hist?.deviceId ?? null" :hostname="hist?.hostname || ''" :port-name="hist?.name || ''" @close="hist = null" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { api, errText, getToken, defaultSite } from '../api.js'
-import { inp, card, btnGhost, th, td } from '../ui.js'
+import { api, errText, getToken, defaultSite, canWriteMaster } from '../api.js'
+import { inp, card, btnGhost, btnLink, th, td } from '../ui.js'
+import CableHistoryPanel from '../components/CableHistoryPanel.vue'
 import VlanCompare from '../components/VlanCompare.vue'
 
 const TABS = [['lldp', 'Verkabelung (LLDP/CDP)'], ['vlan', 'VLANs (Checkmk)']]
@@ -63,7 +70,8 @@ const route = useRoute(), router = useRouter()
 const tab = ref(route.query.tab === 'vlan' ? 'vlan' : 'lldp')
 function setTab(k) { tab.value = k; router.replace({ query: k === 'vlan' ? { tab: 'vlan' } : {} }) }
 
-const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref('')
+const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null)
+const canWrite = canWriteMaster()
 const active = ref(new Set(['mismatch', 'port_mismatch', 'undocumented', 'not_seen', 'unmapped']))
 const chips = [['mismatch', 'anderes Gerät'], ['port_mismatch', 'anderer Port'], ['undocumented', 'nicht dokumentiert'], ['not_seen', 'nicht gesehen'], ['unmapped', 'Port unbekannt'], ['unknown', 'keine Daten'], ['ok', 'stimmt']]
 const chipClass = s => ({ ok: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', mismatch: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
@@ -77,6 +85,14 @@ function toggle(k) { const s = new Set(active.value); s.has(k) ? s.delete(k) : s
 async function load() {
   error.value = ''
   try { res.value = await api.compare(fSite.value ? { site_id: fSite.value } : {}) } catch (e) { error.value = errText(e) }
+}
+async function adopt(r) {
+  if (!confirm(`${r.device}:${r.port} ↔ ${r.adopt.label} als Direktkabel dokumentieren?
+
+Die Verbindung wird als „vorläufig“ markiert. Dosen und Patchfelder können später ergänzt werden.`)) return
+  busy.value = r.port_id; error.value = ''; msg.value = ''
+  try { await api.adoptConnection(r.port_id); msg.value = `Verbindung ${r.device}:${r.port} ↔ ${r.adopt.label} übernommen (vorläufig).`; await load() }
+  catch (e) { error.value = errText(e) } finally { busy.value = null }
 }
 async function downloadCsv() {
   const sel = [...active.value].join(',')

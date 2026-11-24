@@ -103,6 +103,23 @@ class _World:
                 return i
         return self.by_ip.get(str(address or "").split("/")[0]) if not ids else None
 
+    def resolve(self, o: dict) -> dict:
+        """Ein gemeldeter Nachbar (Zeile aus ``observations``) mit aufgelöstem Gerät/Port aus dem Bestand."""
+        dev_id = self.device_by_neighbor(o["neighbor_name"], o["neighbor_address"])
+        port_id = self.by_dev_port.get((dev_id, norm_port(o["neighbor_port"]))) if dev_id else None
+        return {"name": o["neighbor_name"], "port": o["neighbor_port"], "address": o["neighbor_address"], "protocol": o["protocol"],
+                "device_id": dev_id, "port_id": port_id, "label": self.label(port_id) if port_id else (self.dev[dev_id]["hostname"] if dev_id else "")}
+
+    def adopt_target(self, port_id: int, ist: list[dict]) -> Optional[int]:
+        """Gegenport, wenn der Port „übernommen“ werden kann: kein Kabel am Port, genau ein gemeldeter Nachbar, dessen Port im Bestand
+        bekannt und noch frei ist. Sonst None (Konflikte und Mehrdeutigkeiten löst man bewusst von Hand)."""
+        if port_id in self.cable or port_id in self.peer or len(ist) != 1:
+            return None
+        t = ist[0]["port_id"]
+        if not t or t == port_id or t in self.cable or t in self.peer:
+            return None
+        return t
+
     def trace(self, port_id: int) -> tuple[Optional[int], list[str], str]:
         """(Endport am ersten aktiven Gerät | None, Zwischenstationen, Grund bei Abbruch)."""
         hops, cur, seen = [], port_id, set()
@@ -144,12 +161,6 @@ def compare(me: Principal, site_id: Optional[int] = None) -> dict:
         obs.setdefault(o["device_id"], []).append(o)
     rows, seen_pairs = [], set()
 
-    def resolve(o: dict) -> dict:
-        dev_id = w.device_by_neighbor(o["neighbor_name"], o["neighbor_address"])
-        port_id = w.by_dev_port.get((dev_id, norm_port(o["neighbor_port"]))) if dev_id else None
-        return {"name": o["neighbor_name"], "port": o["neighbor_port"], "address": o["neighbor_address"], "protocol": o["protocol"],
-                "device_id": dev_id, "port_id": port_id, "label": w.label(port_id) if port_id else (w.dev[dev_id]["hostname"] if dev_id else "")}
-
     for did, d in w.dev.items():
         if not d["neighbors_at"]:
             continue
@@ -167,7 +178,7 @@ def compare(me: Principal, site_id: Optional[int] = None) -> dict:
         base = {"device_id": did, "device": d["hostname"], "site_id": d["site_id"], "seen_at": d["neighbors_at"]}
 
         for p in sorted(mine, key=lambda x: x["id"]):
-            ist = _merge([resolve(o) for o in by_port.get(p["id"], [])])
+            ist = _merge([w.resolve(o) for o in by_port.get(p["id"], [])])
             end, hops, why = w.trace(p["id"])
             soll = {"port_id": end, "label": w.label(end), "via": hops, "why": why} if (end or hops) else None
             if not ist and not end:
@@ -187,12 +198,31 @@ def compare(me: Principal, site_id: Optional[int] = None) -> dict:
                     if key in seen_pairs:
                         continue
                     seen_pairs.add(key)
-            rows.append({**base, "port_id": p["id"], "port": p["name"], "status": status, "status_label": STATUS_LABELS[status], "soll": soll, "ist": ist})
+            target = w.adopt_target(p["id"], ist) if status == "undocumented" else None
+            adopt = {"port_id": target, "label": w.label(target)} if target else None      # „Verbindung übernehmen“ möglich
+            rows.append({**base, "port_id": p["id"], "port": p["name"], "status": status, "status_label": STATUS_LABELS[status], "soll": soll, "ist": ist, "adopt": adopt})
         for o in unmapped:
-            rows.append({**base, "port_id": None, "port": o["local_port"], "status": "unmapped", "status_label": STATUS_LABELS["unmapped"], "soll": None, "ist": _merge([resolve(o)])})
+            rows.append({**base, "port_id": None, "port": o["local_port"], "status": "unmapped", "status_label": STATUS_LABELS["unmapped"], "soll": None, "ist": _merge([w.resolve(o)]), "adopt": None})
 
     rows.sort(key=lambda r: (-SEVERITY[r["status"]], r["device"].lower(), r["port"]))
     summary = {k: 0 for k in STATUS_LABELS}
     for r in rows:
         summary[r["status"]] += 1
     return {"summary": summary, "rows": rows, "devices": sum(1 for d in w.dev.values() if d["neighbors_at"] and (vs is None or d["site_id"] in vs))}
+
+
+def adopt(port_id: int) -> tuple[int, int]:
+    """Verbindung aus dem Ist übernehmen: liefert (lokaler Port, Gegenport) für ein Kabel, das dem gesehenen Nachbarn entspricht.
+    Rechnet mit dem aktuellen Stand neu, damit nichts übernommen wird, was sich inzwischen geändert hat. ValueError mit Grund, wenn nicht möglich."""
+    w = _World()
+    if port_id not in w.port:
+        raise ValueError("Port nicht gefunden")
+    obs = [o for o in db.rows("SELECT * FROM observations WHERE port_id = ?", (port_id,))
+           if not (_MAC.match(o["neighbor_name"]) and not w.device_by_neighbor(o["neighbor_name"], o["neighbor_address"]))]
+    ist = _merge([w.resolve(o) for o in obs])
+    if port_id in w.cable or port_id in w.peer:
+        raise ValueError("Am Port ist bereits eine Verbindung dokumentiert")
+    target = w.adopt_target(port_id, ist)
+    if not target:
+        raise ValueError("Keine eindeutige, freie Gegenstelle im Bestand – bitte von Hand dokumentieren")
+    return port_id, target

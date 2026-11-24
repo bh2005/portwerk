@@ -168,6 +168,7 @@ export const api = {
   checkmkLink:    () => get('/api/integrations/checkmk'),
   saveCheckmkLink: b => put('/api/admin/checkmk', b),
   compare:        params => get('/api/compare', params),
+  adoptConnection: portId => post('/api/compare/adopt', { port_id: portId }),
   wanMeta:        () => get('/api/wan/meta'),
   wanLinks:       params => get('/api/wan', params),
   wanLink:        id => get(`/api/wan/${id}`),

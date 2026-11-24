@@ -11,7 +11,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from .. import audit, compare, db
+import time
+
+from .. import access, audit, compare, db, reservations
+from ..access import require_writer
 from ..auth import Principal, current_principal, require_admin
 
 router = APIRouter(tags=["soll-ist"])
@@ -54,6 +57,30 @@ def get_compare(site_id: Optional[int] = None, status: str = "", me: Principal =
         res["rows"] = [r for r in res["rows"] if r["status"] in wanted]
     res["labels"] = compare.STATUS_LABELS
     return res
+
+
+class AdoptIn(BaseModel):
+    port_id: int
+
+
+@router.post("/api/compare/adopt", status_code=201)
+def adopt(body: AdoptIn, me: Principal = Depends(require_writer)):
+    """„Verbindung übernehmen“: dokumentiert eine per LLDP/CDP gesehene, bisher undokumentierte Verbindung als Direktkabel.
+    Das Kabel ist als vorläufig markiert – Dosen und Patchfelder lassen sich später nachtragen."""
+    try:
+        a, b = compare.adopt(body.port_id)
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    access.require_write(me, access.site_of_port(a))
+    access.require_write(me, access.site_of_port(b))                                  # beide Enden müssen im eigenen Bereich liegen
+    reservations.check([a, b], use_reserved=False, by=me.name)
+    lo, hi = (a, b) if a < b else (b, a)
+    cid = db.execute(
+        """INSERT INTO cables(port_a_id, port_b_id, cable_label, cable_type, note, created_by, created_at, provisional)
+           VALUES (?,?,?,?,?,?,?,1)""",
+        (lo, hi, "", "other", "Aus Soll/Ist-Abgleich übernommen (LLDP/CDP) – Strecke noch nicht vollständig dokumentiert", me.name, time.time()))
+    audit.log(me.name, "cable.adopt", "port", a, f"-> {b}")
+    return {"cable_id": cid, "port_a_id": lo, "port_b_id": hi}
 
 
 def _cell(x):

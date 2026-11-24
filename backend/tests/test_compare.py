@@ -160,3 +160,36 @@ def test_export_tool_location_helpers(tmp_path):
     f.mkdir(parents=True)
     (f / "tags.mk").write_text("# Written by Checkmk store\n\nwato_tags.update({'tag_groups': [{'id': 'location', 'title': 'L', 'tags': [{'id': 'LOC1', 'title': 'LOC1 Werk Eins', 'aux_tags': []}]}], 'aux_tags': []})\n")
     assert m.tag_titles(tmp_path, "location") == {"LOC1": "LOC1 Werk Eins"} and m.tag_titles(tmp_path, "nope") == {}
+
+
+def test_adopt_connection(client, admin, lab):
+    """„Verbindung übernehmen“: undokumentierte Verbindung wird als vorläufiges Direktkabel angelegt."""
+    rows, _ = by(client, admin)
+    r = rows[("sw1", "Gi0/4")]
+    assert r["status"] == "undocumented" and r["adopt"] is None                    # Nachbar „fremd-sw“ ist nicht im Bestand → nicht übernehmbar
+    assert rows[("sw1", "Gi0/1")]["adopt"] is None                                # bereits dokumentiert
+    sw1 = [d for d in client.get("/api/devices?limit=100", headers=admin).json()["items"] if d["hostname"] == "sw1"][0]["id"]
+    ports = {p["name"]: p["id"] for p in client.get(f"/api/devices/{sw1}/ports", headers=admin).json()}
+    assert client.post("/api/compare/adopt", headers=admin, json={"port_id": ports["Gi0/4"]}).status_code == 409   # keine Gegenstelle im Bestand
+
+    # sw2 meldet Gi0/4 als undokumentierten Nachbarn von sw1: eindeutig und frei → übernehmbar
+    imp = client.post("/api/import/checkmk", headers=admin, json={"site_code": "S1", "hosts": [
+        {"host": "sw2", "inventory": tree(6, lldp=[nb("Gi0/1", "sw1", "Gi0/1"), nb("Gi0/6", "sw1", "Gi0/6")])}]})
+    assert imp.status_code == 200, imp.text
+    sw2 = [d for d in client.get("/api/devices?limit=100", headers=admin).json()["items"] if d["hostname"] == "sw2"][0]["id"]
+    p2 = {p["name"]: p["id"] for p in client.get(f"/api/devices/{sw2}/ports", headers=admin).json()}
+    rows, _ = by(client, admin)
+    a = rows[("sw2", "Gi0/6")]
+    assert a["status"] == "undocumented" and a["adopt"]["label"] == "sw1:Gi0/6"
+    res = client.post("/api/compare/adopt", headers=admin, json={"port_id": p2["Gi0/6"]})
+    assert res.status_code == 201, res.text
+    cab = client.get("/api/cables", headers=admin, params={"provisional": True}).json()
+    assert len(cab) == 1 and cab[0]["provisional"] is True and "Soll/Ist" in cab[0]["note"]
+    assert client.post("/api/compare/adopt", headers=admin, json={"port_id": p2["Gi0/6"]}).status_code == 409    # jetzt dokumentiert
+    rows, _ = by(client, admin)
+    assert ("sw2", "Gi0/6") not in rows or rows[("sw2", "Gi0/6")]["status"] == "unmapped" or rows[("sw2", "Gi0/6")]["status"] != "undocumented"
+    # Vorläufig-Kennzeichen aufheben („Strecke vollständig“)
+    up = client.put(f"/api/cables/{cab[0]['id']}", headers=admin, json={"cable_type": "other", "provisional": False})
+    assert up.status_code == 200, up.text
+    assert client.get("/api/cables", headers=admin, params={"provisional": True}).json() == []
+    assert client.get("/api/cables", headers=admin, params={"provisional": False}).json()
