@@ -15,6 +15,7 @@
     <AdminMail v-if="tab === 'mail'" />
     <AdminCheckmk v-if="tab === 'checkmk'" />
     <AdminOpenPlan v-if="tab === 'openplan'" />
+    <AdminReleases v-if="tab === 'releases'" />
 
     <!-- Benutzer -->
     <div v-if="tab === 'users'" class="space-y-3">
@@ -171,6 +172,7 @@ import AbsenceEditor from '../components/AbsenceEditor.vue'
 import AdminBackup from '../components/AdminBackup.vue'
 import AdminMail from '../components/AdminMail.vue'
 import AdminCheckmk from '../components/AdminCheckmk.vue'
+import AdminReleases from '../components/AdminReleases.vue'
 import AdminOpenPlan from '../components/AdminOpenPlan.vue'
 import { helpContext } from '../content/helpContext.js'
 import { api, errText, isAdmin, siteAdminIds } from '../api.js'
@@ -181,7 +183,7 @@ const OPT_OUT = { confirm_suggest: 'Aufträge zur Bestätigung vorgeschlagen', a
   lldp_problem: 'LLDP-Abweichung bei eigener Ausführung', reservation_expiry: 'Ablauf eigener Reservierungen' }
 const optOutText = n => 'Selbst abbestellte E-Mails: ' + Object.entries(n).filter(([, v]) => !v).map(([k]) => OPT_OUT[k] || k).join(', ')
 const absenceFor = ref(null)
-const tabs = globalAdmin ? [['users', 'Benutzer'], ['tokens', 'API-Zugänge'], ['ldap', 'AD / LDAP'], ['tls', 'Zertifikat (ACME)'], ['backup', 'Sicherung'], ['mail', 'E-Mail'], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan'], ['audit', 'Audit-Log']] : [['users', 'Benutzer']]
+const tabs = globalAdmin ? [['users', 'Benutzer'], ['tokens', 'API-Zugänge'], ['ldap', 'AD / LDAP'], ['tls', 'Zertifikat (ACME)'], ['backup', 'Sicherung'], ['mail', 'E-Mail'], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan'], ['audit', 'Audit-Log'], ['releases', 'Releases']] : [['users', 'Benutzer']]
 const sites = ref([])
 const siteChoices = () => globalAdmin ? sites.value : sites.value.filter(s => siteAdminIds().includes(s.id))
 const scopeText = s => `${roleLabel(s.role)} @ ${s.site_code}`

@@ -193,3 +193,15 @@ def test_adopt_connection(client, admin, lab):
     assert up.status_code == 200, up.text
     assert client.get("/api/cables", headers=admin, params={"provisional": True}).json() == []
     assert client.get("/api/cables", headers=admin, params={"provisional": False}).json()
+
+
+def test_releases(client, admin):
+    from app import releases
+    r = releases.parse("# Änderungen\n\n## 1.2.0 – 2026-01-02\n- Titel A: Text A\n- ohne Doppelpunkt\n\n## 1.1.0 – 2026-01-01\n- B: x\n")
+    assert [x["version"] for x in r] == ["1.2.0", "1.1.0"]
+    assert r[0]["items"] == [{"title": "Titel A", "text": "Text A"}, {"title": "", "text": "ohne Doppelpunkt"}]
+    res = client.get("/api/releases", headers=admin)
+    assert res.status_code == 200, res.text
+    d = res.json()
+    assert d["version"] == d["releases"][0]["version"] and all(x["items"] for x in d["releases"])
+    assert client.get("/api/releases").status_code in (401, 403)
