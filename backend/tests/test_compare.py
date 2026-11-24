@@ -249,6 +249,9 @@ def test_checkmk_api(client, admin, monkeypatch):
         if path.startswith("/objects/host_config/"):
             return 404, {"title": "Not Found"}
         if path.startswith("/domain-types/host_config/collections/all"):
+            if body["attributes"].get("tag_location") == "LOC999":
+                return 400, {"title": "Bad Request", "detail": "These fields have problems: attributes",
+                             "fields": {"attributes": ["Invalid value for tag-group 'Location': 'LOC999'"]}}
             return 200, {"id": body["host_name"]}
         return 500, {"detail": "unerwartet"}
     monkeypatch.setattr(checkmk_api, "request", fake)
@@ -279,6 +282,8 @@ def test_checkmk_api(client, admin, monkeypatch):
     c2 = client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-loc", "location_tag": "LOC026"})
     assert c2.status_code == 201 and c2.json()["location_tag"] == "LOC026" and calls[-1][2]["attributes"]["tag_location"] == "LOC026"
     assert client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-x", "location_tag": "LOC 9"}).status_code == 422
+    bad = client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-x", "location_tag": "LOC999"})
+    assert bad.status_code == 422 and "LOC999" in bad.json()["detail"]                    # Checkmk kennt das Tag nicht
     m, path, body, user, secret = calls[n]
     assert m == "POST" and "bake_agent=false" in path and (user, secret) == ("neu", "geheim")
     assert body["folder"] == "/eu/de_germany" and body["attributes"]["tag_agent"] == "no-agent" and body["attributes"]["tag_snmp_ds"] == "no-snmp"

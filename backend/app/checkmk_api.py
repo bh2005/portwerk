@@ -181,7 +181,7 @@ def create_host(name: str, ip: str = "", folder: str = "", labels: Optional[dict
                      {"host_name": n, "folder": normalize_folder(folder or cfg["default_folder"]), "attributes": attrs})
     if st == 400 and "already" in _detail(js).lower():
         raise HTTPException(409, "Der Host existiert in Checkmk bereits")
-    if st == 400 and tag and "tag_location" in _detail(js):
+    if st == 400 and tag and ("tag-group" in _detail(js).lower() or "tag_location" in _detail(js)):      # z. B. „Invalid value for tag-group 'Location'“
         raise HTTPException(422, f"Das Standort-Tag „{tag}“ gibt es in Checkmk nicht")
     if st not in (200, 201):
         raise _fail(st, js)
