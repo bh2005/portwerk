@@ -175,6 +175,7 @@ export const api = {
   checkmkStatus:  () => get('/api/checkmk/status'),
   checkmkHost:    name => get('/api/checkmk/host', { name }),
   checkmkFolders: () => get('/api/checkmk/folders'),
+  checkmkLocationTags: () => get('/api/checkmk/location-tags'),
   checkmkCreateHost: b => post('/api/checkmk/hosts', b),
   adoptDevice:    b => post('/api/compare/adopt-device', b),
   adoptConnection: portId => post('/api/compare/adopt', { port_id: portId }),

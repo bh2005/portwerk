@@ -95,10 +95,16 @@ def checkmk_folders(_: Principal = Depends(require_writer)):
     return checkmk_api.folders()
 
 
+@router.get("/api/checkmk/location-tags")
+def checkmk_location_tags(_: Principal = Depends(require_writer)):
+    return checkmk_api.location_tags()
+
+
 class CheckmkHostIn(BaseModel):
     hostname: str = Field(min_length=1, max_length=120)
     ip: str = Field(default="", max_length=80)
     folder: str = Field(default="", max_length=300)                    # leer = Standardordner aus den Einstellungen
+    location_tag: str = Field(default="", max_length=40)               # Checkmk-Standort-Tag (z. B. LOC026); leer = keins
 
 
 @router.post("/api/checkmk/hosts", status_code=201)
@@ -106,8 +112,8 @@ def checkmk_create_host(body: CheckmkHostIn, me: Principal = Depends(require_wri
     """Host in Checkmk anlegen – nur mit Host-Check (Ping), als ausstehende Änderung (Aktivierung in Checkmk). Nur mit globaler Berechtigung."""
     if not me.is_global:
         raise HTTPException(403, "Hosts in Checkmk anlegen nur mit globaler Berechtigung")
-    res = checkmk_api.create_host(body.hostname, body.ip, body.folder)
-    audit.log(me.name, "checkmk.host.create", "host", 0, f"{res['host_name']} -> {res['folder']} (Ping, Aktivierung ausstehend)")
+    res = checkmk_api.create_host(body.hostname, body.ip, body.folder, location_tag=body.location_tag)
+    audit.log(me.name, "checkmk.host.create", "host", 0, f"{res['host_name']} -> {res['folder']}{', ' + res['location_tag'] if res['location_tag'] else ''} (Ping, Aktivierung ausstehend)")
     return res
 
 

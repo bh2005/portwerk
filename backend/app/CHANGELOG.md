@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.4.1 – 2026-11-24
+- Standort-Tag beim Anlegen in Checkmk: Neue Hosts bekommen das Tag `location` (z. B. LOC026) passend zum Standort des meldenden Geräts; im Dialog änderbar, geprüft gegen die in Checkmk vorhandenen Tag-Werte.
+
 ## 0.4.0 – 2026-11-24
 - Checkmk-REST-Anbindung: Unter Verwaltung → Checkmk lässt sich ein Automation-User hinterlegen. Beim Übernehmen eines unbekannten Geräts zeigt Portwerk, ob der Host in Checkmk existiert.
 - In Checkmk anlegen: Fehlt der Host, legt Portwerk ihn mit reinem Host-Check (Ping, ohne Agent und SNMP) im gewählten Ordner an. Die Änderung bleibt ausstehend und wird in Checkmk aktiviert; Portwerk aktiviert nie selbst.

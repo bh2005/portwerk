@@ -79,6 +79,9 @@
             <p class="text-amber-600 dark:text-amber-400">Nicht in Checkmk vorhanden.</p>
             <div><label :class="lbl">Ordner in Checkmk</label>
               <select v-model="dev.cmk.folder" :class="inp"><option v-for="f in cmkFolders" :key="f.path" :value="f.path">{{ f.path }} · {{ f.title }}</option></select></div>
+            <div><label :class="lbl">Standort-Tag (location)</label>
+              <select v-model="dev.cmk.location" :class="inp"><option value="">keins</option><option v-for="t in cmkTags" :key="t" :value="t">{{ t }}</option></select>
+              <p v-if="dev.cmk.locationHint" class="text-xs text-slate-400 mt-1">{{ dev.cmk.locationHint }}</p></div>
             <button :class="btnGhost" :disabled="dev.cmk.busy || !dev.hostname.trim()" @click="createCmk">In Checkmk anlegen (nur Ping)</button>
             <p class="text-xs text-slate-400">Host mit reinem Host-Check, ohne Agent und SNMP; wird als ausstehende Änderung angelegt.</p>
           </template>
@@ -108,7 +111,7 @@ const route = useRoute(), router = useRouter()
 const tab = ref(route.query.tab === 'vlan' ? 'vlan' : 'lldp')
 function setTab(k) { tab.value = k; router.replace({ query: k === 'vlan' ? { tab: 'vlan' } : {} }) }
 
-const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), dev = ref(null), cmkOn = ref(false), cmkFolders = ref([]), cmkDefault = ref('/')
+const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), dev = ref(null), cmkOn = ref(false), cmkFolders = ref([]), cmkTags = ref([]), cmkDefault = ref('/')
 const canWrite = canWriteMaster()
 const active = ref(new Set(['mismatch', 'port_mismatch', 'undocumented', 'not_seen', 'unmapped']))
 const chips = [['mismatch', 'anderes Gerät'], ['port_mismatch', 'anderer Port'], ['undocumented', 'nicht dokumentiert'], ['not_seen', 'nicht gesehen'], ['unmapped', 'Port unbekannt'], ['unknown', 'keine Daten'], ['ok', 'stimmt']]
@@ -135,7 +138,7 @@ Die Verbindung wird als „vorläufig“ markiert. Dosen und Patchfelder können
 const isMac = n => /^([0-9a-f]{2}[:.-]?){5}[0-9a-f]{2}$/i.test(n || '')
 function openAdoptDevice(row, ist) {
   dev.value = { row, ist, hostname: String(ist.name).split('.')[0].toLowerCase(), type: ist.type_guess || 'other', mgmt_ip: ist.address || '',
-    neighbor_port: ist.port || '', create_cable: true, error: '', busy: false, cmk: { loading: false, exists: null, error: '', folder: cmkDefault.value, busy: false, created: false } }
+    neighbor_port: ist.port || '', create_cable: true, error: '', busy: false, cmk: { loading: false, exists: null, error: '', folder: cmkDefault.value, busy: false, created: false, location: '', locationHint: '' } }
   if (cmkOn.value) checkCmk()
 }
 async function checkCmk() {
@@ -145,13 +148,19 @@ async function checkCmk() {
   try {
     const r = await api.checkmkHost(dev.value.hostname.trim())
     c.exists = r.exists; c.folder = r.exists ? r.folder : (c.folder || cmkDefault.value); c.ipaddress = r.ipaddress
-    if (!r.exists && !cmkFolders.value.length) cmkFolders.value = await api.checkmkFolders()
+    if (!r.exists) {
+      if (!cmkFolders.value.length) cmkFolders.value = await api.checkmkFolders()
+      if (!cmkTags.value.length) cmkTags.value = await api.checkmkLocationTags()
+      const code = sites.value.find(s => s.id === dev.value.row.site_id)?.code || ''
+      c.location = cmkTags.value.includes(code) ? code : ''
+      c.locationHint = c.location ? `aus dem Standort von ${dev.value.row.device} (${code})` : (code ? `Standort ${code} ist in Checkmk kein Tag – bitte wählen` : '')
+    }
   } catch (e) { c.error = errText(e) } finally { c.loading = false }
 }
 async function createCmk() {
   const d = dev.value, c = d.cmk
   c.busy = true; c.error = ''
-  try { const r = await api.checkmkCreateHost({ hostname: d.hostname.trim(), ip: d.mgmt_ip.trim(), folder: c.folder }); c.created = true; c.exists = true; c.folder = r.folder }
+  try { const r = await api.checkmkCreateHost({ hostname: d.hostname.trim(), ip: d.mgmt_ip.trim(), folder: c.folder, location_tag: c.location }); c.created = true; c.exists = true; c.folder = r.folder }
   catch (e) { c.error = errText(e) } finally { c.busy = false }
 }
 async function adoptDevice() {
