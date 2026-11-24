@@ -11,7 +11,7 @@
     <section :class="box">
       <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
         <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Sicherungen auf dem Server</h3>
-        <button :class="btnPrimary" :disabled="busy" @click="create">{{ busy === 'create' ? 'Sichere …' : 'Jetzt sichern' }}</button>
+        <button :class="btnPrimary" :disabled="!!busy" @click="create">{{ busy === 'create' ? 'Sichere …' : 'Jetzt sichern' }}</button>
       </div>
       <p v-if="!items.length" class="text-sm text-slate-400">Noch keine Sicherung vorhanden.</p>
       <table v-else class="w-full text-sm">
@@ -25,7 +25,8 @@
             <td :class="td" class="whitespace-nowrap">{{ size(b.size) }}</td>
             <td :class="td" class="text-slate-500">{{ b.version || '–' }}</td>
             <td :class="td" class="text-right whitespace-nowrap">
-              <button :class="btnLink" @click="download(b)">Herunterladen</button>
+              <button v-if="hasTargets && !b.damaged && b.kind !== 'before-restore'" :class="btnLink" :disabled="!!busy" title="Auf die aktiven externen Ziele übertragen" @click="push(b)">Extern ablegen</button>
+              <button :class="btnLink" class="ml-3" @click="download(b)">Herunterladen</button>
               <button :class="btnLink" class="ml-3" :disabled="!!busy || b.damaged" @click="restore(b)">Wiederherstellen</button>
               <button :class="btnDanger" class="ml-3" :disabled="!!busy" @click="remove(b)">Löschen</button>
             </td>
@@ -45,6 +46,8 @@
       <button :class="btnPrimary" :disabled="!!busy">Speichern</button>
     </form>
 
+    <BackupTargets @restored="relogin" @changed="l => hasTargets = l.some(t => t.enabled)" />
+
     <section :class="box" class="border-l-4 border-l-amber-500 space-y-3">
       <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Aus Datei wiederherstellen</h3>
       <p class="text-sm text-slate-500 dark:text-slate-400">
@@ -63,11 +66,12 @@
 import { onMounted, reactive, ref } from 'vue'
 import { api, errText, clearToken } from '../api.js'
 import { inp, lbl, th, td, btnPrimary, btnGhost, btnDanger, btnLink, fmtTime } from '../ui.js'
+import BackupTargets from './BackupTargets.vue'
 
 const box = 'border border-slate-200 dark:border-slate-700 rounded-xl p-4'
 const hint = 'text-xs text-slate-400'
 const items = ref([]), s = reactive({ auto: true, hour: 2, keep: 14 })
-const busy = ref(''), err = ref(''), msg = ref(''), file = ref(null), fileInput = ref(null)
+const busy = ref(''), err = ref(''), msg = ref(''), file = ref(null), fileInput = ref(null), hasTargets = ref(false)
 
 const size = n => n >= 1024 ** 2 ? `${(n / 1024 ** 2).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`
 
@@ -78,7 +82,11 @@ async function run(kind, fn, okMsg) {
   busy.value = kind; err.value = ''; msg.value = ''
   try { await fn(); if (okMsg) msg.value = okMsg; await load() } catch (e) { err.value = errText(e) } finally { busy.value = '' }
 }
-const create = () => run('create', () => api.createBackup(), 'Sicherung angelegt.')
+const create = () => run('create', () => api.createBackup(), hasTargets.value ? 'Sicherung angelegt; die Übertragung auf die externen Ziele läuft im Hintergrund (Status siehe unten).' : 'Sicherung angelegt.')
+async function push(b) {
+  busy.value = 'push'; err.value = msg.value = ''
+  try { const r = await api.pushBackup(b.name); msg.value = r.results.map(x => `${x.target}: ${x.ok ? '✓' : '✗ ' + x.error}`).join(' · ') } catch (e) { err.value = errText(e) } finally { busy.value = '' }
+}
 const saveSettings = () => run('settings', () => api.saveBackupSettings({ ...s }), 'Gespeichert.')
 function remove(b) {
   if (confirm(`Sicherung vom ${fmtTime(b.created_at)} löschen?`)) run('delete', () => api.deleteBackup(b.name), 'Sicherung gelöscht.')

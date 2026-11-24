@@ -8,6 +8,7 @@ Beschreibungen der wichtigsten Abläufe in Portwerk, jeweils mit Beispielen. Die
 | [Soll/Ist-Abgleich](soll-ist-abgleich.md) | Verbindungen und Geräte aus LLDP/CDP übernehmen, vorläufige Kabel vervollständigen, Hosts in Checkmk anlegen |
 | [Checkmk-Anbindung](checkmk-anbindung.md) | Automation-User und Rolle in Checkmk einrichten, Portwerk verbinden, Fehlerbilder |
 | [Strecken-Editor](strecken-editor.md) | Die ganze Strecke ansehen und bearbeiten: Kabel, Zwischenstationen einfügen und entfernen, LLDP/CDP-Abgleich der Enden |
+| [Sicherung auf externe Ziele](sicherung-extern.md) | Sicherungen zusätzlich auf NAS (NFS/SMB), S3 oder WebDAV ablegen, optional verschlüsselt; Wiederherstellung von dort |
 | [Verbindungs-Historie](verbindungs-historie.md) | Frühere Verbindungen eines Ports oder Geräts in der Seitenleiste |
 | [Releases](releases.md) | Änderungen je Version in der Verwaltung, Changelog pflegen |
 

@@ -2,6 +2,12 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.7.0 – 2026-11-24
+- Externe Sicherungsziele: Sicherungen lassen sich zusätzlich auf ein eingehängtes Verzeichnis (NAS per NFS/SMB), einen S3-kompatiblen Speicher oder WebDAV ablegen – automatisch nach jeder Sicherung, manuell über „Extern ablegen“. Je Ziel eigene Aufbewahrung, Test, Status und Liste der Sicherungen; Wiederherstellung direkt vom Ziel.
+- Verschlüsselung der externen Sicherungen: Optional mit Passphrase (AES-256-GCM) vor der Übertragung.
+- Dark Mode: Tabellen, u. a. das Audit-Log, waren unlesbar (dunkle Schrift auf dunklem Grund). Standard-Textfarbe und gedämpfte Detail-Spalte entsprechen jetzt dem RSYSLOG-Manager.
+- Korrektur: „Jetzt sichern“ war im Ruhezustand deaktiviert.
+
 ## 0.6.1 – 2026-11-24
 - Filter bei Racks & Schränke: Auswahl nach Standort, Art und Suchtext (Name, Pfad, Kennung); die Auswahl springt auf den ersten Treffer.
 - Filter bei den Standorten: Suche in der Standortliste (Code, Name, Adresse) und Filter im Location-Baum nach Name, Kennung und Art – Treffer werden mit ihrem Oberbau gezeigt.

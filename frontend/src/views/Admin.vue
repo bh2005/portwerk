@@ -95,7 +95,7 @@
             <tr v-if="!audit.length"><td colspan="5" class="px-3 py-6 text-center text-slate-400">Keine Einträge{{ auditFiltered ? ' für diese Suche' : '' }}.</td></tr>
             <tr v-for="a in audit" :key="a.id" class="border-t border-slate-100 dark:border-slate-700">
               <td :class="td" class="whitespace-nowrap">{{ fmtTime(a.ts) }}</td><td :class="td">{{ a.actor }}</td><td :class="td" class="font-mono">{{ a.action }}</td>
-              <td :class="td">{{ a.entity }} {{ a.entity_id }}</td><td :class="td" class="text-slate-500">{{ a.detail }}</td>
+              <td :class="td">{{ a.entity }} {{ a.entity_id }}</td><td :class="td" class="text-slate-500 dark:text-slate-400">{{ a.detail }}</td>
             </tr>
           </tbody>
         </table>

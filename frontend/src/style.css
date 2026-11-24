@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Standard-Textfarbe: ohne sie erben Tabellenzellen u. Ä. im Dark Mode eine dunkle Farbe (unlesbar).
+   Werte wie im RSYSLOG-Manager: Text #e2e8f0, gedämpft #94a3b8. Eigene text-*-Klassen überschreiben das. */
+@layer base {
+  body { @apply text-slate-800 dark:text-slate-200; }
+}

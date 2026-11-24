@@ -5,12 +5,13 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from .. import audit, backup
+from .. import audit, backup, backup_targets
 from ..auth import Principal, require_admin
 
 router = APIRouter(prefix="/api/admin/backups", tags=["verwaltung"])
@@ -48,7 +49,94 @@ def put_settings(body: BackupSettingsIn, me: Principal = Depends(require_admin))
 def create_backup(me: Principal = Depends(require_admin)):
     b = backup.create("manual", me.name)
     audit.log(me.name, "backup.create", "backup", b["name"], f"{b['size']} Bytes")
+    backup_targets.push_async(backup.backup_dir() / b["name"])                         # externe Ziele im Hintergrund
     return b
+
+
+# ── Externe Ziele (NAS/NFS-Pfad, S3, WebDAV) ────────────────────────────────
+
+class TargetIn(BaseModel):
+    type: Optional[str] = None
+    name: Optional[str] = Field(default=None, max_length=80)
+    enabled: Optional[bool] = None
+    keep: Optional[int] = Field(default=None, ge=1, le=365)
+    encrypt: Optional[bool] = None
+    passphrase: Optional[str] = Field(default=None, max_length=200)
+    verify_tls: Optional[bool] = None
+    ca_pem: Optional[str] = Field(default=None, max_length=20000)
+    path: Optional[str] = Field(default=None, max_length=300)
+    endpoint: Optional[str] = Field(default=None, max_length=300)
+    region: Optional[str] = Field(default=None, max_length=60)
+    bucket: Optional[str] = Field(default=None, max_length=120)
+    prefix: Optional[str] = Field(default=None, max_length=200)
+    access_key: Optional[str] = Field(default=None, max_length=200)
+    secret_key: Optional[str] = Field(default=None, max_length=300)
+    path_style: Optional[bool] = None
+    url: Optional[str] = Field(default=None, max_length=300)
+    user: Optional[str] = Field(default=None, max_length=120)
+    password: Optional[str] = Field(default=None, max_length=300)
+
+
+class TargetRestoreIn(BaseModel):
+    name: str
+    confirm: bool = False
+
+
+@router.get("/targets")
+def list_targets(_: Principal = Depends(require_admin)):
+    return {"types": backup_targets.TYPES, "items": backup_targets.list_public()}
+
+
+@router.post("/targets", status_code=201)
+def create_target(body: TargetIn, me: Principal = Depends(require_admin)):
+    out = backup_targets.save(body.model_dump(exclude_none=True))
+    audit.log(me.name, "backup.target.create", "backup", out["id"], f"{out['name']} ({out['type']})")
+    return out
+
+
+@router.put("/targets/{tid}")
+def update_target(tid: str, body: TargetIn, me: Principal = Depends(require_admin)):
+    out = backup_targets.save(body.model_dump(exclude_none=True), tid)
+    audit.log(me.name, "backup.target.update", "backup", tid, f"{out['name']} ({out['type']})")
+    return out
+
+
+@router.delete("/targets/{tid}")
+def delete_target(tid: str, me: Principal = Depends(require_admin)):
+    backup_targets.delete(tid)
+    audit.log(me.name, "backup.target.delete", "backup", tid)
+    return {"ok": True}
+
+
+@router.post("/targets/{tid}/test")
+def test_target(tid: str, _: Principal = Depends(require_admin)):
+    return backup_targets.test(tid)
+
+
+@router.get("/targets/{tid}/items")
+def target_items(tid: str, _: Principal = Depends(require_admin)):
+    return backup_targets.remote_items(tid)
+
+
+@router.post("/targets/{tid}/restore")
+def restore_from_target(tid: str, body: TargetRestoreIn, me: Principal = Depends(require_admin)):
+    _need_confirm(body.confirm)
+    with tempfile.TemporaryDirectory(dir=backup.backup_dir()) as tmp:
+        src = backup_targets.fetch(tid, body.name, Path(tmp))
+        return _restored(me, f"{backup_targets.get(tid)['name']}: {body.name}", backup.restore_file(src, me.name))
+
+
+@router.post("/{name}/push")
+def push_backup(name: str, target: Optional[str] = None, me: Principal = Depends(require_admin)):
+    """Eine vorhandene Sicherung (erneut) auf alle aktiven bzw. das angegebene Ziel übertragen."""
+    p = backup.path_of(name)
+    if not backup_targets.NAME_RE.match(name):
+        raise HTTPException(400, "Nur automatische und manuelle Sicherungen werden extern abgelegt")
+    res = backup_targets.push_all(p, target)
+    if not res:
+        raise HTTPException(409, "Kein aktives Sicherungsziel eingerichtet")
+    audit.log(me.name, "backup.push", "backup", name, "; ".join(f"{r['target']}: {'ok' if r['ok'] else 'Fehler'}" for r in res))
+    return {"results": res}
 
 
 @router.get("/{name}/download")
