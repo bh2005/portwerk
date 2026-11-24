@@ -95,6 +95,24 @@ def checkmk_folders(_: Principal = Depends(require_writer)):
     return checkmk_api.folders()
 
 
+@router.get("/api/checkmk/pending")
+def checkmk_pending(me: Principal = Depends(require_writer)):
+    """Ausstehende Änderungen in Checkmk (eigene und fremde)."""
+    if not me.is_global:
+        raise HTTPException(403, "Nur mit globaler Berechtigung")
+    return checkmk_api.pending()
+
+
+@router.post("/api/checkmk/activate")
+def checkmk_activate(me: Principal = Depends(require_writer)):
+    """Ausstehende Änderungen in Checkmk aktivieren – nur wenn keine fremden anstehen. Nur mit globaler Berechtigung."""
+    if not me.is_global:
+        raise HTTPException(403, "Nur mit globaler Berechtigung")
+    res = checkmk_api.activate()
+    audit.log(me.name, "checkmk.activate", "settings", 0, res["message"])
+    return res
+
+
 class CheckmkHostIn(BaseModel):
     hostname: str = Field(min_length=1, max_length=120)
     ip: str = Field(default="", max_length=80)

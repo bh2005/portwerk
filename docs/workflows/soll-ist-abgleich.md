@@ -104,14 +104,15 @@ Portwerk legt den Host mit diesen Eigenschaften an:
 | Standort-Tag | `tag_location=LOC026` |
 | Label | `source=portwerk` (damit man solche Hosts in Checkmk wiederfindet) |
 
-> **Wichtig:** Der Host ist danach eine **ausstehende Änderung** in Checkmk. Portwerk aktiviert nie selbst.
-> Ein Checkmk-Administrator aktiviert die Änderung (*Setup → Änderungen aktivieren*). Erst dann wird der Host überwacht.
+> **Wichtig:** Der Host ist danach eine **ausstehende Änderung** in Checkmk und wird erst nach der Aktivierung überwacht. Direkt im Dialog erscheint **Ausstehende Änderungen in Checkmk**
+> mit dem Button **In Checkmk aktivieren**. Portwerk aktiviert nur nach Rückfrage und nur, wenn keine fremden Änderungen anstehen; sonst in Checkmk aktivieren
+> (*Setup → Änderungen aktivieren*). Details: [Checkmk-Anbindung](checkmk-anbindung.md#danach-aktivieren).
 
 **Typischer Gesamtablauf** für ein neu entdecktes Gerät:
 
 1. Abgleich öffnen, Filter *Port unbekannt* / *nicht dokumentiert*.
 2. Gerät in den Bestand übernehmen (Workflow 2) **und** im selben Dialog in Checkmk anlegen (Workflow 3).
-3. In Checkmk die ausstehende Änderung aktivieren.
+3. Die ausstehende Änderung aktivieren (Button im Dialog oder in Checkmk).
 4. Beim nächsten Checkmk-Import bekommt das Gerät dort seinen Überwachungsstatus; bei Bedarf in Checkmk auf Agent/SNMP umstellen.
 
 ---

@@ -1,8 +1,9 @@
 """Anbindung an die Checkmk-REST-API: prüfen, ob ein Gerät in Checkmk existiert, und es bei Bedarf dort anlegen.
 
 Portwerk spricht ``<api_url>/check_mk/api/1.0`` mit einem Automation-User (``Authorization: Bearer <user> <secret>``).
-Der User braucht Rechte zum Lesen und Anlegen von Hosts, aber keine zum Aktivieren: Portwerk legt Hosts nur als ausstehende Änderung an,
-die Aktivierung geschieht in Checkmk (damit nie fremde, noch nicht fertige Änderungen mitaktiviert werden).
+Der User braucht Rechte zum Lesen und Anlegen von Hosts. Portwerk legt Hosts nur als ausstehende Änderung an. Aktivieren kann man in Checkmk oder
+(auf Knopfdruck, nach Rückfrage) in Portwerk – dort nur, wenn **keine fremden** Änderungen anstehen; der User sollte deshalb das Recht ``wato.activate``,
+aber **nicht** ``wato.activateforeign`` haben (Checkmk erzwingt das zusätzlich).
 Neue Hosts bekommen nur den Host-Check (Ping): kein Agent, kein SNMP.
 Standardmäßig aus; die Einstellungen pflegt die Verwaltung (Schlüssel ``checkmk_api`` in ``app_settings``).
 """
@@ -83,14 +84,14 @@ def _ctx(cfg: dict):
     return ctx
 
 
-def request(cfg: dict, method: str, path: str, body: Optional[dict] = None) -> tuple:
+def request(cfg: dict, method: str, path: str, body: Optional[dict] = None, headers: Optional[dict] = None, timeout: int = TIMEOUT) -> tuple:
     """(Status, JSON|None). Netzwerkfehler werden zu 502 mit lesbarer Meldung; HTTP-Fehler der API kommen als Status zurück."""
     url = f"{cfg['api_url']}/check_mk/api/1.0{path}"
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method, headers={
-        "Authorization": f"Bearer {cfg['user']} {cfg['secret']}", "Accept": "application/json", "Content-Type": "application/json"})
+        "Authorization": f"Bearer {cfg['user']} {cfg['secret']}", "Accept": "application/json", "Content-Type": "application/json", **(headers or {})})
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT, context=_ctx(cfg)) as r:
+        with urllib.request.urlopen(req, timeout=timeout, context=_ctx(cfg)) as r:
             raw = r.read()
             return r.status, (json.loads(raw) if raw else None)
     except urllib.error.HTTPError as e:
@@ -186,3 +187,47 @@ def create_host(name: str, ip: str = "", folder: str = "", labels: Optional[dict
     if st not in (200, 201):
         raise _fail(st, js)
     return {"host_name": n, "folder": normalize_folder(folder or cfg["default_folder"]), "ping_only": True, "pending_activation": True, "location_tag": tag}
+
+
+# ── Ausstehende Änderungen und Aktivierung ───────────────────────────────────
+
+def site_name(cfg: Optional[dict] = None) -> str:
+    """Name der Checkmk-Site: letztes Pfadstück der API-Adresse (``http://host/test`` → ``test``)."""
+    cfg = cfg or settings()
+    return urllib.parse.urlparse(cfg["api_url"]).path.strip("/").split("/")[-1]
+
+
+def pending() -> dict:
+    """Ausstehende Änderungen in Checkmk, getrennt nach eigenen (vom Portwerk-User) und fremden."""
+    cfg = configured()
+    st, js = request(cfg, "GET", "/domain-types/activation_run/collections/pending_changes")
+    if st != 200:
+        raise _fail(st, js)
+    changes = [{"user": str(c.get("user_id") or ""), "text": str(c.get("text") or c.get("action_name") or ""), "time": c.get("time") or ""}
+               for c in (js or {}).get("value", [])]
+    own = [c for c in changes if c["user"] == cfg["user"]]
+    return {"count": len(changes), "own": len(own), "foreign": len(changes) - len(own), "changes": changes[:50], "site": site_name(cfg)}
+
+
+def activate() -> dict:
+    """Ausstehende Änderungen aktivieren – nur wenn es keine fremden gibt. Wartet auf den Abschluss."""
+    cfg = configured()
+    p = pending()
+    if not p["count"]:
+        return {"activated": False, "message": "Es stehen keine Änderungen an.", **p}
+    if p["foreign"]:
+        users = sorted({c["user"] for c in p["changes"] if c["user"] != cfg["user"]})
+        raise HTTPException(409, f"Es gibt {p['foreign']} fremde ausstehende Änderung(en) von {', '.join(users) or 'anderen Benutzern'} – "
+                                 "bitte in Checkmk prüfen und dort aktivieren.")
+    st, js = request(cfg, "POST", "/domain-types/activation_run/actions/activate-changes/invoke",
+                     {"redirect": False, "sites": [p["site"]], "force_foreign_changes": False}, headers={"If-Match": "*"}, timeout=60)
+    if st == 409:
+        raise HTTPException(409, "In Checkmk läuft gerade eine Aktivierung – bitte kurz warten und erneut versuchen.")
+    if st not in (200, 201, 202):
+        raise _fail(st, js)
+    act_id = (js or {}).get("id")
+    if act_id:
+        st2, js2 = request(cfg, "GET", f"/objects/activation_run/{urllib.parse.quote(str(act_id))}/actions/wait-for-completion/invoke", timeout=120)
+        if st2 not in (200, 204):
+            raise _fail(st2, js2)
+    return {"activated": True, "message": f"{p['count']} Änderung(en) aktiviert.", "count": p["count"], "site": p["site"]}

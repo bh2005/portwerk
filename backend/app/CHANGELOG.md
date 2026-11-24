@@ -2,6 +2,10 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.6.0 – 2026-11-24
+- Umstecken im Strecken-Editor: Ein Kabelende lässt sich an einen anderen Port stecken, das Kabel behält alle Angaben; in der Historie endet die alte Verbindung, die neue beginnt.
+- Änderungen in Checkmk aktivieren: Ausstehende Änderungen werden angezeigt (eigene und fremde) und lassen sich nach Rückfrage aus Portwerk aktivieren – nur wenn keine fremden Änderungen anstehen. Im Dialog „In Bestand übernehmen“ und unter Verwaltung → Checkmk.
+
 ## 0.5.0 – 2026-11-24
 - Strecken-Editor: „Verbindung“ im Gerätedetail öffnet die ganze Strecke als Seitenleiste – Anfang und Ende mit LLDP/CDP-Abgleich, dazwischen Kabel und Stationen. Kabel lassen sich dort direkt bearbeiten (Label, Typ, Länge, Farbe, Messprotokoll, Notiz), lösen und neu verbinden. Auch im Soll/Ist-Abgleich über „Strecke“ erreichbar. Ersetzt den bisherigen Einzel-Dialog.
 - Zwischenstation einfügen und entfernen: Patchfelder und Dosen lassen sich in ein bestehendes Kabel einfügen (aus einem vorläufigen Direktkabel wird die echte Strecke) oder wieder herausnehmen. Alles in einer Transaktion, die Verbindungs-Historie bleibt vollständig.

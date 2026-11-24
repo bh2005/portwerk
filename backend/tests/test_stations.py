@@ -67,6 +67,32 @@ def test_insert_and_remove_station(client, admin, net):
     assert hosts(p) == ["sw-a", "sw-b"] and p["links"][0]["provisional"] is True
 
 
+def test_move_end(client, admin, net):
+    """Ziel ändern: ein Kabelende an einen anderen Port stecken, Kabelangaben bleiben."""
+    c = client.post("/api/devices", headers=admin, json={"hostname": "sw-c", "type": "switch"}).json()["id"]
+    pc = client.post(f"/api/devices/{c}/ports", headers=admin, json={"name": "Gi1"}).json()["id"]
+    pc2 = client.post(f"/api/devices/{c}/ports", headers=admin, json={"name": "Gi2"}).json()["id"]
+    cid = net["cid"]
+    r = client.post(f"/api/cables/{cid}/move-end", headers=admin, json={"end_port_id": net["b"], "new_port_id": pc})
+    assert r.status_code == 201, r.text
+    p = path(client, admin, net["a"])
+    assert hosts(p) == ["sw-a", "sw-c"]
+    lk = p["links"][0]
+    assert lk["label"] == "K-1" and lk["length_m"] == 5 and lk["cable_type"] == "Cat6"       # Angaben bleiben
+    assert path(client, admin, net["b"])["nodes"][0]["device"]["hostname"] == "sw-b" and len(path(client, admin, net["b"])["nodes"]) == 1   # sw-b:Gi1 ist frei
+    hist = client.get("/api/cable-history", headers=admin, params={"port_id": net["a"]}).json()
+    assert len(hist) == 2 and sum(1 for h in hist if h["active"]) == 1                       # alte beendet, neue aktiv
+    new_id = lk["cable_id"]
+    # Fehlerfälle
+    assert client.post(f"/api/cables/{new_id}/move-end", headers=admin, json={"end_port_id": pc, "new_port_id": net["a"]}).status_code == 400   # anderes Ende
+    assert client.post(f"/api/cables/{new_id}/move-end", headers=admin, json={"end_port_id": 999999, "new_port_id": pc2}).status_code == 400
+    assert client.post(f"/api/cables/{new_id}/move-end", headers=admin, json={"end_port_id": pc, "new_port_id": 999999}).status_code == 404
+    assert client.post("/api/cables/999999/move-end", headers=admin, json={"end_port_id": pc, "new_port_id": pc2}).status_code == 404
+    pd = client.post(f"/api/devices/{c}/ports", headers=admin, json={"name": "Gi3"}).json()["id"]
+    assert client.put(f"/api/ports/{pd}/cable", headers=admin, json={"port_b_id": net["b"], "cable_type": "Cat6"}).status_code == 200
+    assert client.post(f"/api/cables/{new_id}/move-end", headers=admin, json={"end_port_id": pc, "new_port_id": pd}).status_code == 409    # Ziel belegt
+
+
 def test_station_errors(client, admin, net):
     cid = net["cid"]
     assert client.post(f"/api/cables/{cid}/insert-station", headers=admin, json={"port_id": net["b"]}).status_code == 400           # Switch ist keine Station

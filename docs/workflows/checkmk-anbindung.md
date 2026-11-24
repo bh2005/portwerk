@@ -7,7 +7,8 @@ nach Portwerk, hier fragt Portwerk Checkmk selbst.
 Sicherheitsprinzipien:
 
 - **Eigener Automation-User** mit minimalen Rechten, nicht der Admin.
-- **Keine Aktivierung durch Portwerk.** Der User darf Hosts anlegen, aber keine Änderungen aktivieren. Fremde, noch nicht fertige Änderungen anderer Administratoren werden so nie mitaktiviert.
+- **Aktivierung nur ohne fremde Änderungen.** Portwerk legt Hosts als ausstehende Änderung an. Aktivieren lässt sich in Checkmk oder auf Knopfdruck in Portwerk – dort nur, wenn **alle** ausstehenden
+  Änderungen vom Portwerk-User stammen. Fremde, noch nicht fertige Änderungen anderer Administratoren werden nie mitaktiviert (Portwerk verweigert, und der User hat kein Recht auf `wato.activateforeign`).
 - Neue Hosts bekommen **nur den Host-Check (Ping)**.
 
 ## 1. In Checkmk einrichten
@@ -23,9 +24,9 @@ H='Content-Type: application/json'
 curl -X POST -H "$A" -H "$H" $B/domain-types/user_role/collections/all \
      -d '{"role_id": "user", "new_role_id": "portwerk", "new_alias": "Portwerk (Hosts anlegen, keine Aktivierung)"}'
 
-# 2. Rechte: alle Ordner sehen, Aktivieren/Verwerfen entziehen
+# 2. Rechte: alle Ordner sehen; Aktivieren erlauben (nur eigene Änderungen), Verwerfen entziehen
 curl -X PUT -H "$A" -H "$H" -H 'If-Match: *' $B/objects/user_role/portwerk \
-     -d '{"new_permissions": {"wato.all_folders": "yes", "wato.see_all_folders": "yes", "wato.activate": "no", "wato.discard": "no"}}'
+     -d '{"new_permissions": {"wato.all_folders": "yes", "wato.see_all_folders": "yes", "wato.activate": "yes", "wato.activateforeign": "no", "wato.discard": "no"}}'
 
 # 3. Automation-User mit eigenem Secret
 curl -X POST -H "$A" -H "$H" $B/domain-types/user_config/collections/all \
@@ -89,9 +90,19 @@ meldet „Das Standort-Tag … gibt es in Checkmk nicht“.
 
 Andere Tag-Gruppen (z. B. Criticality) setzt Portwerk nicht; es gelten die Vorgaben und Ordnerattribute von Checkmk.
 
-### Danach in Checkmk
+### Danach: aktivieren
 
-Der Host steht als **ausstehende Änderung** da. Ein Administrator aktiviert (*Setup → Änderungen aktivieren*). Wer die Hosts wiederfinden will, filtert nach dem Label `source:portwerk` oder nach dem Ordner.
+Der Host steht als **ausstehende Änderung** da. Es gibt zwei Wege:
+
+- **In Checkmk:** *Setup → Änderungen aktivieren*. Dort sehen Sie auch Änderungen anderer Administratoren.
+- **In Portwerk:** Nach dem Anlegen erscheint im Dialog **Ausstehende Änderungen in Checkmk** mit der Liste (Benutzer und Text je Änderung) und dem Button **In Checkmk aktivieren**; derselbe Block steht unter *Verwaltung → Checkmk*.
+  Nach einer Rückfrage aktiviert Portwerk die Site und wartet, bis Checkmk fertig ist.
+
+Portwerk aktiviert **nur**, wenn alle ausstehenden Änderungen vom Portwerk-User stammen. Gibt es fremde, ist der Button gesperrt und die Meldung nennt die Benutzer
+(„Es gibt 1 fremde ausstehende Änderung(en) von anna – bitte in Checkmk prüfen und dort aktivieren“). Läuft in Checkmk gerade eine Aktivierung, kommt „bitte kurz warten“.
+Die Aktivierung nutzt nie `force_foreign_changes`.
+
+Wer die Hosts wiederfinden will, filtert in Checkmk nach dem Label `source:portwerk` oder nach dem Ordner.
 
 ## Fehlerbilder
 
@@ -105,6 +116,9 @@ Der Host steht als **ausstehende Änderung** da. Ein Administrator aktiviert (*S
 | Hostname ungültig | Leerzeichen/Sonderzeichen | erlaubt sind Buchstaben, Ziffern, `_`, `.` und `-` |
 | Das Standort-Tag … gibt es in Checkmk nicht | Standortcode ist kein Wert der Tag-Gruppe `location` | anderen Wert wählen oder leer lassen |
 | Hosts in Checkmk anlegen nur mit globaler Berechtigung | Benutzer ist auf Standorte begrenzt | Aufgabe an einen globalen Benutzer geben |
+| Es gibt N fremde ausstehende Änderung(en) von … | Andere Administratoren haben noch nicht aktivierte Änderungen | in Checkmk prüfen und dort aktivieren |
+| In Checkmk läuft gerade eine Aktivierung | gleichzeitige Aktivierung | kurz warten, erneut versuchen |
+| … lehnt die Berechtigung ab (403) beim Aktivieren | Rolle hat kein `wato.activate` | Recht in der Rolle `portwerk` ergänzen (siehe Abschnitt 1) |
 
 ## API
 
@@ -115,6 +129,14 @@ curl -H "X-Auth-Token: $TOKEN" 'https://opp.example.test/api/checkmk/host?name=a
 
 # Ordner in Checkmk
 curl -H "X-Auth-Token: $TOKEN" https://opp.example.test/api/checkmk/folders
+
+# Ausstehende Änderungen in Checkmk (eigene und fremde)
+curl -H "X-Auth-Token: $TOKEN" https://opp.example.test/api/checkmk/pending
+# → {"count": 2, "own": 2, "foreign": 0, "changes": [{"user": "portwerk", "text": "…", "time": "…"}], "site": "mysite"}
+
+# Aktivieren (nur ohne fremde Änderungen; 409 sonst)
+curl -X POST -H "X-Auth-Token: $TOKEN" https://opp.example.test/api/checkmk/activate
+# → {"activated": true, "message": "2 Änderung(en) aktiviert.", "count": 2, "site": "mysite"}
 
 # Host anlegen (nur Ping, ausstehende Änderung)
 curl -X POST -H "X-Auth-Token: $TOKEN" -H 'Content-Type: application/json' \

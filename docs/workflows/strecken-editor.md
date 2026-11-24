@@ -59,6 +59,12 @@ Mehrere Stationen hintereinander (Patchfeld → Dose) fügt man nacheinander ein
 
 **entfernen** an der Station: Die beiden Kabel werden zu **einem vorläufigen Direktkabel** (Daten des ersten Kabels, Notiz „Zwischenstation entfernt“). Nur möglich, wenn die Station auf **beiden** Seiten verbunden ist; sonst stattdessen das Kabel lösen.
 
+### Umstecken (Ziel ändern)
+
+**umstecken** am Kabel: Sie wählen das **Ende**, das an einen anderen Port soll, suchen das neue Gerät und den freien Port. Die Vorschau zeigt das Ergebnis, z. B. statt
+`sw-a1:Gi0/3 → sw-a2:Gi0/7` jetzt `sw-a1:Gi0/3 → sw-a3:Gi0/9`. Das Kabel behält **alle Angaben** (Nummer, Typ, Länge, Messprotokoll, Kennzeichen *vorläufig*);
+in der Historie endet die alte Verbindung, die neue beginnt. Der neue Port muss frei sein; ist er reserviert oder verplant, fragt Portwerk nach.
+
 ### Kabel lösen und neu verbinden
 
 **lösen** trennt ein Kabel (mit Rückfrage). An einem **offenen Ende** (Station ohne Anschluss) oder an einem unverbundenen Port erscheint **+ Verbindung herstellen**:
@@ -84,9 +90,13 @@ curl -H "X-Auth-Token: $TOKEN" https://opp.example.test/api/ports/4711/path
 curl -X POST -H "X-Auth-Token: $TOKEN" -H 'Content-Type: application/json' \
      -d '{"port_id": 5120, "side_port_id": 4711}' https://opp.example.test/api/cables/88/insert-station
 
+# Kabelende umstecken (Kabel behält seine Angaben)
+curl -X POST -H "X-Auth-Token: $TOKEN" -H 'Content-Type: application/json' \
+     -d '{"end_port_id": 4711, "new_port_id": 4802}' https://opp.example.test/api/cables/88/move-end
+
 # Station entfernen (einer ihrer beiden Ports genügt)
 curl -X POST -H "X-Auth-Token: $TOKEN" -H 'Content-Type: application/json' \
      -d '{"port_id": 5120}' https://opp.example.test/api/stations/remove
 ```
 
-Fehlercodes: `400` – kein Patchfeld/keine Dose oder Gegenseite fehlt, `409` – Station schon verbunden bzw. nur einseitig verbunden, `404` – Kabel/Port nicht gefunden.
+Fehlercodes: `400` – kein Patchfeld/keine Dose, Gegenseite fehlt oder ungültiger Port, `409` – Station bzw. neuer Port schon verbunden, bzw. Station nur einseitig verbunden, `404` – Kabel/Port nicht gefunden.

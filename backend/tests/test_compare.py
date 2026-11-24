@@ -288,5 +288,5 @@ def test_checkmk_api(client, admin, monkeypatch):
     assert m == "POST" and "bake_agent=false" in path and (user, secret) == ("neu", "geheim")
     assert body["folder"] == "/eu/de_germany" and body["attributes"]["tag_agent"] == "no-agent" and body["attributes"]["tag_snmp_ds"] == "no-snmp"
     assert body["attributes"]["ipaddress"] == "10.2.3.4" and body["attributes"]["labels"]["source"] == "portwerk"
-    assert not any("activate" in x[1] for x in calls)                                   # es wird nie aktiviert
+    assert not any("activate" in x[1] for x in calls)                                   # Anlegen aktiviert nie
     assert client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "a b"}).status_code == 422

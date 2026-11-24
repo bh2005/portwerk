@@ -27,6 +27,12 @@ class InsertStationIn(BaseModel):
     side_port_id: Optional[int] = None              # Kabelende, das mit ``port_id`` verbunden wird (Standard: Port A des Kabels)
 
 
+class MoveEndIn(BaseModel):
+    end_port_id: int                                # das Kabelende, das umgesteckt wird (einer der beiden Ports des Kabels)
+    new_port_id: int                                # neuer Port dafür
+    use_reserved: bool = False                      # reservierten/verplanten Zielport trotzdem verwenden
+
+
 class RemoveStationIn(BaseModel):
     port_id: int                                    # einer der beiden Ports der Station
 
@@ -83,6 +89,38 @@ def insert_station(cid: int, body: InsertStationIn, me: Principal = Depends(requ
         second = _insert(t, s2["id"], y, c, me, False, c["provisional"])
     audit.log(me.name, "cable.insert_station", "cable", cid, f"{s['name']} ↔ {s2['name']}")
     return {"cable_ids": [first, second], "station_port_id": s["id"], "station_peer_port_id": s2["id"]}
+
+
+@router.post("/api/cables/{cid}/move-end", status_code=201)
+def move_end(cid: int, body: MoveEndIn, me: Principal = Depends(require_writer)):
+    """Ein Kabelende an einen anderen Port stecken. Das Kabel behält alle Angaben (Nummer, Typ, Länge, Messprotokoll, Kennzeichen „vorläufig“);
+    in der Historie endet die alte Verbindung, die neue beginnt."""
+    c = db.row("SELECT * FROM cables WHERE id = ?", (cid,))
+    if not c:
+        raise HTTPException(404, "Kabel nicht gefunden")
+    if body.end_port_id not in (c["port_a_id"], c["port_b_id"]):
+        raise HTTPException(400, "end_port_id gehört nicht zu diesem Kabel")
+    keep = c["port_b_id"] if body.end_port_id == c["port_a_id"] else c["port_a_id"]
+    if body.new_port_id in (keep, body.end_port_id):
+        raise HTTPException(400, "Der neue Port muss ein anderer Port sein (nicht das andere Ende und nicht der bisherige)")
+    if not db.row("SELECT id FROM ports WHERE id = ?", (body.new_port_id,)):
+        raise HTTPException(404, "Neuer Port nicht gefunden")
+    if _cable_at(body.new_port_id):
+        raise HTTPException(409, "Der neue Port ist bereits verbunden")
+    for pid in (body.end_port_id, keep, body.new_port_id):
+        access.require_write(me, access.site_of_port(pid))
+    reservations.check([body.new_port_id], use_reserved=body.use_reserved, by=me.name)
+    with db.transaction() as t:
+        cablelog.remove_cable(cid, by=me.name, reason="manual", c=t)
+        lo, hi = (keep, body.new_port_id) if keep < body.new_port_id else (body.new_port_id, keep)
+        new = t.execute(
+            """INSERT INTO cables(port_a_id, port_b_id, cable_label, cable_type, fiber_count, length_m, color, installed_at,
+                                  measurement_ref, measurement_ok, note, created_by, created_at, provisional)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (lo, hi, c["cable_label"], c["cable_type"], c["fiber_count"], c["length_m"], c["color"], c["installed_at"],
+             c["measurement_ref"], c["measurement_ok"], c["note"], me.name, time.time(), c["provisional"])).lastrowid
+    audit.log(me.name, "cable.move_end", "cable", cid, f"{body.end_port_id} -> {body.new_port_id}")
+    return {"cable_id": new, "port_a_id": lo, "port_b_id": hi}
 
 
 @router.post("/api/stations/remove", status_code=201)

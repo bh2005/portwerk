@@ -74,7 +74,8 @@
             <button :class="btnLink" @click="checkCmk">neu prüfen</button></div>
           <p v-if="dev.cmk.loading" class="text-slate-400">Prüfe …</p>
           <p v-else-if="dev.cmk.error" class="text-red-500">{{ dev.cmk.error }}</p>
-          <p v-else-if="dev.cmk.created" class="text-green-600 dark:text-green-400">In Checkmk angelegt (nur Ping) in {{ dev.cmk.folder }}. Die Änderung ist noch nicht aktiv – bitte in Checkmk aktivieren.</p>
+          <p v-else-if="dev.cmk.created" class="text-green-600 dark:text-green-400">In Checkmk angelegt (nur Ping) in {{ dev.cmk.folder }}. Die Änderung ist noch nicht aktiv.</p>
+          <CheckmkActivate v-if="dev.cmk.created" />
           <p v-else-if="dev.cmk.exists" class="text-green-600 dark:text-green-400">In Checkmk vorhanden<span class="text-slate-500 dark:text-slate-400"> · {{ dev.cmk.folder || '/' }}<template v-if="dev.cmk.ipaddress"> · {{ dev.cmk.ipaddress }}</template></span></p>
           <template v-else-if="dev.cmk.exists === false">
             <p class="text-amber-600 dark:text-amber-400">Nicht in Checkmk vorhanden.</p>
@@ -107,6 +108,7 @@ import { inp, lbl, card, btnGhost, btnPrimary, btnLink, th, td, DEVICE_TYPES } f
 import SidePanel from '../components/SidePanel.vue'
 import CableHistoryPanel from '../components/CableHistoryPanel.vue'
 import PathEditor from '../components/PathEditor.vue'
+import CheckmkActivate from '../components/CheckmkActivate.vue'
 import VlanCompare from '../components/VlanCompare.vue'
 
 const TABS = [['lldp', 'Verkabelung (LLDP/CDP)'], ['vlan', 'VLANs (Checkmk)']]

@@ -43,12 +43,17 @@
       <button type="button" :class="btnLink" :disabled="busyApi || !a.secret_set" @click="testApi">Verbindung testen</button>
       <span v-if="msgApi" class="text-sm text-green-600">{{ msgApi }}</span><span v-if="errApi" class="text-sm text-red-500">{{ errApi }}</span>
     </div>
+    <div v-if="a.enabled && a.secret_set" class="max-w-xl space-y-2">
+      <CheckmkActivate />
+      <p class="text-xs text-slate-400">Zum Aktivieren aus Portwerk braucht der Automation-User das Recht <code>wato.activate</code> (nicht <code>wato.activateforeign</code>). Fremde Änderungen aktiviert Portwerk nie.</p>
+    </div>
   </form>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { api, errText } from '../api.js'
+import CheckmkActivate from './CheckmkActivate.vue'
 import { loadCheckmk } from '../checkmk.js'
 import { inp, lbl, btnPrimary, btnLink } from '../ui.js'
 

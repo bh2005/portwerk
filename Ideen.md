@@ -50,3 +50,5 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Checkmk-REST-Anbindung: Host prüfen, mit Ping und Standort-Tag anlegen (Aktivierung in Checkmk) | #26 |
 | Strecken-Editor: ganze Strecke als Seitenleiste, Kabel bearbeiten, Zwischenstationen einfügen/entfernen | #26 |
 | Dokumentation der Abläufe mit Beispielen (`docs/workflows/`) | #26 |
+| Strecken-Editor: Umstecken (Ziel ändern) | (dieser PR) |
+| Checkmk: ausstehende Änderungen anzeigen und aus Portwerk aktivieren (nur ohne fremde Änderungen) | (dieser PR) |

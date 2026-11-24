@@ -52,6 +52,7 @@
           <p v-if="links[i].note" class="text-xs text-slate-400 mt-0.5">{{ links[i].note }}</p>
           <div v-if="canWrite" class="flex gap-3 mt-1">
             <button :class="btnLink" @click="toggleEdit(i)">{{ edit?.i === i ? 'schließen' : 'bearbeiten' }}</button>
+            <button :class="btnLink" @click="toggleMove(i)">{{ mv?.i === i ? 'abbrechen' : 'umstecken' }}</button>
             <button :class="btnLink" @click="toggleInsert(i)">{{ ins?.i === i ? 'abbrechen' : '+ Zwischenstation' }}</button>
             <button :class="btnDanger" :disabled="busy" @click="unplug(i)">lösen</button>
           </div>
@@ -60,6 +61,20 @@
           <div v-if="edit?.i === i" class="mt-2 rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">
             <CableFields :model-value="edit.f" />
             <div class="flex gap-2 justify-end"><button :class="btnGhost" @click="edit = null">Abbrechen</button><button :class="btnPrimary" :disabled="busy" @click="saveCable">Speichern</button></div>
+          </div>
+
+          <!-- Ziel ändern: ein Ende an einen anderen Port stecken -->
+          <div v-if="mv?.i === i" class="mt-2 rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">
+            <div class="text-xs text-slate-500">Welches Ende soll an einen anderen Port?</div>
+            <label class="flex items-center gap-2 text-sm"><input v-model="mv.end" type="radio" value="left" /> <span class="font-mono">{{ endName(i, false) }}</span></label>
+            <label class="flex items-center gap-2 text-sm"><input v-model="mv.end" type="radio" value="right" /> <span class="font-mono">{{ endName(i, true) }}</span></label>
+            <PortPicker :key="'mv' + i + mv.end" v-model="mv.portId" label="Neuer Port" @select="p => mv.sel = p" />
+            <p v-if="mv.sel" class="text-xs text-slate-500">Danach: <span class="font-mono">{{ mv.end === 'left' ? mv.sel.device.hostname + ':' + mv.sel.name : endName(i, false) }}</span> →
+              <span class="font-mono">{{ mv.end === 'left' ? endName(i, true) : mv.sel.device.hostname + ':' + mv.sel.name }}</span></p>
+            <p v-if="mv.sel?.cable" class="text-xs text-red-500">Der Port ist bereits verbunden ({{ mv.sel.cable.device_hostname }}:{{ mv.sel.cable.port_name }}). Zuerst dort lösen.</p>
+            <p class="text-xs text-slate-400">Das Kabel behält alle Angaben; in der Historie endet die alte Verbindung, die neue beginnt.</p>
+            <div class="flex gap-2 justify-end"><button :class="btnGhost" @click="mv = null">Abbrechen</button>
+              <button :class="btnPrimary" :disabled="busy || !mv.sel || !!mv.sel.cable" @click="moveEnd(i)">Umstecken</button></div>
           </div>
 
           <!-- Zwischenstation einfügen -->
@@ -112,7 +127,7 @@ const props = defineProps({ open: Boolean, portId: { type: Number, default: null
 const emit = defineEmits(['close', 'changed'])
 
 const data = ref(null), loading = ref(false), error = ref(''), msg = ref(''), busy = ref(false)
-const edit = ref(null), ins = ref(null)
+const edit = ref(null), ins = ref(null), mv = ref(null)
 const canWrite = canWriteMaster()
 const nodes = computed(() => data.value?.nodes || [])
 const links = computed(() => data.value?.links || [])
@@ -138,19 +153,33 @@ async function load() {
   loading.value = true
   try { data.value = await api.portPath(props.portId); error.value = '' } catch (e) { data.value = null; error.value = errText(e) } finally { loading.value = false }
 }
-async function reload(m) { msg.value = ''; edit.value = ins.value = null; await load(); msg.value = m || ''; emit('changed') }
-watch(() => [props.open, props.portId], ([o]) => { if (o) { msg.value = ''; error.value = ''; edit.value = ins.value = null; data.value = null; load() } }, { immediate: true })
+async function reload(m) { msg.value = ''; edit.value = ins.value = mv.value = null; await load(); msg.value = m || ''; emit('changed') }
+watch(() => [props.open, props.portId], ([o]) => { if (o) { msg.value = ''; error.value = ''; edit.value = ins.value = mv.value = null; data.value = null; load() } }, { immediate: true })
 
 const cableFields = l => ({ cable_label: l.label || '', cable_type: l.cable_type || 'other', fiber_count: l.fiber_count ?? null, length_m: l.length_m ?? null, color: l.color || '',
   installed_at: l.installed_at || null, measurement_ref: l.measurement_ref || '', measurement_ok: l.measurement_ok ?? null, note: l.note || '' })
-function toggleEdit(i) { ins.value = null; edit.value = edit.value?.i === i ? null : { i, f: { ...cableFields(links.value[i]), provisional: !!links.value[i].provisional } } }
-function toggleInsert(i) { edit.value = null; ins.value = ins.value?.i === i ? null : { i, portId: '', sel: null, swap: false } }
+function toggleEdit(i) { ins.value = mv.value = null; edit.value = edit.value?.i === i ? null : { i, f: { ...cableFields(links.value[i]), provisional: !!links.value[i].provisional } } }
+function toggleMove(i) { edit.value = ins.value = null; mv.value = mv.value?.i === i ? null : { i, end: 'right', portId: '', sel: null } }
+function toggleInsert(i) { edit.value = mv.value = null; ins.value = ins.value?.i === i ? null : { i, portId: '', sel: null, swap: false } }
 
 async function run(fn, done) {
   busy.value = true; error.value = ''
   try { await fn(); await reload(done) } catch (e) { error.value = errText(e) } finally { busy.value = false }
 }
 const saveCable = () => run(() => api.updateCable(links.value[edit.value.i].cable_id, { ...edit.value.f }), 'Kabel gespeichert.')
+async function moveEnd(i, reserved = false) {
+  const m = mv.value
+  busy.value = true; error.value = ''
+  try {
+    await api.moveCableEnd(links.value[i].cable_id, { end_port_id: (m.end === 'left' ? leftPort(i) : rightPort(i)).id, new_port_id: m.sel.id, use_reserved: reserved })
+    busy.value = false; await reload('Kabel umgesteckt.')
+  } catch (e) {
+    busy.value = false
+    const c = conflictOf(e)
+    if (c && c.code === 'port_reserved' && !reserved && confirm(c.message)) return moveEnd(i, true)
+    error.value = errText(e)
+  }
+}
 const insertStation = i => run(() => api.insertStation(links.value[i].cable_id, { port_id: ins.value.sel.id, side_port_id: (ins.value.swap ? rightPort(i) : leftPort(i)).id }), 'Zwischenstation eingefügt.')
 function removeStation(n) {
   if (!confirm(`${n.device.hostname} (${n.ports.map(p => p.name).join(' ⇄ ')}) aus der Strecke nehmen?\n\nDie beiden Kabel werden zu einem vorläufigen Direktkabel.`)) return
