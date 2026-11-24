@@ -161,7 +161,7 @@ Rollen sind kombinierbar; lokale Benutzer plus optional AD/LDAP (Gruppen → Rol
 | **1 – Stammdaten und Import** | Standorte/Locations/Racks, Geräte, Ports, Import aus Checkmk, CSV, JSON, API; Port-Ansicht und freie Ports; Benutzer/Rollen, Audit, Hilfe | ✔ |
 | **2 – Patchverbindungen und Aufträge** | Verbindungen, Pfadansicht, Aufträge mit Ablauf und Historie, Konfliktprüfung, Arbeitsanweisung (Druck/CSV/PDF), **OpenPlan-Schnittstelle** | ✔ |
 | **3 – Soll/Ist** | LLDP-Beobachtungen, Abgleich, Bestätigungsvorschlag, Abweichungsbericht | ✔ |
-| **4 – Ausbau** | Webhooks nach außen, Berichte, Geräte aus OpenPlan, Beschriftungsetiketten | teilweise: Etiketten ✔, Berichte (Kapazität, Zeitreise) ✔; Webhooks nach außen und Geräte aus OpenPlan offen |
+| **4 – Ausbau** | Webhooks nach außen, Berichte, Geräte aus OpenPlan, Beschriftungsetiketten | teilweise: Etiketten ✔, Berichte (Kapazität, Zeitreise) ✔; Geräte aus OpenPlan ✔; Webhooks nach außen offen |
 
 Über den Entwurf hinaus umgesetzt: Port-Reservierungen, mobile Techniker-Ansicht, Pfad-Tracer als Grafik, Zeitreise (Stand am / Vergleich),
 Kapazitätsplanung, Sicherung/Wiederherstellung, WAN-Leitungsverzeichnis, Geräte- und Kabel-Assistenten mit Gerätekatalog.

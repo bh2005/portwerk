@@ -8,8 +8,9 @@ import time
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
 
-from .. import audit, db, openplan
+from .. import audit, db, opdevices, openplan
 from ..auth import Principal, current_principal, require_admin
 from ..schemas import OpenPlanBulkIn, OpenPlanCreateIn, OpenPlanLinkIn, OpenPlanProjectIn, OpenPlanSettingsIn
 from . import workorders
@@ -81,6 +82,30 @@ def projects(me: Principal = Depends(current_principal)):
     _planner(me)
     cfg = openplan.require_enabled()
     return [{"id": p["id"], "name": p["name"], "task_count": p.get("task_count"), "access": p.get("access", "")} for p in openplan.call("GET", "/api/projects", None, cfg)]
+
+
+class DevicePick(BaseModel):
+    task_id: int
+    location_id: Optional[int] = None
+    type: Optional[str] = None
+
+
+class DeviceImportIn(BaseModel):
+    items: list[DevicePick] = Field(min_length=1, max_length=500)
+
+
+@router.get("/api/openplan/projects/{pid}/devices")
+def project_devices(pid: int, me: Principal = Depends(current_principal)):
+    """Geräte-Vorgänge eines OpenPlan-Projekts mit Zuordnung zu Standort, Ort, Typ und Katalogmodell (Vorschau für die Übernahme)."""
+    _planner(me)
+    return opdevices.preview(pid, me)
+
+
+@router.post("/api/openplan/projects/{pid}/devices")
+def import_project_devices(pid: int, body: DeviceImportIn, me: Principal = Depends(current_principal)):
+    """Gewählte Geräte als „geplant“ anlegen bzw. vorhandene verknüpfen; Rückverweis ``portwerk`` in OpenPlan."""
+    _planner(me)
+    return opdevices.apply(pid, [i.model_dump() for i in body.items], me)
 
 
 @router.get("/api/openplan/projects/{pid}/tasks")

@@ -40,6 +40,13 @@ class FakeOpenPlan:
         self.tasks[self.seq] = {"id": self.seq, "project_id": pid, "name": name, "parent_id": parent, "summary": summary, "wbs": str(self.seq), "status": "open", "percent": 0.0, "note": "", "duration": 1}
         return self.seq
 
+    def add_device(self, pid, **attrs):
+        """Geräte-Vorgang wie beim Import einer Geräteliste in OpenPlan (``ext_key`` + ``attrs``)."""
+        tid = self.add_task(pid, attrs["hostname"], summary=True)
+        self.tasks[tid].update(ext_key=attrs["hostname"].lower(), attrs=attrs)
+        self.add_task(pid, "Vor Ort tauschen", parent=tid)                 # Schritte darunter: Geräte-Vorgang ist ein Sammelvorgang
+        return tid
+
     def project_json(self, pid):
         ts = [{**t, "refs": {s: {"ref": r, "url": u} for (tid, s), (r, u) in self.refs.items() if tid == t["id"]}} for t in self.tasks.values() if t["project_id"] == pid]
         return {"project": {"id": pid, "name": self.projects[pid]}, "tasks": ts}
@@ -74,6 +81,8 @@ class FakeOpenPlan:
             t = self.tasks.get(tid)
             if not t:
                 raise OpenPlanError(404, "OpenPlan antwortet 404")
+            if any(x["parent_id"] == tid for x in self.tasks.values()):
+                raise OpenPlanError(422, "OpenPlan antwortet 422: Nur für Teilvorgänge ohne Unterpunkte (kein Sammelvorgang)")
             before = (t["status"], t["percent"], t["note"], self.refs.get((tid, body.get("system"))))
             if body.get("status") is not None:
                 t["status"] = body["status"]
@@ -89,6 +98,14 @@ class FakeOpenPlan:
                 self.refs[(tid, body["system"])] = (body["ref"], body.get("url", ""))
             after = (t["status"], t["percent"], t["note"], self.refs.get((tid, body.get("system"))))
             return {"changed": before != after, "task": {"id": tid, "status": t["status"], "percent": t["percent"], "status_note": t["note"]}}
+        if method == "PUT" and "/refs/" in path:                          # Referenz direkt setzen (auch an Sammelvorgängen)
+            tid, system = int(path.split("/")[3]), path.split("/")[5]
+            if tid not in self.tasks:
+                raise OpenPlanError(404, "OpenPlan antwortet 404")
+            if system not in REF_SYSTEMS:
+                raise OpenPlanError(422, f"OpenPlan antwortet 422: Input should be {', '.join(REF_SYSTEMS)}")
+            self.refs[(tid, system)] = (body["ref"], body.get("url", ""))
+            return {"system": system, "ref": body["ref"], "url": body.get("url", ""), "changed": True}
         if method == "DELETE" and "/refs/" in path:
             tid, system = int(path.split("/")[3]), path.split("/")[5]
             return {"ok": True, "removed": self.refs.pop((tid, system), None) is not None}

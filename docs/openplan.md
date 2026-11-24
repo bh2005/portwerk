@@ -21,6 +21,12 @@ und aus einer Projektvorlage lässt sich ein ganzes **Einbauprojekt** (Patchfeld
 - **Abgleich:** Jede Statusänderung und jedes Abhaken meldet Status/Fortschritt an die Aufgabe (Entwurf bis freigegeben = offen; in Ausführung = Prozent erledigter Positionen, höchstens 99;
   bestätigt = erledigt; abgelehnt = blockiert). Ein Ausfall von OpenPlan stört den Auftrag nie – „Jetzt abgleichen“ holt es nach.
 - **Rückrichtung:** Ändert jemand den Status der Aufgabe in OpenPlan, zeigt der Auftrag den neuen Status (Webhook).
+- **Geräte aus OpenPlan:** Geräte → „Aus OpenPlan …“ zeigt die Geräte-Vorgänge eines Projekts (aus dem Import einer Geräteliste in OpenPlan).
+  Die Zuordnung läuft so: Standort über den Location-Code (= Standort-Code in Portwerk), sonst über den Namen; Ort über „Rack / HE“ (z. B. `R3 / HE 12`),
+  bei gleichnamigen Racks entscheidet „Gebäude / Raum“, ohne Rack der Raum. Typ aus dem Gerätetyp, Katalogmodell über „Hersteller Modell“ oder „Modell“.
+  Neue Geräte entstehen als **geplant** (Quelle „OpenPlan“, Ports aus dem Katalogmodell, HE nur wenn frei); ein vorhandenes Gerät gleichen Namens wird verknüpft.
+  Am OpenPlan-Vorgang steht danach die Referenz `portwerk: <Hostname>` mit Link. Ein erneuter Abruf erkennt Übernommenes (`devices.openplan_ref`).
+  Dafür genügt der normale API-Zugang (das Dienstkonto muss Mitglied des Projekts sein).
 - **Abwesenheiten:** Portwerk holt stündlich die persönlichen Abwesenheiten aller OpenPlan-Benutzer für ein Jahr im Voraus (`GET /api/absences`).
   Die Zuordnung läuft über den Benutzernamen (Groß-/Kleinschreibung egal), sonst über eine eindeutige E-Mail-Adresse. Benutzer ohne Gegenstück zeigt die Verwaltung an.
   Übernommene Einträge ersetzen bei jedem Abgleich die vorigen und sind in Portwerk nur lesbar. Für sie gilt die **Standard-Vertretung** aus dem Profil, denn OpenPlan kennt keine Vertretung.
@@ -28,4 +34,4 @@ und aus einer Projektvorlage lässt sich ein ganzes **Einbauprojekt** (Patchfeld
 
 ## Technik
 API-Aufrufe und Statuszuordnung: `backend/app/openplan.py`, Routen `backend/app/routers/openplan.py`, Tests `backend/tests/test_openplan.py` (gegen eine simulierte OpenPlan-API).
-Der Vertrag auf OpenPlan-Seite steht in dessen `docs/integration-api.md` (Abschnitt 7: Abwesenheiten). Abgleich der Abwesenheiten: `openplan.sync_absences`, Tests `backend/tests/test_openplan_absences.py`.
+Der Vertrag auf OpenPlan-Seite steht in dessen `docs/integration-api.md` (Abschnitt 7: Abwesenheiten). Abgleich der Abwesenheiten: `openplan.sync_absences`, Tests `backend/tests/test_openplan_absences.py`. Geräte: `backend/app/opdevices.py`, Tests `backend/tests/test_openplan_devices.py`.
