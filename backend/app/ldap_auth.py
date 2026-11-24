@@ -32,7 +32,7 @@ DEFAULTS: dict[str, Any] = {
     "user_filter": "(&(objectClass=user)(sAMAccountName={username}))", "ca_pem": "",
     "required_group": "", "group_roles": {r: "" for r in ROLES},
     "scoped_groups": [],                 # [{group, role, site_id}]: Rolle nur für einen Standort
-    "default_role": "viewer",            # Rolle für Benutzer ohne passende Gruppe; leer = Anmeldung verweigern
+    "default_role": "",                  # Rolle für Benutzer ohne passende Gruppe; leer = Konto ohne Rechte (Hinweis zur Freischaltung)
     "auto_create": True, "nested_groups": True,
 }
 
@@ -264,9 +264,8 @@ def _auth(cfg: dict, username: str, password: str, trace: Optional[list]) -> Opt
             if cfg["default_role"]:
                 roles = [cfg["default_role"]]
                 _step(trace, "Standardrolle", True, cfg["default_role"])
-            else:
-                _step(trace, "Rolle", False, "keine passende Gruppe und keine Standardrolle – Anmeldung nicht erlaubt")
-                return None
+            else:                                                        # Anmeldung ja, Rechte nein: die Oberfläche zeigt den Hinweis zur Freischaltung
+                _step(trace, "Rolle", True, "keine passende Gruppe und keine Standardrolle – das Konto hat zunächst keine Rechte (Administrator muss freischalten)")
         return {"username": account, "display": str(g("displayName") or ""),
                 "email": str(g("mail") or ""), "roles": roles, "scopes": scopes}
     finally:

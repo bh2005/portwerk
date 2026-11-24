@@ -102,11 +102,14 @@ def test_first_login_creates_user_with_roles_from_groups(client, admin, ad):
     assert a["roles"] == ["admin", "planer"]
 
 
-def test_default_role_and_deny_without_group(client, admin, ad):
+def test_default_role_and_no_rights_without_group(client, admin, ad):
     assert ldap_login(client, "nogr").json()["user"]["roles"] == ["viewer"]
     client.put("/api/admin/ldap", headers=admin, json={"default_role": ""})
-    assert ldap_login(client, "nogr").status_code == 401       # ohne passende Gruppe und ohne Standardrolle: kein Zugang (auch nicht für bestehende Konten)
+    r = ldap_login(client, "nogr")                              # ohne passende Gruppe und ohne Standardrolle: Anmeldung ja, aber ohne Rechte (Hinweis in der Oberfläche)
+    assert r.status_code == 200 and r.json()["user"]["roles"] == [] and r.json()["user"]["scopes"] == []
+    assert client.get("/api/sites", headers={"X-Auth-Token": r.json()["token"]}).json() == []          # sieht keine Daten
     assert ldap_login(client, "max").status_code == 200        # mit Gruppe weiterhin
+    assert ldap_login(client, "max").json()["user"]["roles"] == ["planer"]
 
 
 def test_roles_sync_on_every_login_and_old_sessions_end(client, admin, ad):

@@ -200,7 +200,7 @@ def _login_ldap(username: str, password: str, u: Optional[dict]) -> dict:
             "INSERT INTO users(username, full_name, email, roles, source, password_hash, created_at) VALUES (?,?,?,?,?,?,?)",
             (info["username"], info["display"], info["email"], roles, "ldap", "ldap$" + secrets.token_hex(16), time.time()))
         u = db.row("SELECT * FROM users WHERE id = ?", (uid,))
-        audit.log(info["username"], "user.create", "user", uid, f"ldap [{roles}]")
+        audit.log(info["username"], "user.create", "user", uid, f"ldap [{roles or 'keine Rechte – wartet auf Freischaltung'}]")
     db.execute("DELETE FROM user_scopes WHERE user_id = ? AND source = 'ldap'", (u["id"],))      # Standort-Rechte aus AD-Gruppen neu setzen
     for role, site_id in info.get("scopes") or []:
         db.execute("INSERT OR IGNORE INTO user_scopes(user_id, role, site_id, source) VALUES (?,?,?, 'ldap')", (u["id"], role, site_id))

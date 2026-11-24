@@ -2,6 +2,10 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.8.0 – 2026-11-24
+- Neue Benutzer ohne Rechte: Ein Konto ohne Rolle und ohne Standort-Recht (z. B. beim ersten AD-Login angelegt) kann sich anmelden, sieht aber nur den Hinweis „Noch keine Berechtigung – bitte an einen Administrator wenden“ und keine Daten. In der Benutzerverwaltung steht „wartet auf Freischaltung“.
+- AD-Standard geändert: „Rolle ohne passende Gruppe“ ist jetzt standardmäßig leer (Konto ohne Rechte) statt „Betrachter“; eine leere Einstellung verweigert die Anmeldung nicht mehr, sondern legt ein Konto ohne Rechte an. Bestehende Einstellungen bleiben unverändert.
+
 ## 0.7.1 – 2026-11-24
 - Dark Mode, Korrektur: Die Standard-Textfarbe aus 0.7.0 griff in der App nicht (die Klasse `dark` sitzt auf dem Wurzel-Element der App, nicht auf `html`). Tabellen im Audit-Log, in der Übersicht, bei den Geräten und in der Verwaltung sind jetzt im Dark Mode lesbar; geprüft in 14 Ansichten mit dem echten Dark-Mode-Schalter.
 

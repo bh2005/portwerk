@@ -54,7 +54,7 @@
       <p class="text-xs text-slate-400">Sind oben Gruppen zugeordnet, werden die Rollen bei <b>jeder Anmeldung</b> aus dem Verzeichnis übernommen (manuelle Änderungen an AD-Konten werden dann überschrieben). Ohne Gruppen-Zuordnung liefert das Verzeichnis nur die Anmeldung: neue Konten bekommen die Rolle unten, danach pflegt der Administrator die Rollen unter Benutzer.</p>
       <div class="grid sm:grid-cols-2 gap-3 items-end">
         <div><label :class="lbl">Rolle ohne passende Gruppe</label>
-          <select v-model="f.default_role" :class="inp"><option value="">keine – Anmeldung nicht erlaubt</option>
+          <select v-model="f.default_role" :class="inp"><option value="">keine – Konto ohne Rechte, Hinweis zur Freischaltung</option>
             <option v-for="[k, l] in ROLES.filter(r => r[0] !== 'admin')" :key="k" :value="k">{{ l }}</option></select></div>
         <div class="space-y-1">
           <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="f.auto_create" /> Konto beim ersten Login automatisch anlegen</label>
@@ -97,7 +97,7 @@ const hint = 'text-xs text-slate-400 mt-1'
 const f = reactive({
   enabled: false, url: '', base_dn: '', domain: '', bind_dn: '', bind_password: '', clear_bind_password: false,
   user_filter: '(&(objectClass=user)(sAMAccountName={username}))', ca_pem: '', required_group: '',
-  group_roles: Object.fromEntries(ROLES.map(r => [r[0], ''])), scoped_groups: [], default_role: 'viewer', auto_create: true, nested_groups: true,
+  group_roles: Object.fromEntries(ROLES.map(r => [r[0], ''])), scoped_groups: [], default_role: '', auto_create: true, nested_groups: true,
 })
 const meta = reactive({ bind_password_set: false, from_db: false })
 const t = reactive({ username: '', password: '' })
