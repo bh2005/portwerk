@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 API_PREFIXES = ("api/", "auth/", "health")
+NO_CACHE = {"Cache-Control": "no-cache"}      # index.html immer neu prüfen (ETag), sonst zeigt der Browser nach einem Update die alte Oberfläche
 
 
 def find_static_dir(configured: str = "") -> Optional[Path]:
@@ -36,7 +37,7 @@ def register_static(app: FastAPI, directory: Optional[Path]) -> bool:
             return JSONResponse({"detail": "Nicht gefunden"}, status_code=404)
         candidate = (dist / full_path).resolve()
         if full_path and candidate.is_file() and dist in candidate.parents:      # nur Dateien innerhalb von dist
-            return FileResponse(candidate)
-        return FileResponse(dist / "index.html")
+            return FileResponse(candidate, headers=NO_CACHE if candidate.name == "index.html" else None)
+        return FileResponse(dist / "index.html", headers=NO_CACHE)
 
     return True

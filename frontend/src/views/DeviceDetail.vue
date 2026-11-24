@@ -78,6 +78,9 @@
                     {{ p.cable.device_hostname }}:{{ p.cable.port_name }}
                   </router-link>
                   <span v-if="p.cable && p.cable.cable_label" class="ml-1 text-slate-400">({{ p.cable.cable_label }})</span>
+                  <span v-if="p.cable && p.cable.provisional" class="ml-1 inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                    title="Aus dem Soll/Ist-Abgleich übernommen – Dosen und Patchfelder sind noch nicht dokumentiert">vorläufig
+                    <button v-if="canWrite" class="ml-1 underline" title="Strecke ist vollständig dokumentiert" @click="completeCable(p)">vollständig</button></span>
                   <span v-if="p.cable && p.cable.measurement_ok === true" class="ml-1 text-green-500" title="Messung bestanden">✓</span>
                   <span v-if="p.cable && p.cable.measurement_ok === false" class="ml-1 text-red-500" title="Messung nicht bestanden">✗</span>
                   <span v-if="!p.cable && !p.reservation && !p.planned" class="text-slate-400">–</span>
@@ -106,53 +109,14 @@
         </div>
       </div>
 
-      <div ref="histCard" :class="card" class="p-4">
-        <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Verbindungs-Historie<span v-if="hist.port"> – Port {{ hist.port.name }}</span>
-          </h2>
-          <div class="flex flex-wrap items-end gap-2">
-            <div><label :class="lbl">Stand am</label><input v-model="hist.at" type="datetime-local" :class="inp" class="!py-1" @change="loadHistory" /></div>
-            <button v-if="hist.at" :class="btnLink" @click="hist.at = ''; loadHistory()">alle Zeitpunkte</button>
-            <button v-if="hist.port" :class="btnLink" @click="hist.port = null; loadHistory()">alle Ports</button>
-          </div>
-        </div>
-        <p v-if="hist.error" class="text-sm text-red-500">{{ hist.error }}</p>
-        <p v-else-if="!hist.rows.length" class="text-sm text-slate-400">{{ hist.at ? 'Zu diesem Zeitpunkt war nichts verbunden.' : 'Noch keine Verbindungen.' }}</p>
-        <div v-else class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead><tr class="bg-slate-50 dark:bg-slate-700/40"><th :class="th">Port</th><th :class="th">Gegenstelle</th><th :class="th">Kabel</th>
-              <th :class="th">Von</th><th :class="th">Bis</th><th :class="th">Hergestellt</th><th :class="th">Getrennt</th></tr></thead>
-            <tbody>
-              <tr v-for="h in hist.rows" :key="h.id" class="border-t border-slate-100 dark:border-slate-700" :class="h.active ? '' : 'text-slate-500'">
-                <td :class="td" class="font-mono text-xs">{{ h.local.port_name }}</td>
-                <td :class="td" class="font-mono text-xs">
-                  <router-link v-if="h.remote.device_id" :to="`/devices/${h.remote.device_id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ h.remote.hostname }}:{{ h.remote.port_name }}</router-link>
-                  <span v-else :title="'Port existiert nicht mehr'">{{ h.remote.hostname }}:{{ h.remote.port_name }}</span>
-                </td>
-                <td :class="td" class="text-xs">{{ h.cable_label || '–' }}<span class="text-slate-400"> {{ h.cable_type !== 'other' ? h.cable_type : '' }}</span></td>
-                <td :class="td" class="text-xs whitespace-nowrap">{{ fmtTime(h.valid_from) }}</td>
-                <td :class="td" class="text-xs whitespace-nowrap">
-                  <span v-if="h.active" class="text-green-600 dark:text-green-400 font-medium">steckt</span>
-                  <span v-else>{{ fmtTime(h.valid_to) }}</span>
-                </td>
-                <td :class="td" class="text-xs">
-                  <router-link v-if="h.workorder" :to="`/workorders/${h.workorder.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ h.workorder.number }}</router-link>
-                  <span v-else>{{ h.created_by || '–' }}</span>
-                </td>
-                <td :class="td" class="text-xs">
-                  <template v-if="!h.active">
-                    <router-link v-if="h.ended_workorder" :to="`/workorders/${h.ended_workorder.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ h.ended_workorder.number }}</router-link>
-                    <span v-else>{{ h.ended_by || '–' }}</span>
-                    <span class="text-slate-400 ml-1">{{ END_REASONS[h.end_reason] || '' }}</span>
-                  </template>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div :class="card" class="px-4 py-3 flex items-center justify-between gap-3">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Verbindungs-Historie</h2>
+        <button :class="btnLink" @click="hist.port = null; hist.open = true">alle Ports anzeigen</button>
       </div>
     </template>
+
+    <CableHistoryPanel :open="hist.open" :device-id="d?.id" :port-id="hist.port?.id ?? null" :hostname="d?.hostname || ''" :port-name="hist.port?.name || ''"
+                       @close="hist.open = false" @all-ports="hist.port = null" />
 
     <WorkplaceWizard v-if="workplaceFor" :preset="workplaceFor" @close="workplaceFor = null; load()" />
 
@@ -324,6 +288,7 @@ import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
 import CableWizard from '../components/CableWizard.vue'
+import CableHistoryPanel from '../components/CableHistoryPanel.vue'
 import PathGraphic from '../components/PathGraphic.vue'
 import PortConfigFields from '../components/PortConfigFields.vue'
 import WorkplaceWizard from '../components/WorkplaceWizard.vue'
@@ -341,7 +306,7 @@ const form = reactive({})
 const error = ref(''), msg = ref(''), msgErr = ref(false), formError = ref('')
 const portForm = ref(null), bulk = ref(null), peer = ref(null), cableForm = ref(null)
 const cableWiz = ref(null)
-const hist = reactive({ rows: [], at: '', port: null, error: '' }), histCard = ref(null)
+const hist = reactive({ open: false, port: null })
 const canReserve = hasRole('planer'), picked = ref(new Set()), resForm = ref(null), pathDlg = ref(null)
 const vlanDlg = ref(null), workplaceFor = ref(null), canPlan = hasRole('planer')
 /** Kurzform für die Port-Tabelle: Profilname bzw. VLAN-Nummern (voller Text im Tooltip). */
@@ -389,16 +354,15 @@ async function releaseRes(p) {
   if (!confirm(`Reservierung „${p.reservation.purpose}“ für ${p.name} freigeben?`)) return
   try { await api.releaseReservation(p.reservation.id); await load() } catch (e) { error.value = errText(e) }
 }
-const END_REASONS = { manual: '(direkt)', workorder: '', wizard: '(Assistent)', retire: '(Rückbau)', '': '(Port/Gerät gelöscht)' }
-async function loadHistory() {
-  if (!d.value) return
+function showPortHistory(p) { hist.port = p; hist.open = true }
+async function completeCable(p) {
+  const c = p.cable
   try {
-    const params = hist.port ? { port_id: hist.port.id } : { device_id: d.value.id }
-    if (hist.at) params.at = hist.at
-    hist.rows = await api.cableHistory(params); hist.error = ''
-  } catch (e) { hist.rows = []; hist.error = errText(e) }
+    await api.updateCable(c.id, { cable_type: c.cable_type, cable_label: c.cable_label, fiber_count: c.fiber_count, length_m: c.length_m, color: c.color,
+      installed_at: c.installed_at, measurement_ref: c.measurement_ref, measurement_ok: c.measurement_ok, note: c.note, provisional: false })
+    await load()
+  } catch (e) { error.value = errText(e) }
 }
-function showPortHistory(p) { hist.port = p; loadHistory(); histCard.value?.scrollIntoView({ behavior: 'smooth' }) }
 function startCable(p) { cableWiz.value = { deviceId: d.value.id, portId: p ? p.id : null } }
 async function cableDone(r) { cableWiz.value = null; msgErr.value = false; msg.value = r.workorder ? `Kabel als Position in ${r.workorder.number} angelegt.` : 'Kabel angelegt.'; await load() }
 
@@ -410,7 +374,6 @@ async function load() {
     for (const k of FIELDS) form[k] = d.value[k]
     error.value = ''
     if (hist.port && !d.value.ports.some(p => p.id === hist.port.id)) hist.port = null
-    loadHistory()
   } catch (e) { error.value = errText(e, 'Gerät nicht gefunden'); d.value = null }
 }
 
@@ -512,5 +475,5 @@ async function savePeer() {
 }
 
 onMounted(async () => { loadCableTypes(); loadCheckmk(); try { locations.value = await api.locations() } catch {} ; load() })
-watch(() => route.params.id, id => { if (id) { hist.port = null; hist.at = ''; picked.value = new Set(); load() } })
+watch(() => route.params.id, id => { if (id) { hist.port = null; hist.open = false; picked.value = new Set(); load() } })
 </script>

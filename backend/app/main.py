@@ -9,16 +9,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
-from . import acme_client, auth, backup, notifications
+from . import acme_client, auth, backup, notifications, releases
 from .config import settings
-from .routers import accounts, backups, catalog, compare, documents, history, imports, labels, portreservations, vlans, masterdata, notify, openplan, overview, patchlists, search, serverconfig, wan, wizards, workorders
+from .routers import accounts, backups, catalog, compare, documents, history, imports, labels, portreservations, vlans, masterdata, notify, openplan, overview, patchlists, releases as releases_router, search, serverconfig, wan, wizards, workorders
 from .static import find_static_dir, register_static
 
 logger = logging.getLogger("opp")
 
 app = FastAPI(
     title="Portwerk API",
-    version="0.1.0",
+    version=releases.current_version("0.1.0"),
     description="Verwaltung und Planung von Verkabelung/Patchungen – Stammdaten, Import, Aufträge.",
     docs_url="/api/docs",
     redoc_url=None,
@@ -69,6 +69,7 @@ app.include_router(notify.router)
 app.include_router(openplan.router)
 app.include_router(wan.router)
 app.include_router(compare.router)
+app.include_router(releases_router.router)
 app.include_router(search.router)
 app.include_router(history.router)
 app.include_router(backups.router)

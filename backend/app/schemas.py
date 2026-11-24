@@ -95,6 +95,7 @@ class CableIn(BaseModel):
     measurement_ref: str = ""
     measurement_ok: Optional[bool] = None       # None=nicht gemessen, True=bestanden, False=nicht bestanden
     note: str = ""
+    provisional: Optional[bool] = None          # nur beim Aktualisieren: False = Strecke ist vollständig dokumentiert (None = unverändert)
 
 
 WORKORDER_STATUSES = ("draft", "submitted", "approved", "rejected", "in_progress", "done", "confirmed", "rework")

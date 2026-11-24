@@ -403,6 +403,7 @@ def _port_with_cable(port: dict) -> dict:
             "measurement_ref": cable["measurement_ref"],
             "measurement_ok": None if cable["measurement_ok"] is None else bool(cable["measurement_ok"]),
             "note": cable["note"],
+            "provisional": bool(cable["provisional"]),
             "port_id": other["id"],
             "port_name": other["name"],
             "device_id": other["device_id"],
@@ -580,6 +581,7 @@ def list_cables(
     cable_type: Optional[str] = None,
     measurement_ok: Optional[str] = None,
     q: Optional[str] = None,
+    provisional: Optional[bool] = None,
     me: Principal = Depends(current_principal),
 ):
     """Alle Kabel (für Bereichs-Benutzer: Kabel, von denen mindestens ein Ende im eigenen Standort liegt), optional gefiltert."""
@@ -596,6 +598,8 @@ def list_cables(
         where.append("c.measurement_ok = 0")
     elif measurement_ok == "none":
         where.append("c.measurement_ok IS NULL")
+    if provisional is not None:
+        where.append("c.provisional = ?"); args.append(int(provisional))
     if q:
         where.append("(c.cable_label LIKE ? OR c.note LIKE ? OR c.measurement_ref LIKE ?)")
         args += [f"%{q}%", f"%{q}%", f"%{q}%"]
@@ -628,6 +632,7 @@ def _cable_out(c: dict) -> dict:
         "measurement_ref": c["measurement_ref"],
         "measurement_ok": None if c["measurement_ok"] is None else bool(c["measurement_ok"]),
         "note": c["note"],
+        "provisional": bool(c.get("provisional")),
         "created_by": c["created_by"],
         "created_at": c["created_at"],
         "port_a": {"id": c["port_a_id"], "name": c["port_a_name"],
@@ -649,11 +654,12 @@ def update_cable(cid: int, body: CableIn, me: Principal = Depends(require_writer
     body.cable_type = check_cable_type(body.cable_type)
     db.execute(
         """UPDATE cables SET cable_label=?, cable_type=?, fiber_count=?, length_m=?, color=?,
-                             installed_at=?, measurement_ref=?, measurement_ok=?, note=? WHERE id=?""",
+                             installed_at=?, measurement_ref=?, measurement_ok=?, note=?,
+                             provisional=COALESCE(?, provisional) WHERE id=?""",
         (body.cable_label.strip(), body.cable_type, body.fiber_count, body.length_m,
          body.color.strip(), body.installed_at, body.measurement_ref.strip(),
          None if body.measurement_ok is None else int(body.measurement_ok),
-         body.note.strip(), cid),
+         body.note.strip(), None if body.provisional is None else int(body.provisional), cid),
     )
     audit.log(me.name, "cable.update", "cable", cid, body.cable_label)
     row = db.row(
