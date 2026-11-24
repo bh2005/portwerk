@@ -13,6 +13,8 @@
       <p class="text-sm text-slate-600 dark:text-slate-300">
         Bitte wenden Sie sich für die Vergabe von Rechten an einen <b>Administrator</b>. Nennen Sie dabei Ihren Benutzernamen und den Standort, für den Sie Zugriff brauchen.
       </p>
+      <p v-if="user.admins_notified" class="text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2">
+        Die globalen Administratoren wurden per E-Mail über Ihre Anmeldung informiert.</p>
       <p v-if="msg" class="text-sm text-amber-700 dark:text-amber-300">{{ msg }}</p>
       <div class="flex justify-center gap-2 pt-2">
         <button :class="btnGhost" :disabled="busy" @click="$emit('recheck')">{{ busy ? 'Prüfe …' : 'Erneut prüfen' }}</button>

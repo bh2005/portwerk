@@ -108,6 +108,7 @@ def public_user(u: dict) -> dict:
         "notify": _notify_prefs(u),
         "prefs": ui_prefs(u.get("ui_prefs") or ""),
         "absent": _absent(u["id"]),
+        "admins_notified": bool(u.get("admins_notified_at")),         # globale Administratoren wurden über das Konto ohne Rechte informiert
     }
 
 
@@ -169,6 +170,28 @@ def init() -> Optional[str]:
     return None
 
 
+_notify_try: dict[int, float] = {}
+
+
+def _inform_admins_if_waiting(u: dict) -> dict:
+    """Konto ohne jede Rechte, Administratoren noch nicht informiert: Mail an die globalen Administratoren (Versuch höchstens einmal pro Stunde)."""
+    if u.get("admins_notified_at") or parse_roles(u["roles"]) or user_scopes(u["id"]):
+        return u
+    if time.time() - _notify_try.get(u["id"], 0) < 3600:
+        return u
+    _notify_try[u["id"]] = time.time()
+    try:
+        from . import notifications
+        sent = notifications.new_user_waiting(u)
+    except Exception:                                                  # Anmeldung darf daran nie scheitern
+        sent = 0
+    if sent:
+        db.execute("UPDATE users SET admins_notified_at = ? WHERE id = ?", (time.time(), u["id"]))
+        audit.log(u["username"], "user.admins_notified", "user", u["id"], f"{sent} Empfänger")
+        u = db.row("SELECT * FROM users WHERE id = ?", (u["id"],))
+    return u
+
+
 def _login_ldap(username: str, password: str, u: Optional[dict]) -> dict:
     """Anmeldung über das Verzeichnis. Das Konto entsteht beim ersten Login (wenn erlaubt); Name, E-Mail und Rollen
     werden bei jeder Anmeldung aus dem Verzeichnis übernommen. Lokale Konten bleiben rein lokal."""
@@ -205,7 +228,7 @@ def _login_ldap(username: str, password: str, u: Optional[dict]) -> dict:
     for role, site_id in info.get("scopes") or []:
         db.execute("INSERT OR IGNORE INTO user_scopes(user_id, role, site_id, source) VALUES (?,?,?, 'ldap')", (u["id"], role, site_id))
     db.execute("UPDATE users SET last_login = ? WHERE id = ?", (time.time(), u["id"]))
-    u = db.row("SELECT * FROM users WHERE id = ?", (u["id"],))
+    u = _inform_admins_if_waiting(db.row("SELECT * FROM users WHERE id = ?", (u["id"],)))
     token = new_session_token()
     _sessions[token] = {"uid": u["id"], "tv": u["token_version"], "exp": time.time() + settings.session_ttl_hours * 3600}
     audit.log(u["username"], "auth.login", detail="ldap")
@@ -223,10 +246,11 @@ def login(username: str, password: str) -> dict:
         audit.log(username or "?", "auth.login_failed")
         raise HTTPException(401, "Ungültige Anmeldedaten")
     db.execute("UPDATE users SET last_login = ? WHERE id = ?", (time.time(), u["id"]))
+    u = _inform_admins_if_waiting(db.row("SELECT * FROM users WHERE id = ?", (u["id"],)))
     token = new_session_token()
     _sessions[token] = {"uid": u["id"], "tv": u["token_version"], "exp": time.time() + settings.session_ttl_hours * 3600}
     audit.log(u["username"], "auth.login")
-    return {"token": token, "user": public_user(db.row("SELECT * FROM users WHERE id = ?", (u["id"],)))}
+    return {"token": token, "user": public_user(u)}
 
 
 def logout(token: str) -> None:

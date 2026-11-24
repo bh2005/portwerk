@@ -33,7 +33,7 @@
 
         <div v-if="notify" class="space-y-2">
           <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">E-Mail-Benachrichtigungen</h3>
-          <label v-for="[k, l] in NOTIFY" :key="k" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
+          <label v-for="[k, l] in notifyShown" :key="k" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
             <input type="checkbox" :checked="notify[k]" @change="setNotify(k, $event.target.checked)" /> {{ l }}</label>
           <p class="text-xs text-slate-400">{{ me.email ? `an ${me.email}` : 'Keine E-Mail-Adresse hinterlegt – es kommen keine Mails.' }}
             Ob überhaupt Mails verschickt werden, legt die Verwaltung fest.</p>
@@ -123,7 +123,8 @@ const show = ref(false), saving = ref(false), msg = ref(''), msgErr = ref(false)
 const firstField = ref(null)
 const NOTIFY = [['assigned', 'Mir wurde ein Auftrag zugewiesen'], ['my_orders', 'Mein Auftrag wurde freigegeben, abgelehnt, auf Nacharbeit gesetzt oder bestätigt'],
   ['lldp_problem', 'LLDP meldet eine Abweichung bei einem Auftrag, den ich ausgeführt habe'], ['reservation_expiry', 'Meine Reservierung läuft in 3 Tagen ab'],
-  ['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)']]
+  ['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)'], ['new_user', 'Ein neuer Benutzer ohne Rechte hat sich angemeldet (globale Administratoren)']]
+const notifyShown = computed(() => NOTIFY.filter(([k]) => k !== 'new_user' || (me.value.roles || []).includes('admin')))     // nur für globale Administratoren
 const START_PAGES = [['', 'automatisch (Übersicht, Techniker am Handy: mobil)'], ['dashboard', 'Übersicht'], ['workorders', 'Patchaufträge'],
   ['m', 'Meine Aufträge (mobil)'], ['racks', 'Racks'], ['capacity', 'Kapazität']]
 const prefs = ref(null), sites = ref([]), sessions = ref(null), prefsMsg = ref(''), represents = ref([])

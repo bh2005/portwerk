@@ -180,7 +180,7 @@ import { inp, lbl, card, th, td, btnPrimary, btnGhost, btnDanger, btnLink, ROLES
 
 const globalAdmin = isAdmin()
 const OPT_OUT = { confirm_suggest: 'Aufträge zur Bestätigung vorgeschlagen', assigned: 'Zuweisung von Aufträgen', my_orders: 'Statusänderung eigener Aufträge',
-  lldp_problem: 'LLDP-Abweichung bei eigener Ausführung', reservation_expiry: 'Ablauf eigener Reservierungen' }
+  lldp_problem: 'LLDP-Abweichung bei eigener Ausführung', reservation_expiry: 'Ablauf eigener Reservierungen', new_user: 'Neuer Benutzer ohne Rechte' }
 const optOutText = n => 'Selbst abbestellte E-Mails: ' + Object.entries(n).filter(([, v]) => !v).map(([k]) => OPT_OUT[k] || k).join(', ')
 const absenceFor = ref(null)
 const tabs = globalAdmin ? [['users', 'Benutzer'], ['tokens', 'API-Zugänge'], ['ldap', 'AD / LDAP'], ['tls', 'Zertifikat (ACME)'], ['backup', 'Sicherung'], ['mail', 'E-Mail'], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan'], ['audit', 'Audit-Log'], ['releases', 'Releases']] : [['users', 'Benutzer']]

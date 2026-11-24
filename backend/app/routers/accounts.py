@@ -48,6 +48,7 @@ class NotifyPrefsIn(BaseModel):
     my_orders: Optional[bool] = None
     lldp_problem: Optional[bool] = None
     reservation_expiry: Optional[bool] = None
+    new_user: Optional[bool] = None
 
 
 class UiPrefsIn(BaseModel):
