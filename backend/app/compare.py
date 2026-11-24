@@ -107,8 +107,8 @@ class _World:
         """Ein gemeldeter Nachbar (Zeile aus ``observations``) mit aufgelöstem Gerät/Port aus dem Bestand."""
         dev_id = self.device_by_neighbor(o["neighbor_name"], o["neighbor_address"])
         port_id = self.by_dev_port.get((dev_id, norm_port(o["neighbor_port"]))) if dev_id else None
-        return {"name": o["neighbor_name"], "port": o["neighbor_port"], "address": o["neighbor_address"], "protocol": o["protocol"],
-                "device_id": dev_id, "port_id": port_id, "label": self.label(port_id) if port_id else (self.dev[dev_id]["hostname"] if dev_id else "")}
+        return {"obs_id": o["id"], "name": o["neighbor_name"], "port": o["neighbor_port"], "address": o["neighbor_address"], "protocol": o["protocol"],
+                "capabilities": o["capabilities"], "type_guess": guess_type(o["capabilities"]), "device_id": dev_id, "port_id": port_id, "label": self.label(port_id) if port_id else (self.dev[dev_id]["hostname"] if dev_id else "")}
 
     def adopt_target(self, port_id: int, ist: list[dict]) -> Optional[int]:
         """Gegenport, wenn der Port „übernommen“ werden kann: kein Kabel am Port, genau ein gemeldeter Nachbar, dessen Port im Bestand
@@ -137,6 +137,16 @@ class _World:
                 return None, hops, "Kette endet am Patchfeld " + hops[-1]
             cur = nxt
         return None, hops, "Schleife in der Verkabelung"
+
+
+def guess_type(capabilities: str) -> str:
+    """Gerätetyp aus den gemeldeten LLDP/CDP-Fähigkeiten (nur ein Vorschlag, im Dialog änderbar)."""
+    c = str(capabilities or "").lower()
+    for key, typ in (("wlan", "ap"), ("access point", "ap"), ("router", "router"), ("telephone", "endpoint"), ("phone", "endpoint"),
+                     ("station", "endpoint"), ("bridge", "switch"), ("switch", "switch")):
+        if key in c:
+            return typ
+    return "other"
 
 
 def _merge(ist: list[dict]) -> list[dict]:
@@ -175,7 +185,7 @@ def compare(me: Principal, site_id: Optional[int] = None) -> dict:
                 continue                                                     # reine MAC-Adressen (Telefone, Kameras …) sind kein Gerätenachbar
             by_port.setdefault(o["port_id"], []).append(o)
         unmapped = [o for o in by_port.get(None, [])]
-        base = {"device_id": did, "device": d["hostname"], "site_id": d["site_id"], "seen_at": d["neighbors_at"]}
+        base = {"device_id": did, "device": d["hostname"], "site_id": d["site_id"], "location_id": d["location_id"], "seen_at": d["neighbors_at"]}
 
         for p in sorted(mine, key=lambda x: x["id"]):
             ist = _merge([w.resolve(o) for o in by_port.get(p["id"], [])])

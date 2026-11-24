@@ -38,7 +38,8 @@
             </td>
             <td :class="td" class="text-xs">
               <div v-for="(i, n) in r.ist" :key="n"><span class="font-mono text-slate-700 dark:text-slate-200">{{ i.name }}<template v-if="i.port">:{{ i.port }}</template></span>
-                <span class="text-slate-400"> · {{ i.protocol.toUpperCase() }}<template v-if="!i.device_id"> · nicht im Bestand</template></span></div>
+                <span class="text-slate-400"> · {{ i.protocol.toUpperCase() }}<template v-if="!i.device_id"> · nicht im Bestand</template></span>
+                <button v-if="!i.device_id && canWrite && !isMac(i.name)" :class="btnLink" class="ml-2" title="Gerät samt Port im Bestand anlegen" @click="openAdoptDevice(r, i)">In Bestand übernehmen</button></div>
               <span v-if="!r.ist.length" class="text-slate-400">kein Nachbar gesehen</span>
             </td>
             <td :class="td" class="text-right whitespace-nowrap">
@@ -53,6 +54,27 @@
       </table>
     </div>
     </template>
+    <SidePanel :open="!!dev" title="In Bestand übernehmen" @close="dev = null">
+      <template v-if="dev">
+        <p class="text-sm text-slate-500 dark:text-slate-400">Gesehen von <b class="font-mono">{{ dev.row.device }}:{{ dev.row.port }}</b> per {{ dev.ist.protocol.toUpperCase() }}
+          als <span class="font-mono">{{ dev.ist.name }}<template v-if="dev.ist.port">:{{ dev.ist.port }}</template></span>.
+          Das Gerät wird am selben Ort wie {{ dev.row.device }} angelegt.</p>
+        <div><label :class="lbl">Hostname</label><input v-model="dev.hostname" :class="inp" /></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label :class="lbl">Typ</label><select v-model="dev.type" :class="inp"><option v-for="t in DEVICE_TYPES" :key="t[0]" :value="t[0]">{{ t[1] }}</option></select>
+            <p v-if="dev.ist.capabilities" class="text-xs text-slate-400 mt-1">Gemeldet: {{ dev.ist.capabilities }}</p></div>
+          <div><label :class="lbl">Verwaltungs-IP</label><input v-model="dev.mgmt_ip" :class="inp" placeholder="optional" /></div>
+        </div>
+        <div><label :class="lbl">Port am neuen Gerät</label><input v-model="dev.neighbor_port" :class="inp" placeholder="leer = keinen Port anlegen" /></div>
+        <label class="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"><input v-model="dev.create_cable" type="checkbox" class="mt-1" :disabled="!dev.neighbor_port.trim()" />
+          <span>Verbindung zu {{ dev.row.device }}:{{ dev.row.port }} als vorläufiges Direktkabel dokumentieren<span v-if="!dev.row.port_id" class="block text-xs text-slate-400">Der lokale Port ist noch nicht im Bestand und wird mit angelegt.</span></span></label>
+        <p v-if="dev.error" class="text-sm text-red-500">{{ dev.error }}</p>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2"><button :class="btnGhost" @click="dev = null">Abbrechen</button>
+          <button :class="btnPrimary" :disabled="!dev || !dev.hostname.trim() || dev.busy" @click="adoptDevice">Übernehmen</button></div>
+      </template>
+    </SidePanel>
     <CableHistoryPanel :open="!!hist" :port-id="hist?.id ?? null" :device-id="hist?.deviceId ?? null" :hostname="hist?.hostname || ''" :port-name="hist?.name || ''" @close="hist = null" />
   </div>
 </template>
@@ -61,7 +83,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, errText, getToken, defaultSite, canWriteMaster } from '../api.js'
-import { inp, card, btnGhost, btnLink, th, td } from '../ui.js'
+import { inp, lbl, card, btnGhost, btnPrimary, btnLink, th, td, DEVICE_TYPES } from '../ui.js'
+import SidePanel from '../components/SidePanel.vue'
 import CableHistoryPanel from '../components/CableHistoryPanel.vue'
 import VlanCompare from '../components/VlanCompare.vue'
 
@@ -70,7 +93,7 @@ const route = useRoute(), router = useRouter()
 const tab = ref(route.query.tab === 'vlan' ? 'vlan' : 'lldp')
 function setTab(k) { tab.value = k; router.replace({ query: k === 'vlan' ? { tab: 'vlan' } : {} }) }
 
-const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null)
+const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), dev = ref(null)
 const canWrite = canWriteMaster()
 const active = ref(new Set(['mismatch', 'port_mismatch', 'undocumented', 'not_seen', 'unmapped']))
 const chips = [['mismatch', 'anderes Gerät'], ['port_mismatch', 'anderer Port'], ['undocumented', 'nicht dokumentiert'], ['not_seen', 'nicht gesehen'], ['unmapped', 'Port unbekannt'], ['unknown', 'keine Daten'], ['ok', 'stimmt']]
@@ -93,6 +116,21 @@ Die Verbindung wird als „vorläufig“ markiert. Dosen und Patchfelder können
   busy.value = r.port_id; error.value = ''; msg.value = ''
   try { await api.adoptConnection(r.port_id); msg.value = `Verbindung ${r.device}:${r.port} ↔ ${r.adopt.label} übernommen (vorläufig).`; await load() }
   catch (e) { error.value = errText(e) } finally { busy.value = null }
+}
+const isMac = n => /^([0-9a-f]{2}[:.-]?){5}[0-9a-f]{2}$/i.test(n || '')
+function openAdoptDevice(row, ist) {
+  dev.value = { row, ist, hostname: String(ist.name).split('.')[0].toLowerCase(), type: ist.type_guess || 'other', mgmt_ip: ist.address || '',
+    neighbor_port: ist.port || '', create_cable: true, error: '', busy: false }
+}
+async function adoptDevice() {
+  const d = dev.value
+  d.busy = true; d.error = ''
+  try {
+    const r = await api.adoptDevice({ obs_id: d.ist.obs_id, hostname: d.hostname.trim(), type: d.type, mgmt_ip: d.mgmt_ip.trim(),
+      neighbor_port: d.neighbor_port.trim(), create_cable: d.create_cable && !!d.neighbor_port.trim() })
+    msg.value = `${r.hostname} in den Bestand übernommen` + (r.cable_id ? ' – Verbindung dokumentiert (vorläufig).' : r.cable_skipped ? ` – Kabel nicht angelegt (${r.cable_skipped}).` : '.')
+    dev.value = null; await load()
+  } catch (e) { d.error = errText(e); d.busy = false }
 }
 async function downloadCsv() {
   const sel = [...active.value].join(',')

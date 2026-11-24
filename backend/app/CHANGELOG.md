@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.3.1 – 2026-11-24
+- Soll/Ist: In Bestand übernehmen: Ein per LLDP/CDP gesehenes, aber unbekanntes Gerät lässt sich direkt aus dem Abgleich anlegen (Hostname, Typ-Vorschlag aus den gemeldeten Fähigkeiten, IP, Port). Optional wird die Verbindung als vorläufiges Direktkabel dokumentiert; ein unbekannter lokaler Port wird mit angelegt.
+
 ## 0.3.0 – 2026-11-24
 - Soll/Ist: Verbindung übernehmen: Eine per LLDP/CDP gesehene, bisher undokumentierte Verbindung lässt sich mit einem Klick als Direktkabel dokumentieren. Sie wird als „vorläufig“ markiert; Dosen und Patchfelder können später nachgetragen werden („vollständig“ hebt die Markierung auf).
 - Verbindungs-Historie als Seitenleiste: Die Historie eines Ports oder Geräts öffnet sich von rechts, im Gerätedetail und im Soll/Ist-Abgleich.

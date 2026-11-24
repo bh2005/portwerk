@@ -16,6 +16,8 @@ import time
 from .. import access, audit, compare, db, reservations
 from ..access import require_writer
 from ..auth import Principal, current_principal, require_admin
+from ..schemas import DEVICE_TYPES, DeviceIn, PortIn
+from .masterdata import create_device, create_port
 
 router = APIRouter(tags=["soll-ist"])
 
@@ -74,13 +76,63 @@ def adopt(body: AdoptIn, me: Principal = Depends(require_writer)):
     access.require_write(me, access.site_of_port(a))
     access.require_write(me, access.site_of_port(b))                                  # beide Enden müssen im eigenen Bereich liegen
     reservations.check([a, b], use_reserved=False, by=me.name)
+    cid, lo, hi = _insert_provisional(a, b, me)
+    return {"cable_id": cid, "port_a_id": lo, "port_b_id": hi}
+
+
+def _insert_provisional(a: int, b: int, me: Principal) -> tuple:
     lo, hi = (a, b) if a < b else (b, a)
     cid = db.execute(
         """INSERT INTO cables(port_a_id, port_b_id, cable_label, cable_type, note, created_by, created_at, provisional)
            VALUES (?,?,?,?,?,?,?,1)""",
         (lo, hi, "", "other", "Aus Soll/Ist-Abgleich übernommen (LLDP/CDP) – Strecke noch nicht vollständig dokumentiert", me.name, time.time()))
     audit.log(me.name, "cable.adopt", "port", a, f"-> {b}")
-    return {"cable_id": cid, "port_a_id": lo, "port_b_id": hi}
+    return cid, lo, hi
+
+
+class AdoptDeviceIn(BaseModel):
+    obs_id: int                                              # gemeldeter Nachbar (Zeile aus dem Abgleich)
+    hostname: str = Field(min_length=1, max_length=120)
+    type: str = "other"
+    mgmt_ip: str = Field(default="", max_length=80)
+    neighbor_port: str = Field(default="", max_length=64)    # Portname am neuen Gerät; leer = keinen Port anlegen
+    create_cable: bool = True                                # zusätzlich die Verbindung (vorläufig) dokumentieren
+
+
+@router.post("/api/compare/adopt-device", status_code=201)
+def adopt_device(body: AdoptDeviceIn, me: Principal = Depends(require_writer)):
+    """„In Bestand übernehmen“: legt ein per LLDP/CDP gesehenes, aber unbekanntes Gerät an (am Standort des meldenden Geräts),
+    bei Bedarf dessen Port und den unbekannten lokalen Port, und dokumentiert auf Wunsch die Verbindung als vorläufiges Direktkabel."""
+    if body.type not in DEVICE_TYPES:
+        raise HTTPException(400, "Gerätetyp ungültig")
+    o = db.row("SELECT * FROM observations WHERE id = ?", (body.obs_id,))
+    if not o:
+        raise HTTPException(404, "Nachbar nicht gefunden (Abgleich neu laden)")
+    local = db.row("SELECT * FROM devices WHERE id = ?", (o["device_id"],))
+    access.require_write(me, access.site_of_device(local["id"]))
+    w = compare._World()
+    if w.device_by_neighbor(o["neighbor_name"], o["neighbor_address"]):
+        raise HTTPException(409, "Das Gerät ist bereits im Bestand")
+    dev = create_device(DeviceIn(hostname=body.hostname.strip(), type=body.type, mgmt_ip=body.mgmt_ip.strip(), location_id=local["location_id"],
+                                 note="Aus Soll/Ist-Abgleich übernommen (LLDP/CDP)"), me)
+    remote_port = None
+    if body.neighbor_port.strip():
+        remote_port = create_port(dev["id"], PortIn(name=body.neighbor_port.strip()), me)["id"]
+    local_port = o["port_id"] or w.by_dev_port.get((local["id"], compare.norm_port(o["local_port"])))
+    if not local_port and o["local_port"].strip():                                   # „Port unbekannt“: lokalen Port mit anlegen
+        local_port = create_port(local["id"], PortIn(name=o["local_port"].strip()), me)["id"]
+    if local_port and not o["port_id"]:
+        db.execute("UPDATE observations SET port_id = ? WHERE id = ?", (local_port, o["id"]))
+    cable_id, skipped = None, ""
+    if body.create_cable:
+        if not (local_port and remote_port):
+            skipped = "Port fehlt"
+        elif local_port in w.cable or local_port in w.peer:
+            skipped = "lokaler Port ist bereits verbunden"
+        else:
+            cable_id = _insert_provisional(local_port, remote_port, me)[0]
+    audit.log(me.name, "device.adopt", "device", dev["id"], f"{body.hostname} (gesehen von {local['hostname']}:{o['local_port']})")
+    return {"device_id": dev["id"], "hostname": dev["hostname"], "port_id": remote_port, "cable_id": cable_id, "cable_skipped": skipped}
 
 
 def _cell(x):
