@@ -2,6 +2,10 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.4.0 – 2026-11-24
+- Checkmk-REST-Anbindung: Unter Verwaltung → Checkmk lässt sich ein Automation-User hinterlegen. Beim Übernehmen eines unbekannten Geräts zeigt Portwerk, ob der Host in Checkmk existiert.
+- In Checkmk anlegen: Fehlt der Host, legt Portwerk ihn mit reinem Host-Check (Ping, ohne Agent und SNMP) im gewählten Ordner an. Die Änderung bleibt ausstehend und wird in Checkmk aktiviert; Portwerk aktiviert nie selbst.
+
 ## 0.3.1 – 2026-11-24
 - Soll/Ist: In Bestand übernehmen: Ein per LLDP/CDP gesehenes, aber unbekanntes Gerät lässt sich direkt aus dem Abgleich anlegen (Hostname, Typ-Vorschlag aus den gemeldeten Fähigkeiten, IP, Port). Optional wird die Verbindung als vorläufiges Direktkabel dokumentiert; ein unbekannter lokaler Port wird mit angelegt.
 
