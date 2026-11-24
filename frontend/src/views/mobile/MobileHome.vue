@@ -5,7 +5,7 @@
     </MobileBar>
 
     <div class="p-3 space-y-4">
-      <p v-if="err" class="text-sm text-red-600 bg-red-50 rounded-lg p-3">{{ err }}</p>
+      <p v-if="err" class="text-sm text-red-600 bg-red-50 rounded-lg p-3 dark:text-red-400">{{ err }}</p>
       <p v-if="loading" class="text-slate-500">Lade …</p>
 
       <section v-for="sec in sections" :key="sec.key" v-show="sec.orders.length">
@@ -15,13 +15,13 @@
             class="block bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm active:bg-slate-50 dark:active:bg-slate-700">
             <div class="flex items-center gap-2">
               <span class="font-mono text-sm text-slate-500">{{ w.number }}</span>
-              <span v-if="w.priority === 'high' || w.priority === 'critical'" class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">{{ w.priority === 'critical' ? 'kritisch' : 'hoch' }}</span>
+              <span v-if="w.priority === 'high' || w.priority === 'critical'" class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:text-red-400">{{ w.priority === 'critical' ? 'kritisch' : 'hoch' }}</span>
               <span v-if="isMine(w)" class="ml-auto text-xs px-2 py-0.5 rounded-full bg-ks-100 text-ks-700">mir zugewiesen</span>
             </div>
             <div class="text-lg font-semibold text-slate-800 dark:text-slate-100 mt-1 leading-snug">{{ w.title }}</div>
             <div class="text-sm text-slate-500 mt-1">
               {{ w.location ? w.location.name : '' }}<template v-if="w.planned_from"> · {{ fmtDate(w.planned_from) }}</template>
-              <template v-if="w.depends_on && w.depends_on.blocking"> · <span class="text-amber-600">wartet auf {{ w.depends_on.number }}</span></template>
+              <template v-if="w.depends_on && w.depends_on.blocking"> · <span class="text-amber-600 dark:text-amber-400">wartet auf {{ w.depends_on.number }}</span></template>
             </div>
             <div class="mt-3 flex items-center gap-3">
               <div class="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">

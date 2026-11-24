@@ -33,11 +33,11 @@
 
         <div v-if="notify" class="space-y-2">
           <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">E-Mail-Benachrichtigungen</h3>
-          <label v-for="[k, l] in NOTIFY" :key="k" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
+          <label v-for="[k, l] in notifyShown" :key="k" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
             <input type="checkbox" :checked="notify[k]" @change="setNotify(k, $event.target.checked)" /> {{ l }}</label>
           <p class="text-xs text-slate-400">{{ me.email ? `an ${me.email}` : 'Keine E-Mail-Adresse hinterlegt – es kommen keine Mails.' }}
             Ob überhaupt Mails verschickt werden, legt die Verwaltung fest.</p>
-          <p v-if="notifyMsg" class="text-xs text-green-600">{{ notifyMsg }}</p>
+          <p v-if="notifyMsg" class="text-xs text-green-600 dark:text-green-400">{{ notifyMsg }}</p>
         </div>
 
         <hr v-if="notify" class="border-slate-100 dark:border-slate-700" />
@@ -62,9 +62,9 @@
           <p class="text-xs text-slate-400">Der Standard-Standort belegt die Filter in Kapazität, Soll/Ist, Zeitreise und VLANs vor. Gilt auf allen Geräten.</p>
           <div v-if="sessions" class="flex items-center justify-between gap-2 text-sm pt-1">
             <span class="text-slate-600 dark:text-slate-300">{{ sessions.active }} aktive Anmeldung(en)</span>
-            <button type="button" class="text-xs text-red-600 hover:underline" :disabled="sessions.active < 2" @click="logoutOthers">Alle anderen abmelden</button>
+            <button type="button" class="text-xs text-red-600 hover:underline dark:text-red-400" :disabled="sessions.active < 2" @click="logoutOthers">Alle anderen abmelden</button>
           </div>
-          <p v-if="prefsMsg" class="text-xs text-green-600">{{ prefsMsg }}</p>
+          <p v-if="prefsMsg" class="text-xs text-green-600 dark:text-green-400">{{ prefsMsg }}</p>
         </div>
 
         <hr v-if="prefs" class="border-slate-100 dark:border-slate-700" />
@@ -91,7 +91,7 @@
             <label :class="lbl">Neues Passwort bestätigen</label>
             <input v-model="confirm" :type="show ? 'text' : 'password'" autocomplete="new-password"
               :class="[inp, confirm && next !== confirm ? 'border-red-400 dark:border-red-500' : '']" @keyup.enter="save" />
-            <p v-if="confirm && next !== confirm" class="text-[11px] text-red-500 mt-1">Passwörter stimmen nicht überein</p>
+            <p v-if="confirm && next !== confirm" class="text-[11px] text-red-500 mt-1 dark:text-red-400">Passwörter stimmen nicht überein</p>
           </div>
           <label class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
             <input v-model="show" type="checkbox" class="rounded border-slate-300 text-ks-600 focus:ring-ks-500" /> Passwörter anzeigen
@@ -123,7 +123,8 @@ const show = ref(false), saving = ref(false), msg = ref(''), msgErr = ref(false)
 const firstField = ref(null)
 const NOTIFY = [['assigned', 'Mir wurde ein Auftrag zugewiesen'], ['my_orders', 'Mein Auftrag wurde freigegeben, abgelehnt, auf Nacharbeit gesetzt oder bestätigt'],
   ['lldp_problem', 'LLDP meldet eine Abweichung bei einem Auftrag, den ich ausgeführt habe'], ['reservation_expiry', 'Meine Reservierung läuft in 3 Tagen ab'],
-  ['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)']]
+  ['confirm_suggest', 'Aufträge zur Bestätigung vorgeschlagen (Freigeber)'], ['new_user', 'Ein neuer Benutzer ohne Rechte hat sich angemeldet (globale Administratoren)']]
+const notifyShown = computed(() => NOTIFY.filter(([k]) => k !== 'new_user' || (me.value.roles || []).includes('admin')))     // nur für globale Administratoren
 const START_PAGES = [['', 'automatisch (Übersicht, Techniker am Handy: mobil)'], ['dashboard', 'Übersicht'], ['workorders', 'Patchaufträge'],
   ['m', 'Meine Aufträge (mobil)'], ['racks', 'Racks'], ['capacity', 'Kapazität']]
 const prefs = ref(null), sites = ref([]), sessions = ref(null), prefsMsg = ref(''), represents = ref([])

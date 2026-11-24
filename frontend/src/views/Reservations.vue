@@ -13,8 +13,8 @@
       Reservierte Ports gelten in den Assistenten nicht als frei. Wer sie verbinden oder in einem Auftrag verplanen will, bekommt eine Rückfrage.
       Reservieren: auf der Geräteseite Ports ankreuzen → „Reservieren“. Abgelaufene Reservierungen blockieren nichts mehr.
     </p>
-    <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
-    <p v-if="msg" class="text-sm text-green-600">{{ msg }}</p>
+    <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
+    <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
 
     <div v-for="g in groups" :key="g.purpose" :class="card" class="overflow-hidden">
       <div class="px-4 py-2 flex items-center gap-3 flex-wrap border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/40">
@@ -30,12 +30,12 @@
             <td :class="td" class="text-xs text-slate-500">{{ r.location }}</td>
             <td :class="td" class="text-xs">{{ r.reserved_by }}</td>
             <td :class="td" class="text-xs whitespace-nowrap">
-              <span v-if="r.expired" class="text-red-500">abgelaufen {{ fmtDate(r.until) }}</span>
+              <span v-if="r.expired" class="text-red-500 dark:text-red-400">abgelaufen {{ fmtDate(r.until) }}</span>
               <span v-else-if="r.until">bis {{ fmtDate(r.until) }}</span><span v-else class="text-slate-400">unbefristet</span>
             </td>
             <td :class="td" class="text-xs">
               <router-link v-if="r.workorder" :to="`/workorders/${r.workorder.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ r.workorder.number }}</router-link>
-              <span v-if="r.busy" class="ml-2 text-amber-600" title="An diesem Port steckt bereits ein Kabel">belegt</span>
+              <span v-if="r.busy" class="ml-2 text-amber-600 dark:text-amber-400" title="An diesem Port steckt bereits ein Kabel">belegt</span>
             </td>
           </tr>
         </tbody>

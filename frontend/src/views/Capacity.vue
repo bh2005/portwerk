@@ -18,14 +18,14 @@
       Ports je Kategorie: <Legend /> Bei Patchfeldern und Dosen zählt nur die Vorderseite. HE: belegt = mindestens eine Seite;
       „frei“ = vorne und hinten frei; „Block“ = größter zusammenhängender freier Bereich (passt ein Gerät dieser Höhe hinein?).
     </p>
-    <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
+    <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
 
     <!-- Engpässe -->
     <div v-if="data && data.alerts.length" :class="card" class="p-4 border-l-4 border-l-red-500">
       <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{{ data.alerts.length }} Engpass/Engpässe (weniger als {{ data.warn }} % frei)</h2>
       <ul class="text-sm space-y-1">
         <li v-for="(a, i) in data.alerts.slice(0, showAll ? undefined : 8)" :key="i" class="flex gap-2 flex-wrap">
-          <span class="font-medium text-red-600 tabular-nums w-14 text-right">{{ a.free_pct }} %</span>
+          <span class="font-medium text-red-600 tabular-nums w-14 text-right dark:text-red-400">{{ a.free_pct }} %</span>
           <span class="text-slate-700 dark:text-slate-200">{{ a.label }}</span>
           <span class="text-slate-500">{{ a.path }}</span>
           <span class="text-slate-400">({{ a.free }} von {{ a.total }} frei<template v-if="a.kind === 'units'">, größter Block {{ a.largest_block }} HE</template>)</span>
@@ -54,12 +54,12 @@
               <Bar v-if="r.stats[c].total" :s="r.stats[c]" :warn="r.warn.includes(c) || (r.level === 0 && pct(r.stats[c]) < data.warn)" />
             </td>
             <td :class="td">
-              <div v-if="r.units" class="text-xs" :class="r.warn.includes('units') ? 'text-red-600 font-medium' : 'text-slate-600 dark:text-slate-300'">
+              <div v-if="r.units" class="text-xs" :class="r.warn.includes('units') ? 'text-red-600 dark:text-red-400 font-medium' : 'text-slate-600 dark:text-slate-300'">
                 <UnitBar :u="r.units" :warn="r.warn.includes('units')" />
                 {{ r.units.free }} von {{ r.units.total }} frei · Block {{ r.units.largest_block }}
                 <span v-if="r.units.half_free" class="text-slate-400"> · {{ r.units.half_free }} halb</span>
                 <span v-if="r.units.planned" class="text-sky-600"> · {{ r.units.planned }} verplant</span>
-                <span v-if="r.units.freed" class="text-green-600"> · {{ r.units.freed }} wird frei</span>
+                <span v-if="r.units.freed" class="text-green-600 dark:text-green-400"> · {{ r.units.freed }} wird frei</span>
               </div>
               <div v-else-if="r.siteUnits && r.siteUnits.racks" class="text-xs text-slate-500">{{ r.siteUnits.free }} von {{ r.siteUnits.total }} HE frei ({{ r.siteUnits.racks }} Racks)</div>
             </td>
@@ -89,7 +89,7 @@ const Bar = (p) => {
   return h('div', { class: 'text-xs', title: Object.keys(COLORS).map(k => `${NAMES[k]}: ${s[k]}`).join(' · ') }, [
     h('div', { class: 'flex h-2 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 ' + (p.warn ? 'ring-2 ring-red-500' : '') },
       Object.keys(COLORS).map(k => s[k] ? h('div', { style: { width: `${100 * s[k] / s.total}%`, background: COLORS[k] } }) : null)),
-    h('div', { class: 'mt-0.5 ' + (p.warn ? 'text-red-600 font-medium' : 'text-slate-600 dark:text-slate-300') },
+    h('div', { class: 'mt-0.5 ' + (p.warn ? 'text-red-600 dark:text-red-400 font-medium' : 'text-slate-600 dark:text-slate-300') },
       `${s.free} / ${s.total} frei (${Math.round(pct(s))} %)`),
   ])
 }

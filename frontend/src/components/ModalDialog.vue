@@ -12,7 +12,7 @@
       </div>
       <div class="px-5 py-4 space-y-3 max-h-[70vh] overflow-y-auto"><slot /></div>
       <div v-if="$slots.footer || error" class="px-5 py-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800">
-        <p v-if="error" class="text-sm text-red-500 mb-2">{{ error }}</p>
+        <p v-if="error" class="text-sm text-red-500 mb-2 dark:text-red-400">{{ error }}</p>
         <div class="flex items-center justify-end gap-3"><slot name="footer" /></div>
       </div>
     </div>

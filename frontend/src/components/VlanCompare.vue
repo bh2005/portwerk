@@ -4,8 +4,8 @@
       Vergleicht die dokumentierte VLAN-Konfiguration (Soll) mit den VLANs, die Checkmk im Inventar meldet (Ist).
       Checkmk liefert diese Daten nur für <b>Cisco</b> und nur <b>Access-VLANs</b> – Trunks und Voice-VLANs werden nicht gemeldet.
       <template v-if="res"> Grundlage: {{ res.devices }} Gerät(e) mit VLAN-Daten.</template></p>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
-    <p v-if="msg" class="text-sm text-green-600">{{ msg }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
+    <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
 
     <div class="flex flex-wrap gap-2 items-center">
       <button v-for="[k, l] in chips" :key="k" type="button" @click="toggle(k)" class="px-3 py-1 rounded-full text-xs font-medium border transition-colors"

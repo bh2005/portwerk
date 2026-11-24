@@ -38,7 +38,7 @@
       <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="onlyFree" @change="load" /> nur freie Ports</label>
     </template>
 
-    <p v-if="error" class="text-xs text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-xs text-red-500 dark:text-red-400">{{ error }}</p>
     <p v-else-if="loading" class="text-xs text-slate-400">Lade Ports …</p>
     <p v-else-if="ports !== null" class="text-xs" :class="ports.length ? 'text-green-600' : 'text-slate-400'">{{ ports.length }} Ports<template v-if="ports.length"> · {{ ports[0].hostname }}:{{ ports[0].name }} … {{ ports[ports.length - 1].hostname }}:{{ ports[ports.length - 1].name }}</template><template v-if="truncated"> (gekürzt auf 2000)</template></p>
   </div>

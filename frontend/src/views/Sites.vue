@@ -7,12 +7,15 @@
         <button @click="openSite()" :class="btnGhost">+ Standort (einfach)</button>
       </div>
     </div>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
 
     <div class="grid md:grid-cols-3 gap-4">
       <div :class="card" class="p-2 md:col-span-1">
+        <div v-if="sites.length > 5" class="p-1 pb-2"><input v-model="siteQ" :class="inp" class="!py-1" placeholder="Standort suchen (Code, Name, Adresse) …" />
+          <p v-if="siteQ" class="text-[11px] text-slate-400 mt-1">{{ shownSites.length }} von {{ sites.length }}</p></div>
         <p v-if="!sites.length" class="text-sm text-slate-400 p-3">Noch kein Standort angelegt.</p>
-        <button v-for="s in sites" :key="s.id" @click="select(s)"
+        <p v-else-if="!shownSites.length" class="text-sm text-slate-400 p-3">Kein Standort für diese Suche.</p>
+        <button v-for="s in shownSites" :key="s.id" @click="select(s)"
           class="w-full text-left px-3 py-2 rounded-lg transition-colors"
           :class="sel?.id === s.id ? 'bg-ks-50 dark:bg-ks-900/30' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'">
           <div class="text-sm font-medium text-slate-800 dark:text-slate-100">{{ s.code }} <span class="font-normal text-slate-400">· {{ s.name }}</span></div>
@@ -36,8 +39,15 @@
         </div>
 
         <p v-if="!tree.length" class="text-sm text-slate-400">Noch keine Gebäude, Räume oder Racks.</p>
+        <div v-if="tree.length > 6" class="flex items-center gap-2 flex-wrap mb-2">
+          <input v-model="locQ" :class="inp" class="!py-1 !w-64" placeholder="Locations filtern (Name, Kennung) …" />
+          <select v-model="locKind" :class="inp" class="!py-1 !w-44"><option value="">alle Arten</option><option v-for="k in locKinds" :key="k" :value="k">{{ kindLabel(k) }}</option></select>
+          <button v-if="locQ || locKind" type="button" :class="btnLink" @click="locQ = ''; locKind = ''">Filter zurücksetzen</button>
+          <span v-if="locQ || locKind" class="text-xs text-slate-400">{{ treeShown.length }} von {{ tree.length }}</span>
+        </div>
+        <p v-if="tree.length && !treeShown.length" class="text-sm text-slate-400">Keine Location für diesen Filter.</p>
         <ul class="text-sm">
-          <li v-for="n in tree" :key="n.id" class="flex items-center gap-2 py-1 border-b border-slate-50 dark:border-slate-700/50" :style="{ paddingLeft: n.depth * 18 + 'px' }">
+          <li v-for="n in treeShown" :key="n.id" class="flex items-center gap-2 py-1 border-b border-slate-50 dark:border-slate-700/50" :style="{ paddingLeft: n.depth * 18 + 'px' }">
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300">{{ kindLabel(n.kind) }}</span>
             <span class="text-slate-800 dark:text-slate-100">{{ n.name }}</span>
             <span v-if="n.ident" class="text-xs font-mono text-slate-500">{{ n.ident }}</span>
@@ -138,6 +148,23 @@ const tree = computed(() => {
     .forEach(l => { out.push({ ...l, depth }); walk(l.id, depth + 1) })
   walk(null, 0)
   return out
+})
+// Filter: Treffer samt Oberbau (damit man sieht, wo sie liegen) und Unterbau
+const siteQ = ref(''), locQ = ref(''), locKind = ref('')
+const shownSites = computed(() => {
+  const q = siteQ.value.trim().toLowerCase()
+  return q ? sites.value.filter(s => `${s.code} ${s.name} ${s.address || ''}`.toLowerCase().includes(q)) : sites.value
+})
+const locKinds = computed(() => [...new Set(tree.value.map(n => n.kind))])
+const treeShown = computed(() => {
+  const q = locQ.value.trim().toLowerCase()
+  if (!q && !locKind.value) return tree.value
+  const byId = new Map(tree.value.map(n => [n.id, n]))
+  const hit = new Set(tree.value.filter(n => (!locKind.value || n.kind === locKind.value) && (!q || `${n.name} ${n.ident || ''}`.toLowerCase().includes(q))).map(n => n.id))
+  const keep = new Set(hit)
+  for (const id of hit) for (let p = byId.get(id)?.parent_id; p && !keep.has(p); p = byId.get(p)?.parent_id) keep.add(p)                // Oberbau
+  tree.value.forEach(n => { for (let p = n.parent_id; p; p = byId.get(p)?.parent_id) if (hit.has(p)) { keep.add(n.id); break } })     // Unterbau
+  return tree.value.filter(n => keep.has(n.id))
 })
 const parentChoices = computed(() => tree.value.filter(n => n.id !== locForm.value?.id && !CONTAINER_KINDS.includes(n.kind)))
 

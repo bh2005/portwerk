@@ -20,7 +20,7 @@
       <select v-model="f.source" :class="inp" class="!w-36" @change="reload"><option value="">Alle Quellen</option><option v-for="[k, l] in SOURCES" :key="k" :value="k">{{ l }}</option></select>
       <select v-model="f.site_id" :class="inp" class="!w-40" @change="reload"><option value="">Alle Standorte</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }}</option></select>
     </div>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
 
     <div :class="card" class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -32,7 +32,7 @@
           <tr v-for="d in items" :key="d.id" class="border-t border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/30">
             <td :class="td"><router-link :to="`/devices/${d.id}`" class="text-ks-600 dark:text-ks-400 hover:underline font-medium">{{ d.hostname }}</router-link>
               <div v-if="d.former_hostname" class="text-[11px] text-slate-400">ehemals {{ d.former_hostname }}</div>
-              <div v-else-if="d.planned_hostname" class="text-[11px] text-amber-600">wird nach dem Rückbau zu „{{ d.planned_hostname }}“</div></td>
+              <div v-else-if="d.planned_hostname" class="text-[11px] text-amber-600 dark:text-amber-400">wird nach dem Rückbau zu „{{ d.planned_hostname }}“</div></td>
             <td :class="td">{{ typeLabel(d.type) }}</td>
             <td :class="td" class="text-slate-500">{{ [d.vendor, d.model].filter(Boolean).join(' ') || '–' }}</td>
             <td :class="td" class="font-mono text-xs">{{ d.mgmt_ip || '–' }}</td>

@@ -1,10 +1,10 @@
 <template>
   <ModalDialog wide title="Aufträge nach OpenPlan übertragen" :error="error" @close="$emit('close')">
     <div v-if="result" class="space-y-2 text-sm">
-      <p v-if="result.url" class="text-green-600">Projekt „{{ result.name }}“ angelegt: <a :href="result.url" target="_blank" rel="noopener" class="underline">in OpenPlan öffnen</a> ({{ result.tasks }} Vorgänge aus der Vorlage).</p>
-      <p v-if="result.created.length" class="text-green-600">{{ result.created.length }} Vorgang/Vorgänge für Patchaufträge angelegt: {{ result.created.map(c => c.number).join(', ') }}</p>
+      <p v-if="result.url" class="text-green-600 dark:text-green-400">Projekt „{{ result.name }}“ angelegt: <a :href="result.url" target="_blank" rel="noopener" class="underline">in OpenPlan öffnen</a> ({{ result.tasks }} Vorgänge aus der Vorlage).</p>
+      <p v-if="result.created.length" class="text-green-600 dark:text-green-400">{{ result.created.length }} Vorgang/Vorgänge für Patchaufträge angelegt: {{ result.created.map(c => c.number).join(', ') }}</p>
       <p v-if="result.skipped_linked.length" class="text-slate-500">Bereits verknüpft (übersprungen): {{ result.skipped_linked.join(', ') }}</p>
-      <ul v-if="result.errors.length" class="text-red-500 list-disc pl-5"><li v-for="(e, i) in result.errors" :key="i">{{ e.number || e.id }}: {{ e.message }}</li></ul>
+      <ul v-if="result.errors.length" class="text-red-500 list-disc pl-5 dark:text-red-400"><li v-for="(e, i) in result.errors" :key="i">{{ e.number || e.id }}: {{ e.message }}</li></ul>
     </div>
     <template v-else>
       <p class="text-sm text-slate-500">{{ ids.length }} Patchauftrag/Patchaufträge ausgewählt. Je Auftrag entsteht ein Vorgang in OpenPlan (Status und Fortschritt werden danach automatisch abgeglichen).</p>

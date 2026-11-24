@@ -15,13 +15,13 @@
           <div class="flex-1 h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><div class="h-full bg-green-500 transition-all" :style="{ width: pct + '%' }"></div></div>
           <span class="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{{ done }}/{{ items.length }}</span>
         </div>
-        <p v-if="wo.depends_on && wo.depends_on.blocking" class="mt-3 text-sm text-amber-700 bg-amber-50 rounded-lg p-2">
+        <p v-if="wo.depends_on && wo.depends_on.blocking" class="mt-3 text-sm text-amber-700 bg-amber-50 rounded-lg p-2 dark:text-amber-400">
           Erst nach Bestätigung von {{ wo.depends_on.number }} (Rückbau) starten – aktuell: {{ wo.depends_on.status_label }}.</p>
         <p v-if="wo.description" class="mt-3 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">{{ wo.description }}</p>
       </div>
 
-      <p v-if="err" class="text-sm text-red-700 bg-red-50 rounded-xl p-3">{{ err }}</p>
-      <p v-if="info" class="text-sm text-green-700 bg-green-50 rounded-xl p-3">{{ info }}</p>
+      <p v-if="err" class="text-sm text-red-700 bg-red-50 rounded-xl p-3 dark:text-red-400">{{ err }}</p>
+      <p v-if="info" class="text-sm text-green-700 bg-green-50 rounded-xl p-3 dark:text-green-400">{{ info }}</p>
 
       <!-- Filter -->
       <div class="flex bg-white dark:bg-slate-800 rounded-xl p-1 shadow-sm text-sm font-medium">
@@ -65,7 +65,7 @@
       </template>
       <p v-if="!shown.length" class="text-center text-slate-500 py-8">{{ filter === 'open' && items.length ? 'Alles erledigt 🎉' : 'Keine Positionen.' }}</p>
     </div>
-    <p v-else-if="err" class="m-3 text-sm text-red-700 bg-red-50 rounded-xl p-3">{{ err }}</p>
+    <p v-else-if="err" class="m-3 text-sm text-red-700 bg-red-50 rounded-xl p-3 dark:text-red-400">{{ err }}</p>
 
     <!-- Aktionsleiste unten -->
     <div v-if="wo" class="fixed bottom-0 inset-x-0 p-3 flex gap-2 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-700">

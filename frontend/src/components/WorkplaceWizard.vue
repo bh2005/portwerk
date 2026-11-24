@@ -65,7 +65,7 @@
             <div class="text-xs uppercase tracking-wide text-slate-400 mb-1">Positionen</div>
             <div v-for="(i, n) in prev.items" :key="n" class="font-mono text-xs">{{ i.action === 'configure' ? '⚙' : '→' }} {{ i.text }}</div>
           </div>
-          <p v-for="w in prev.warnings" :key="w" class="text-sm text-amber-600">{{ w }}</p>
+          <p v-for="w in prev.warnings" :key="w" class="text-sm text-amber-600 dark:text-amber-400">{{ w }}</p>
         </template>
       </template>
       <p v-if="busy" class="text-sm text-slate-400">Prüfe …</p>

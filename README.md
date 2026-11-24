@@ -90,6 +90,7 @@ und baut die Oberfläche.
 ## Dokumentation
 
 - [docs/konzept.md](docs/konzept.md) – Datenmodell, Ablauf, Rollen, Etappen und Stand der Umsetzung
+- [docs/workflows/](docs/workflows/README.md) – Abläufe mit Beispielen: Soll/Ist-Abgleich, Checkmk-Anbindung, Verbindungs-Historie, Releases
 - [docs/checkmk-import.md](docs/checkmk-import.md) – Import aus Checkmk
 - [docs/openplan.md](docs/openplan.md) – Anbindung an OpenPlan
 - [Ideen.md](Ideen.md) – umgesetzte und offene Ideen

@@ -35,8 +35,8 @@
     </div>
 
     <button type="button" :class="btnGhost" @click="add">+ Zuordnung</button>
-    <p v-if="result.error" class="text-sm text-red-500">{{ result.error }}</p>
-    <p v-else-if="result.links.length" class="text-sm text-green-600">{{ result.links.length }} Verbindung(en): {{ result.links[0].port_name }} → … ,
+    <p v-if="result.error" class="text-sm text-red-500 dark:text-red-400">{{ result.error }}</p>
+    <p v-else-if="result.links.length" class="text-sm text-green-600 dark:text-green-400">{{ result.links.length }} Verbindung(en): {{ result.links[0].port_name }} → … ,
       Kabelnummer {{ result.links[0].cable_label }}<template v-if="result.links.length > 1"> … {{ result.links[result.links.length - 1].cable_label }}</template></p>
   </div>
 </template>

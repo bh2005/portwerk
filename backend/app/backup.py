@@ -227,8 +227,9 @@ def run_auto_if_due(now: Optional[float] = None) -> Optional[dict]:
         return None
     b = create("auto", "automatisch", now)
     prune(s["keep"])
-    from . import audit
+    from . import audit, backup_targets
     audit.log("system", "backup.auto", "backup", b["name"], f"{b['size']} Bytes")
+    backup_targets.push_all(backup_dir() / b["name"])                    # externe Ziele (Fehler stehen im Status der Ziele)
     return b
 
 

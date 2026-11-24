@@ -46,7 +46,9 @@ def _walk(start: dict, first: str, at: Optional[float] = None) -> tuple[list, st
                 return out, ("open" if cur["type"] in THROUGH_TYPES else "")
             nxt = _port(c["port_b_id"] if c["port_a_id"] == cur["id"] else c["port_a_id"])
             link = {"kind": "cable", "cable_id": c["id"], "label": c["cable_label"], "type": c["cable_type"] if c["cable_type"] != "other" else "",
-                    "length_m": c["length_m"], "color": c["color"], "measurement_ok": c["measurement_ok"], "workorder_id": c["workorder_id"]}
+                    "cable_type": c["cable_type"], "length_m": c["length_m"], "color": c["color"], "measurement_ok": c["measurement_ok"], "workorder_id": c["workorder_id"],
+                    "fiber_count": c.get("fiber_count"), "installed_at": c.get("installed_at"), "measurement_ref": c.get("measurement_ref") or "",
+                    "note": c.get("note") or "", "provisional": bool(c.get("provisional"))}
         if not nxt or nxt["id"] in seen:
             return out, "loop"
         seen.add(nxt["id"])

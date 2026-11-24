@@ -1,6 +1,6 @@
 # Portwerk – Ideen und offene Punkte
 
-Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept.md) mit dem Code (22.11.2026); die Punkte sind seitdem großteils umgesetzt.
+Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept.md) mit dem Code (22.11.2026); die Punkte sind seitdem großteils umgesetzt.
 
 ## Offen
 
@@ -16,6 +16,14 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
   OpenPlan führt Abwesenheiten (Urlaub, Schulung, Krankheit); diese könnten in Portwerk automatisch gelten, statt sie doppelt einzutragen.
 - **Historie für Geräte-Orte und Patchfeld-Paare**
   Historisiert sind nur Verbindungen; Zeitreise und „Pfad am Datum“ zeigen Orte und Durchschleifungen mit dem heutigen Stand.
+- **Kabelliste mit Filter „vorläufig“**
+  `GET /api/cables?provisional=true` gibt es; eine Oberfläche, die alle noch nachzudokumentierenden Strecken auflistet, fehlt.
+- **Checkmk-Anbindung über HTTPS**
+  Die REST-Anbindung funktioniert mit jeder Adresse; sie sollte nach Möglichkeit über HTTPS laufen (Secret im Klartext vermeiden).
+- **Sicherungsziel SFTP**
+  Externe Ziele gibt es für Verzeichnis (NAS), S3 und WebDAV; SFTP bräuchte ein zusätzliches Paket (`paramiko`).
+- **Tests unter Python 3.9**
+  Zwei Tests (`test_timezone_offset_is_respected`, `test_workorder_pdf_content`) schlagen in der lokalen Python-3.9-Umgebung fehl; in der CI (3.12) ungeprüft.
 
 ## Umgesetzt
 
@@ -38,4 +46,15 @@ Stand: 2026-11-23. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Arbeitsplatz-Assistent (Dose → Patchfeld → freier Switchport, Profil/VLAN, Auftrag) | #21 |
 | E-Mail an Freigeber bei „zur Bestätigung vorgeschlagen“, persönliche Benachrichtigungen | #22 |
 | Profil: weitere Benachrichtigungen, Standard-Standort, Startseite, alle anderen abmelden | #23 |
-| Abwesenheit und Vertretung | (dieser PR) |
+| Abwesenheit und Vertretung | #24 |
+| Soll/Ist: „Verbindung übernehmen“ (vorläufiges Direktkabel), Verbindungs-Historie als Seitenleiste, Release-Tab, `index.html` ohne Cache | #25 |
+| Soll/Ist: „In Bestand übernehmen“ für unbekannte Nachbargeräte | #26 |
+| Checkmk-REST-Anbindung: Host prüfen, mit Ping und Standort-Tag anlegen (Aktivierung in Checkmk) | #26 |
+| Strecken-Editor: ganze Strecke als Seitenleiste, Kabel bearbeiten, Zwischenstationen einfügen/entfernen | #26 |
+| Dokumentation der Abläufe mit Beispielen (`docs/workflows/`) | #26 |
+| Autorouting: fehlende Patchungen zwischen Quell- und Zielport automatisch planen, neues Gerät als „geplant“ anlegen | (dieser PR) |
+| Strecken-Editor: Umstecken (Ziel ändern) | (dieser PR) |
+| Externe Sicherungsziele (NAS-Verzeichnis, S3, WebDAV), optional verschlüsselt, Wiederherstellung vom Ziel | (dieser PR) |
+| Filter für Locations bei Racks & Schränke und bei den Standorten | (dieser PR) |
+| Dark Mode: Standard-Textfarbe, Audit-Log lesbar | (dieser PR) |
+| Checkmk: ausstehende Änderungen anzeigen und aus Portwerk aktivieren (nur ohne fremde Änderungen) | (dieser PR) |

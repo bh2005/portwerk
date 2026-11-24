@@ -84,7 +84,7 @@
           <span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="opClass(wo.openplan.status)">{{ opLabel(wo.openplan.status) }}<template v-if="wo.openplan.percent != null"> · {{ Math.round(wo.openplan.percent) }} %</template></span>
           <span v-if="wo.openplan.synced_at" class="text-xs text-slate-400">abgeglichen {{ fmtTime(wo.openplan.synced_at) }}</span>
         </div>
-        <p v-if="wo.openplan.error" class="text-xs text-red-500">Letzter Abgleich fehlgeschlagen: {{ wo.openplan.error }}</p>
+        <p v-if="wo.openplan.error" class="text-xs text-red-500 dark:text-red-400">Letzter Abgleich fehlgeschlagen: {{ wo.openplan.error }}</p>
       </div>
     </div>
     <OpenPlanDialog v-if="opDialog" :wo="wo" @close="opDialog = false" @done="r => { wo = r; opDialog = false; note = 'Mit OpenPlan verknüpft.' }" />
@@ -172,7 +172,7 @@
             </td>
             <td :class="td" class="font-mono text-xs">
               <template v-if="item.wan"><span class="text-slate-500">{{ item.wan.site_b || '–' }}</span>
-                <span v-if="Object.keys(item.wan_patch || {}).length" class="block text-amber-600">→ {{ patchText(item.wan_patch) }}</span></template>
+                <span v-if="Object.keys(item.wan_patch || {}).length" class="block text-amber-600 dark:text-amber-400">→ {{ patchText(item.wan_patch) }}</span></template>
               <span v-else-if="item.port_b" class="text-slate-700 dark:text-slate-200">{{ item.port_b.device_hostname }}:{{ item.port_b.name }}</span>
               <span v-else class="text-slate-400">–</span>
               <span v-if="item.old_port_b" class="text-slate-400 ml-1">(war: {{ item.old_port_b.device_hostname }}:{{ item.old_port_b.name }})</span>
@@ -198,8 +198,8 @@
       </table>
     </div>
 
-    <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
-    <p v-if="note" class="text-sm text-green-600">{{ note }}</p>
+    <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
+    <p v-if="note" class="text-sm text-green-600 dark:text-green-400">{{ note }}</p>
 
     <SendDialog v-if="sendOpen" :title="`Auftrag ${wo.number} senden`" :workorder-id="wo.id" :submit="b => api.sendWorkorder(wo.id, b)" @close="sendOpen = false" />
 
@@ -234,7 +234,7 @@
           </div>
           <div><label :class="lbl">Bis</label><input v-model="editForm.planned_to" type="date" :class="inp" /></div>
           <div><label :class="lbl">Notiz</label><textarea v-model="editForm.note" :class="inp" rows="2" /></div>
-          <p v-if="dialogErr" class="text-sm text-red-500">{{ dialogErr }}</p>
+          <p v-if="dialogErr" class="text-sm text-red-500 dark:text-red-400">{{ dialogErr }}</p>
           <div class="flex justify-end gap-2">
             <button :class="btnGhost" @click="editDialog=false">Abbrechen</button>
             <button :class="btnPrimary" @click="saveEdit" :disabled="saving">{{ saving ? '…' : 'Speichern' }}</button>
@@ -315,7 +315,7 @@
             <div><label :class="lbl">Farbe</label><input v-model="itemForm.color" :class="inp" /></div>
           </div>
           <div><label :class="lbl">Notiz</label><input v-model="itemForm.note" :class="inp" /></div>
-          <p v-if="dialogErr" class="text-sm text-red-500">{{ dialogErr }}</p>
+          <p v-if="dialogErr" class="text-sm text-red-500 dark:text-red-400">{{ dialogErr }}</p>
           <div class="flex justify-end gap-2">
             <button :class="btnGhost" @click="itemDialog=false">Abbrechen</button>
             <button :class="btnPrimary" @click="saveItem" :disabled="saving">{{ saving ? '…' : 'Speichern' }}</button>
@@ -349,7 +349,7 @@
             <label :class="lbl">Abweichungsnotiz *</label>
             <textarea v-model="execForm.deviation_note" :class="inp" rows="2" placeholder="Was war anders?" />
           </div>
-          <p v-if="dialogErr" class="text-sm text-red-500">{{ dialogErr }}</p>
+          <p v-if="dialogErr" class="text-sm text-red-500 dark:text-red-400">{{ dialogErr }}</p>
           <div class="flex justify-end gap-2">
             <button :class="btnGhost" @click="execDialog=false">Abbrechen</button>
             <button :class="btnPrimary" @click="saveExec" :disabled="saving">{{ saving ? '…' : 'Bestätigen' }}</button>
@@ -360,7 +360,7 @@
   </div>
 
   <div v-else-if="loading" class="text-sm text-slate-400 p-8">Lade…</div>
-  <div v-else class="text-sm text-red-500 p-8">{{ err }}</div>
+  <div v-else class="text-sm text-red-500 p-8 dark:text-red-400">{{ err }}</div>
 </template>
 
 <script setup>

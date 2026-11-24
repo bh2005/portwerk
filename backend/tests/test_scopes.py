@@ -252,9 +252,10 @@ def test_ldap_scoped_groups(client, admin, world, monkeypatch):
         lg2 = client.post("/auth/login", json={"username": "scop", "password": "gut"}).json()
         assert lg2["user"]["scopes"] == [] and lg2["user"]["roles"] == ["viewer"]
         assert client.get("/auth/me", headers=h).status_code == 401                                   # alte Sitzung mit alten Rechten beendet
-        # Benutzer ohne Gruppe bekommt ohne Standardrolle keinen Zugang
+        # Benutzer ohne Gruppe bekommt ohne Standardrolle ein Konto ohne Rechte (Anmeldung ja, Hinweis zur Freischaltung)
         client.put("/api/admin/ldap", headers=admin, json={"default_role": ""})
-        assert client.post("/auth/login", json={"username": "nobody", "password": "gut"}).status_code == 401
+        nb = client.post("/auth/login", json={"username": "nobody", "password": "gut"})
+        assert nb.status_code == 200 and nb.json()["user"]["roles"] == [] and nb.json()["user"]["scopes"] == []
     finally:
         test_ldap.USERS.pop("scop", None)
         test_ldap.USERS.pop("nobody", None)

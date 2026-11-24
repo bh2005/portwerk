@@ -34,7 +34,7 @@
         </div>
         <div v-if="parsed">
           <p class="text-sm" :class="parsed.pairs.length ? 'text-green-600' : 'text-red-500'">{{ parsed.pairs.length }} von {{ parsed.total }} Zeilen gültig</p>
-          <ul v-if="parsed.errors.length" class="text-xs text-red-500 max-h-28 overflow-y-auto mt-1"><li v-for="e in parsed.errors" :key="e.line">Zeile {{ e.line }}: {{ e.message }}</li></ul>
+          <ul v-if="parsed.errors.length" class="text-xs text-red-500 max-h-28 overflow-y-auto mt-1 dark:text-red-400"><li v-for="e in parsed.errors" :key="e.line">Zeile {{ e.line }}: {{ e.message }}</li></ul>
         </div>
       </template>
     </div>
@@ -112,7 +112,7 @@
         <div v-if="preview.workorder" class="text-slate-500">Patchauftrag: {{ preview.workorder.existing ? `Positionen in ${preview.workorder.existing}` : `neu „${preview.workorder.new}“` }}</div>
         <div v-if="preview.skipped.length" class="text-slate-500">{{ preview.skipped.length }} bestehende Verbindung(en) werden übersprungen.</div>
         <div v-if="preview.removals" class="text-amber-700 dark:text-amber-400">Rückbau ({{ preview.removals.via }}): {{ preview.removals.count }} alte Patches<span v-if="form.mode === 'workorder'"> – der neue Auftrag startet erst nach bestätigtem Rückbau.</span></div>
-        <div v-for="w in preview.warnings" :key="w" class="text-amber-600">⚠ {{ w }}</div>
+        <div v-for="w in preview.warnings" :key="w" class="text-amber-600 dark:text-amber-400">⚠ {{ w }}</div>
       </div>
     </div>
 

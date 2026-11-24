@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-6xl space-y-4">
     <router-link to="/devices" class="text-xs text-ks-600 dark:text-ks-400 hover:underline">← Alle Geräte</router-link>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
 
     <template v-if="d">
       <div class="flex items-start justify-between">
@@ -82,7 +82,7 @@
                     title="Aus dem Soll/Ist-Abgleich übernommen – Dosen und Patchfelder sind noch nicht dokumentiert">vorläufig
                     <button v-if="canWrite" class="ml-1 underline" title="Strecke ist vollständig dokumentiert" @click="completeCable(p)">vollständig</button></span>
                   <span v-if="p.cable && p.cable.measurement_ok === true" class="ml-1 text-green-500" title="Messung bestanden">✓</span>
-                  <span v-if="p.cable && p.cable.measurement_ok === false" class="ml-1 text-red-500" title="Messung nicht bestanden">✗</span>
+                  <span v-if="p.cable && p.cable.measurement_ok === false" class="ml-1 text-red-500 dark:text-red-400" title="Messung nicht bestanden">✗</span>
                   <span v-if="!p.cable && !p.reservation && !p.planned" class="text-slate-400">–</span>
                   <span v-if="p.reservation" class="ml-1 inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
                     :title="`reserviert von ${p.reservation.reserved_by}` + (p.reservation.workorder ? ` für ${p.reservation.workorder.number}` : '')">
@@ -91,6 +91,7 @@
                   <router-link v-if="p.planned" :to="`/workorders/${p.planned.id}`" class="ml-1 inline-block px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 hover:underline"
                     :title="p.planned.title">verplant: {{ p.planned.number }}</router-link>
                   <button v-if="p.cable || p.peer_port_id" :class="btnLink" class="ml-2" title="Ganze Strecke über Patchfelder bis zum Endgerät" @click="showPath(p)">Pfad</button>
+                  <button v-if="canPlan && !p.cable && !['patchpanel', 'outlet'].includes(d.type)" :class="btnLink" class="ml-2" title="Patchungen zu einem Zielport automatisch planen" @click="autoRoute = { portId: p.id }">Autorouting</button>
                   <button :class="btnLink" class="ml-2" title="Frühere Verbindungen dieses Ports" @click="showPortHistory(p)">Historie</button>
                   <button v-if="['switch', 'router', 'firewall'].includes(d.type) || p.config" :class="btnLink" class="ml-2" title="VLAN / Portprofil" @click="openVlan(p)">VLAN</button>
                   <button v-if="d.type === 'outlet' && canPlan && !p.name.toLowerCase().endsWith('-back')" :class="btnLink" class="ml-2"
@@ -99,7 +100,7 @@
                 <td v-if="canWrite" :class="td" class="text-right whitespace-nowrap">
                   <button :class="btnLink" @click="openPort(p)">Bearbeiten</button>
                   <button v-if="d.type === 'patchpanel'" :class="btnLink" class="ml-3" @click="openPeer(p)">Gegenseite</button>
-                  <button :class="btnLink" class="ml-3" @click="openLink(p)">Verbindung</button>
+                  <button :class="btnLink" class="ml-3" @click="strecke = p" title="Ganze Strecke ansehen und bearbeiten (Kabel, Zwischenstationen, LLDP-Abgleich)">Verbindung</button>
                   <button v-if="!p.cable" :class="btnLink" class="ml-3" @click="startCable(p)">Kabel-Assistent</button>
                   <button :class="btnDanger" class="ml-3" @click="removePort(p)">Löschen</button>
                 </td>
@@ -199,72 +200,8 @@
       </template>
     </ModalDialog>
 
-    <ModalDialog v-if="cableForm" :title="`Kabel an ${cableForm.port.name}`" :error="formError" @close="cableForm = null">
-      <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2"><label :class="lbl">Zielgerät</label>
-            <select v-model="cableForm.deviceId" :class="inp" @change="loadCablePorts">
-              <option :value="null">(Verbindung lösen)</option>
-              <option v-for="o in cableForm.devices" :key="o.id" :value="o.id">{{ o.hostname }}</option>
-            </select>
-          </div>
-          <div v-if="cableForm.deviceId" class="col-span-2"><label :class="lbl">Zielport</label>
-            <select v-model="cableForm.portId" :class="inp">
-              <option :value="null">(Port wählen)</option>
-              <option v-for="p in cableForm.ports" :key="p.id" :value="p.id">
-                {{ p.name }}{{ p.cable ? ` ← belegt: ${p.cable.device_hostname}:${p.cable.port_name}` : '' }}
-              </option>
-            </select>
-          </div>
-        </div>
-        <hr class="border-slate-200 dark:border-slate-700" />
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Kabeldetails</p>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label :class="lbl">Kabelnummer / Label</label>
-            <input v-model="cableForm.cable_label" :class="inp" placeholder="z.B. K-EG-001" />
-          </div>
-          <div><label :class="lbl">Kabeltyp</label>
-            <select v-model="cableForm.cable_type" :class="inp">
-              <option v-for="t in cableTypes" :key="t.name" :value="t.name">{{ t.name }}</option>
-            </select>
-          </div>
-          <div v-if="countLabel(cableForm.cable_type)">
-            <label :class="lbl">{{ countLabel(cableForm.cable_type) }}</label>
-            <input v-model.number="cableForm.fiber_count" type="number" min="1" :class="inp" placeholder="z.B. 4" />
-          </div>
-          <div><label :class="lbl">Länge (m)</label>
-            <input v-model.number="cableForm.length_m" type="number" min="0" step="0.5" :class="inp" placeholder="z.B. 15.5" />
-          </div>
-          <div><label :class="lbl">Farbe</label>
-            <input v-model="cableForm.color" :class="inp" placeholder="z.B. blau" />
-          </div>
-          <div><label :class="lbl">Verlegt am</label>
-            <input v-model="cableForm.installed_at" type="date" :class="inp" />
-          </div>
-        </div>
-        <hr class="border-slate-200 dark:border-slate-700" />
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Messprotokoll</p>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label :class="lbl">Protokoll-Nr. / Referenz</label>
-            <input v-model="cableForm.measurement_ref" :class="inp" placeholder="z.B. FLUKE-2024-001" />
-          </div>
-          <div><label :class="lbl">Messergebnis</label>
-            <select v-model="cableForm.measurement_ok" :class="inp">
-              <option :value="null">– nicht gemessen –</option>
-              <option :value="true">✓ Bestanden</option>
-              <option :value="false">✗ Nicht bestanden</option>
-            </select>
-          </div>
-        </div>
-        <div><label :class="lbl">Notiz</label>
-          <input v-model="cableForm.note" :class="inp" placeholder="Freitext" />
-        </div>
-      </div>
-      <template #footer>
-        <button @click="cableForm = null" :class="btnGhost">Abbrechen</button>
-        <button @click="saveCable" :class="btnPrimary" :disabled="cableForm.deviceId !== null && !cableForm.portId">Speichern</button>
-      </template>
-    </ModalDialog>
+    <AutoRouteWizard :open="!!autoRoute" :preset-port-id="autoRoute?.portId ?? null" :preset-device-id="d?.id ?? null" @close="autoRoute = null" @done="load" />
+    <PathEditor :open="!!strecke" :port-id="strecke?.id ?? null" @close="strecke = null" @changed="load" />
 
     <ModalDialog v-if="peer" :title="`Gegenseite von ${peer.port.name}`" :error="formError" @close="peer = null">
       <p class="text-xs text-slate-400">Beim Patchfeld hängt jeder Port mit seiner Gegenseite (Rückseite/Vorderseite oder zweites Feld) zusammen. Wähle das Gerät und den Port.</p>
@@ -289,6 +226,8 @@ import { useRoute, useRouter } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
 import CableWizard from '../components/CableWizard.vue'
 import CableHistoryPanel from '../components/CableHistoryPanel.vue'
+import PathEditor from '../components/PathEditor.vue'
+import AutoRouteWizard from '../components/AutoRouteWizard.vue'
 import PathGraphic from '../components/PathGraphic.vue'
 import PortConfigFields from '../components/PortConfigFields.vue'
 import WorkplaceWizard from '../components/WorkplaceWizard.vue'
@@ -304,7 +243,7 @@ const canWrite = canWriteMaster()
 const d = ref(null), locations = ref([])
 const form = reactive({})
 const error = ref(''), msg = ref(''), msgErr = ref(false), formError = ref('')
-const portForm = ref(null), bulk = ref(null), peer = ref(null), cableForm = ref(null)
+const portForm = ref(null), bulk = ref(null), peer = ref(null), strecke = ref(null), autoRoute = ref(null)
 const cableWiz = ref(null)
 const hist = reactive({ open: false, port: null })
 const canReserve = hasRole('planer'), picked = ref(new Set()), resForm = ref(null), pathDlg = ref(null)
@@ -411,53 +350,6 @@ async function saveBulk() {
     await api.bulkPorts(d.value.id, { ...bulk.value, speed_mbps: bulk.value.speed_mbps || null })
     bulk.value = null; await load()
   } catch (e) { formError.value = errText(e) }
-}
-
-function _emptyCable() {
-  return { cable_label: '', cable_type: 'other', fiber_count: null, length_m: null,
-           color: '', installed_at: null, measurement_ref: '', measurement_ok: null, note: '' }
-}
-async function openLink(p) {
-  formError.value = ''
-  const r = await api.devices({ limit: 1000 })
-  const devices = r.items.filter(o => o.id !== d.value.id)
-  const currentDeviceId = p.cable ? p.cable.device_id : null
-  let ports = []
-  if (currentDeviceId) {
-    const dev = await api.device(currentDeviceId)
-    ports = dev.ports.filter(x => x.id !== p.id)
-  }
-  cableForm.value = {
-    port: p, devices, ports,
-    deviceId: currentDeviceId,
-    portId: p.cable ? p.cable.port_id : null,
-    ...(p.cable ? {
-      cable_label: p.cable.cable_label, cable_type: p.cable.cable_type || 'other',
-      fiber_count: p.cable.fiber_count, length_m: p.cable.length_m, color: p.cable.color,
-      installed_at: p.cable.installed_at, measurement_ref: p.cable.measurement_ref,
-      measurement_ok: p.cable.measurement_ok, note: p.cable.note,
-    } : _emptyCable()),
-  }
-}
-async function loadCablePorts() {
-  cableForm.value.portId = null
-  if (cableForm.value.deviceId) {
-    const dev = await api.device(cableForm.value.deviceId)
-    cableForm.value.ports = dev.ports.filter(x => x.id !== cableForm.value.port.id)
-  } else {
-    cableForm.value.ports = []
-  }
-}
-async function saveCable() {
-  try {
-    const { port, devices, ports, deviceId, portId, ...cableFields } = cableForm.value
-    await api.setCable(port.id, { port_b_id: portId, ...cableFields })
-    cableForm.value = null; await load()
-  } catch (e) {
-    const c = conflictOf(e)
-    if (c && c.code === 'port_reserved' && !cableForm.value.use_reserved && confirm(c.message)) { cableForm.value.use_reserved = true; return saveCable() }
-    formError.value = errText(e)
-  }
 }
 
 async function openPeer(p) {

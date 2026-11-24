@@ -33,7 +33,8 @@ PREFS = {"confirm_suggest": "Aufträge zur Bestätigung vorgeschlagen (Freigeber
          "assigned": "Mir wurde ein Auftrag zugewiesen",
          "my_orders": "Mein Auftrag wurde freigegeben, abgelehnt, auf Nacharbeit gesetzt oder bestätigt",
          "lldp_problem": "LLDP meldet eine Abweichung bei einem Auftrag, den ich ausgeführt habe",
-         "reservation_expiry": f"Meine Reservierung läuft in {REMIND_DAYS} Tagen ab"}
+         "reservation_expiry": f"Meine Reservierung läuft in {REMIND_DAYS} Tagen ab",
+         "new_user": "Ein neuer Benutzer ohne Rechte hat sich angemeldet (globale Administratoren)"}
 
 
 def prefs(raw: str) -> dict:
@@ -101,9 +102,10 @@ def _route(users: list, key: str, eligible) -> tuple[list[dict], dict[int, tuple
     return direct, deputies
 
 
-def _deliver(users: list, key: str, subject: str, lines: list[str], link: str, action: str, entity: str, entity_id, eligible=None) -> int:
+def _deliver(users: list, key: str, subject: str, lines: list[str], link: str, action: str, entity: str, entity_id, eligible=None, wait: bool = False) -> int:
     """Gemeinsamer Versand: Hauptschalter, Abwesenheit/Vertretung, persönliche Einstellung, Domain-Filter, Hintergrund, Audit-Log.
-    ``eligible(vertretung)``: darf die Vertretung diese Nachricht bekommen (Standort, Rolle)?"""
+    ``eligible(vertretung)``: darf die Vertretung diese Nachricht bekommen (Standort, Rolle)?
+    ``wait``: sofort und im Aufrufer senden; geliefert wird dann die Zahl der **tatsächlich** versendeten Empfänger (sonst die der geplanten)."""
     cfg = mailer.settings()
     if not cfg["enabled"]:
         return 0
@@ -123,16 +125,21 @@ def _deliver(users: list, key: str, subject: str, lines: list[str], link: str, a
     if not jobs:
         return 0
 
-    def send() -> None:
+    def send() -> int:
+        done = 0
         for rcpt, ls in jobs:
             text = "\n".join(ls) + (f"\n\n{link}\n" if link else "\n")
             html = "".join(f"<p>{_h.escape(x)}</p>" for x in ls if x) + (f'<p><a href="{_h.escape(link)}">In Portwerk öffnen</a></p>' if link else "")
             try:
                 mailer.send(cfg, rcpt, subject, text, html)
+                done += len(rcpt)
                 audit.log("system", f"mail.{action}", entity, entity_id, f"{subject} an {', '.join(rcpt)}"[:500])
             except Exception as e:                                       # Versandfehler darf den Vorgang nie stören
                 log.warning("Benachrichtigung %s fehlgeschlagen: %s", action, e)
                 audit.log("system", f"mail.{action}_failed", entity, entity_id, str(e)[:300])
+        return done
+    if wait:
+        return send()
     if SEND_IN_BACKGROUND:
         threading.Thread(target=send, daemon=True, name=f"mail-{action}").start()
     else:
@@ -189,6 +196,25 @@ def order_status(wid: int, action: str, actor: str) -> int:
     return _deliver([_user(w["created_by"])], "my_orders", f"[Portwerk] {w['number']} {word}",
                     [f"Dein Patchauftrag {w['number']} „{w['title']}“ wurde von {actor} {word}.", hint],
                     _link(cfg, f"/workorders/{wid}"), "order_status", "workorder", wid, eligible=lambda d: can_see(d, w["site_id"]))
+
+
+# ── Globale Administratoren: neuer Benutzer wartet auf Freischaltung ──────────
+
+def global_admins() -> list[dict]:
+    return db.rows("SELECT id, username, full_name, email, notify_prefs, roles FROM users WHERE active = 1 AND (',' || roles || ',') LIKE '%,admin,%'")
+
+
+def new_user_waiting(u: dict) -> int:
+    """Hinweis-Mail an die globalen Administratoren: ``u`` hat sich angemeldet und hat noch keine Rechte. Liefert die Zahl der Empfänger
+    (0 = nicht versendet, z. B. E-Mail nicht eingerichtet oder kein Administrator mit Adresse)."""
+    name = u.get("full_name") or u["username"]
+    cfg = mailer.settings()
+    is_admin = lambda d: "admin" in (d.get("roles") or "").split(",")                          # noqa: E731 – Vertretung muss selbst globaler Administrator sein
+    return _deliver(global_admins(), "new_user", f"[Portwerk] Neuer Benutzer wartet auf Freischaltung: {name}",
+                    [f"{name} ({u['username']}{', ' + u['email'] if u.get('email') else ''}) hat sich bei Portwerk angemeldet und hat noch keine Rechte.",
+                     "Der Benutzer sieht nur den Hinweis, sich für Rechte an einen Administrator zu wenden.",
+                     "Bitte unter Verwaltung → Benutzer eine Rolle oder Standort-Rechte vergeben."],
+                    _link(cfg, "/admin"), "new_user", "user", u["id"], eligible=is_admin, wait=True)
 
 
 # ── Techniker: LLDP-Abweichung ────────────────────────────────────────────────

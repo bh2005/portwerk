@@ -39,7 +39,7 @@
           <button type="button" :class="btnGhost" @click="fetchCa">Laden</button>
         </div>
         <ul v-if="caInfo.length" class="text-xs space-y-1"><li v-for="c in caInfo" :key="c.fingerprint"><b>{{ c.subject }}</b><br /><span class="font-mono break-all text-slate-500">SHA-256 {{ c.fingerprint }}</span></li></ul>
-        <p v-if="caInfo.length && caUrl.startsWith('http://')" class="text-xs text-amber-600">⚠ Per http:// geladen: Fingerabdrücke bitte gegen die bekannten Werte der CA prüfen, bevor du speicherst.</p>
+        <p v-if="caInfo.length && caUrl.startsWith('http://')" class="text-xs text-amber-600 dark:text-amber-400">⚠ Per http:// geladen: Fingerabdrücke bitte gegen die bekannten Werte der CA prüfen, bevor du speicherst.</p>
         <div class="flex gap-5 items-center flex-wrap text-sm text-slate-600 dark:text-slate-300">
           <label class="flex items-center gap-2"><input type="checkbox" v-model="f.auto_renew" /> automatisch erneuern</label>
           <label class="flex items-center gap-2">erneuern ab <input v-model.number="f.renew_days" type="number" min="1" max="60" :class="inp" class="!w-20 !py-1" /> Tagen vor Ablauf</label>
@@ -48,7 +48,7 @@
       <div class="flex items-center gap-3">
         <button :class="btnPrimary" :disabled="busy">Speichern</button>
         <span v-if="dirty" class="text-xs text-slate-400">ungespeicherte Änderungen</span>
-        <span v-if="msg" class="text-sm text-green-600">{{ msg }}</span><span v-if="err" class="text-sm text-red-500">{{ err }}</span>
+        <span v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</span><span v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</span>
       </div>
     </form>
 

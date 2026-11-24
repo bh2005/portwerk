@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4 max-w-3xl">
-    <p v-if="err" class="text-sm text-red-500">{{ err }}</p>
+    <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
     <p v-else-if="!data" class="text-sm text-slate-400">Lade …</p>
     <template v-else>
       <p class="text-sm text-slate-500 dark:text-slate-400">Installierte Version: <b class="text-slate-800 dark:text-slate-100">{{ data.version }}</b>

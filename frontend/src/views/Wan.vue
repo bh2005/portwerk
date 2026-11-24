@@ -7,8 +7,8 @@
         <button v-if="canWrite" :class="btnPrimary" @click="openForm()">+ WAN-Verbindung</button>
       </div>
     </div>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
-    <p v-if="note" class="text-sm text-green-600">{{ note }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
+    <p v-if="note" class="text-sm text-green-600 dark:text-green-400">{{ note }}</p>
 
     <div class="flex flex-wrap gap-3 items-center">
       <input v-model="q" :class="inp" class="max-w-xs" placeholder="Suchen (Name, Provider, Leitungs-ID …)" @input="loadSoon" />

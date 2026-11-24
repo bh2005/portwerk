@@ -7,7 +7,7 @@
         class="px-4 py-2 text-sm -mb-px border-b-2 transition-colors"
         :class="tab === t[0] ? 'border-ks-600 text-ks-700 dark:text-ks-300 font-medium' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'">{{ t[1] }}</button>
     </div>
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
 
     <AdminLdap v-if="tab === 'ldap'" />
     <AdminTls v-if="tab === 'tls'" />
@@ -25,8 +25,8 @@
           <thead><tr class="bg-slate-50 dark:bg-slate-700/40"><th :class="th">Benutzer</th><th :class="th">Rollen</th><th :class="th">Letzte Anmeldung</th><th :class="th">Status</th><th :class="th"></th></tr></thead>
           <tbody>
             <tr v-for="u in users" :key="u.id" class="border-t border-slate-100 dark:border-slate-700">
-              <td :class="td"><div class="font-medium text-slate-800 dark:text-slate-100">{{ u.username }} <span v-if="u.source === 'ldap'" class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-ks-50 dark:bg-ks-900/30 text-ks-700 dark:text-ks-300 font-normal" title="Anmeldung über Active Directory; Rollen kommen aus den AD-Gruppen">AD</span></div><div class="text-xs text-slate-400">{{ u.full_name }} {{ u.email }}
-                <span v-if="u.notify && Object.values(u.notify).includes(false)" class="ml-1 text-amber-600" :title="optOutText(u.notify)">✉ abbestellt</span>
+              <td :class="td"><div class="font-medium text-slate-800 dark:text-slate-100">{{ u.username }} <span v-if="!u.roles.length && !u.scopes.length" class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-normal" title="Hat sich angemeldet, aber noch keine Rechte – Bearbeiten, um Rollen oder Standort-Rechte zu vergeben">wartet auf Freischaltung</span><span v-if="u.source === 'ldap'" class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-ks-50 dark:bg-ks-900/30 text-ks-700 dark:text-ks-300 font-normal" title="Anmeldung über Active Directory; Rollen kommen aus den AD-Gruppen">AD</span></div><div class="text-xs text-slate-400">{{ u.full_name }} {{ u.email }}
+                <span v-if="u.notify && Object.values(u.notify).includes(false)" class="ml-1 text-amber-600 dark:text-amber-400" :title="optOutText(u.notify)">✉ abbestellt</span>
                 <span v-if="u.absent" class="ml-1 text-sky-700 dark:text-sky-300">abwesend bis {{ u.absent.until.split('-').reverse().join('.') }}{{ u.absent.deputy ? ` · Vertretung ${u.absent.deputy.username}` : '' }}</span></div></td>
               <td :class="td"><div v-if="u.roles.length">{{ u.roles.map(roleLabel).join(', ') }} <span class="text-[10px] text-slate-400">(global)</span></div>
                 <div class="flex flex-wrap gap-1 mt-0.5"><span v-for="s in u.scopes" :key="s.id" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" :title="s.source === 'ldap' ? 'aus AD-Gruppe' : 'manuell vergeben'">{{ scopeText(s) }}<span v-if="s.source === 'ldap'"> · AD</span></span></div>
@@ -95,7 +95,7 @@
             <tr v-if="!audit.length"><td colspan="5" class="px-3 py-6 text-center text-slate-400">Keine Einträge{{ auditFiltered ? ' für diese Suche' : '' }}.</td></tr>
             <tr v-for="a in audit" :key="a.id" class="border-t border-slate-100 dark:border-slate-700">
               <td :class="td" class="whitespace-nowrap">{{ fmtTime(a.ts) }}</td><td :class="td">{{ a.actor }}</td><td :class="td" class="font-mono">{{ a.action }}</td>
-              <td :class="td">{{ a.entity }} {{ a.entity_id }}</td><td :class="td" class="text-slate-500">{{ a.detail }}</td>
+              <td :class="td">{{ a.entity }} {{ a.entity_id }}</td><td :class="td" class="text-slate-500 dark:text-slate-400">{{ a.detail }}</td>
             </tr>
           </tbody>
         </table>
@@ -180,7 +180,7 @@ import { inp, lbl, card, th, td, btnPrimary, btnGhost, btnDanger, btnLink, ROLES
 
 const globalAdmin = isAdmin()
 const OPT_OUT = { confirm_suggest: 'Aufträge zur Bestätigung vorgeschlagen', assigned: 'Zuweisung von Aufträgen', my_orders: 'Statusänderung eigener Aufträge',
-  lldp_problem: 'LLDP-Abweichung bei eigener Ausführung', reservation_expiry: 'Ablauf eigener Reservierungen' }
+  lldp_problem: 'LLDP-Abweichung bei eigener Ausführung', reservation_expiry: 'Ablauf eigener Reservierungen', new_user: 'Neuer Benutzer ohne Rechte' }
 const optOutText = n => 'Selbst abbestellte E-Mails: ' + Object.entries(n).filter(([, v]) => !v).map(([k]) => OPT_OUT[k] || k).join(', ')
 const absenceFor = ref(null)
 const tabs = globalAdmin ? [['users', 'Benutzer'], ['tokens', 'API-Zugänge'], ['ldap', 'AD / LDAP'], ['tls', 'Zertifikat (ACME)'], ['backup', 'Sicherung'], ['mail', 'E-Mail'], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan'], ['audit', 'Audit-Log'], ['releases', 'Releases']] : [['users', 'Benutzer']]

@@ -205,3 +205,88 @@ def test_releases(client, admin):
     d = res.json()
     assert d["version"] == d["releases"][0]["version"] and all(x["items"] for x in d["releases"])
     assert client.get("/api/releases").status_code in (401, 403)
+
+
+def test_adopt_device(client, admin, lab):
+    """„In Bestand übernehmen“: unbekannter Nachbar wird als Gerät samt Port und vorläufigem Kabel angelegt."""
+    rows, _ = by(client, admin)
+    ist = rows[("sw1", "Gi0/4")]["ist"][0]
+    assert ist["name"] == "fremd-sw" and ist["device_id"] is None and ist["obs_id"]
+    body = {"obs_id": ist["obs_id"], "hostname": "fremd-sw", "type": "switch", "mgmt_ip": "10.9.9.9", "neighbor_port": "Gi1/1", "create_cable": True}
+    assert client.post("/api/compare/adopt-device", headers=admin, json={**body, "type": "kaputt"}).status_code == 400
+    r = client.post("/api/compare/adopt-device", headers=admin, json=body)
+    assert r.status_code == 201, r.text
+    d = r.json()
+    assert d["cable_id"] and d["port_id"] and not d["cable_skipped"]
+    dev = client.get(f"/api/devices/{d['device_id']}", headers=admin).json()
+    assert dev["hostname"] == "fremd-sw" and dev["type"] == "switch" and dev["mgmt_ip"] == "10.9.9.9"
+    cab = client.get("/api/cables", headers=admin, params={"provisional": True}).json()
+    assert len(cab) == 1 and {cab[0]["port_a"]["device_hostname"], cab[0]["port_b"]["device_hostname"]} == {"sw1", "fremd-sw"}
+    rows, _ = by(client, admin)
+    assert rows[("sw1", "Gi0/4")]["status"] == "ok"                                   # jetzt dokumentiert und gesehen
+    assert client.post("/api/compare/adopt-device", headers=admin, json=body).status_code == 409   # schon im Bestand
+
+
+def test_guess_type():
+    from app import compare
+    assert compare.guess_type("WLAN Access Point, Bridge") == "ap" and compare.guess_type("Bridge, Router") == "router"
+    assert compare.guess_type("Telephone") == "endpoint" and compare.guess_type("") == "other"
+
+
+def test_checkmk_api(client, admin, monkeypatch):
+    """Checkmk-REST-Anbindung: Einstellungen (Secret bleibt verborgen), Host prüfen, Ordner, Host anlegen (nur Ping)."""
+    from app import checkmk_api
+    calls = []
+
+    def fake(cfg, method, path, body=None):
+        calls.append((method, path, body, cfg["user"], cfg["secret"]))
+        if path == "/version":
+            return 200, {"versions": {"checkmk": "2.5.0p18"}, "edition": "pro"}
+        if path.startswith("/domain-types/folder_config"):
+            return 200, {"value": [{"id": "~", "title": "Main"}, {"id": "~eu~de_germany", "title": "Deutschland"}]}
+        if path == "/objects/host_config/vorhanden":
+            return 200, {"id": "vorhanden", "extensions": {"folder": "/eu", "attributes": {"ipaddress": "10.1.1.1", "labels": {"a": "b"}}}}
+        if path.startswith("/objects/host_config/"):
+            return 404, {"title": "Not Found"}
+        if path.startswith("/domain-types/host_config/collections/all"):
+            if body["attributes"].get("tag_location") == "LOC999":
+                return 400, {"title": "Bad Request", "detail": "These fields have problems: attributes",
+                             "fields": {"attributes": ["Invalid value for tag-group 'Location': 'LOC999'"]}}
+            return 200, {"id": body["host_name"]}
+        return 500, {"detail": "unerwartet"}
+    monkeypatch.setattr(checkmk_api, "request", fake)
+
+    assert client.get("/api/checkmk/status", headers=admin).json()["enabled"] is False
+    assert client.get("/api/checkmk/host", headers=admin, params={"name": "x"}).status_code == 409           # nicht eingerichtet
+    r = client.put("/api/admin/checkmk-api", headers=admin, json={"enabled": True, "api_url": "http://cmk.example.test/site/", "user": "portwerk",
+                                                                    "secret": "geheim", "default_folder": "eu/de_germany"})
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert d["secret_set"] is True and "secret" not in d and d["api_url"] == "http://cmk.example.test/site" and d["default_folder"] == "/eu/de_germany"
+    assert client.put("/api/admin/checkmk-api", headers=admin, json={"user": "neu"}).json()["secret_set"] is True      # Secret bleibt erhalten
+    assert client.put("/api/admin/checkmk-api", headers=admin, json={"api_url": "ftp://x"}).status_code == 422
+    assert client.post("/api/admin/checkmk-api/test", headers=admin).json() == {"version": "2.5.0p18", "edition": "pro", "folders": 2}
+    assert client.get("/api/checkmk/status", headers=admin).json() == {"enabled": True, "default_folder": "/eu/de_germany"}
+
+    h = client.get("/api/checkmk/host", headers=admin, params={"name": "vorhanden"}).json()
+    assert h["exists"] is True and h["folder"] == "/eu" and h["ipaddress"] == "10.1.1.1"
+    assert client.get("/api/checkmk/host", headers=admin, params={"name": "fehlt"}).json()["exists"] is False
+    assert client.get("/api/checkmk/host", headers=admin, params={"name": "bad name"}).status_code == 422
+    assert [f["path"] for f in client.get("/api/checkmk/folders", headers=admin).json()] == ["/", "/eu/de_germany"]
+
+    n = len(calls)
+    c = client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-neu", "ip": "10.2.3.4/24"})
+    assert c.status_code == 201, c.text
+    assert c.json() == {"host_name": "ap-neu", "folder": "/eu/de_germany", "ping_only": True, "pending_activation": True, "location_tag": ""}
+    assert "tag_location" not in calls[n][2]["attributes"]
+    c2 = client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-loc", "location_tag": "LOC026"})
+    assert c2.status_code == 201 and c2.json()["location_tag"] == "LOC026" and calls[-1][2]["attributes"]["tag_location"] == "LOC026"
+    assert client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-x", "location_tag": "LOC 9"}).status_code == 422
+    bad = client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-x", "location_tag": "LOC999"})
+    assert bad.status_code == 422 and "LOC999" in bad.json()["detail"]                    # Checkmk kennt das Tag nicht
+    m, path, body, user, secret = calls[n]
+    assert m == "POST" and "bake_agent=false" in path and (user, secret) == ("neu", "geheim")
+    assert body["folder"] == "/eu/de_germany" and body["attributes"]["tag_agent"] == "no-agent" and body["attributes"]["tag_snmp_ds"] == "no-snmp"
+    assert body["attributes"]["ipaddress"] == "10.2.3.4" and body["attributes"]["labels"]["source"] == "portwerk"
+    assert not any("activate" in x[1] for x in calls)                                   # Anlegen aktiviert nie
+    assert client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "a b"}).status_code == 422

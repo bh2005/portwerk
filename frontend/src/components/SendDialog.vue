@@ -1,8 +1,8 @@
 <template>
   <ModalDialog wide :title="title" :error="error" @close="$emit('close')">
     <div v-if="result" class="space-y-2">
-      <p class="text-sm text-green-600">Gesendet an: {{ result.sent_to.join(', ') }} ({{ result.items }} Positionen).</p>
-      <p v-if="result.skipped_no_email.length" class="text-sm text-amber-600">Ohne E-Mail-Adresse übersprungen: {{ result.skipped_no_email.join(', ') }}</p>
+      <p class="text-sm text-green-600 dark:text-green-400">Gesendet an: {{ result.sent_to.join(', ') }} ({{ result.items }} Positionen).</p>
+      <p v-if="result.skipped_no_email.length" class="text-sm text-amber-600 dark:text-amber-400">Ohne E-Mail-Adresse übersprungen: {{ result.skipped_no_email.join(', ') }}</p>
     </div>
     <template v-else>
       <div>
@@ -12,7 +12,7 @@
           <label v-for="u in shownUsers" :key="u.id" class="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/40">
             <input type="checkbox" :checked="picked.has(u.id)" @change="toggle(u.id)" />
             <span class="text-slate-800 dark:text-slate-100">{{ u.full_name || u.username }}</span><span class="text-xs text-slate-400">{{ u.username }}<template v-if="u.roles.length"> · {{ u.roles.map(roleLabel).join(', ') }}</template></span>
-            <span v-if="!u.has_email" class="ml-auto text-[11px] text-amber-600">keine E-Mail-Adresse</span>
+            <span v-if="!u.has_email" class="ml-auto text-[11px] text-amber-600 dark:text-amber-400">keine E-Mail-Adresse</span>
           </label>
           <p v-if="!shownUsers.length" class="px-3 py-3 text-sm text-slate-400">Keine Benutzer gefunden.</p>
         </div>
