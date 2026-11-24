@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.12.0 – 2026-11-24
+- Geräte aus OpenPlan: Geräte → „Aus OpenPlan …“ listet die Geräte-Vorgänge eines OpenPlan-Projekts (Geräte-Rollout) und ordnet Standort, Ort (Rack/HE, sonst Raum), Typ und Katalogmodell zu. Ausgewählte Geräte werden als „geplant“ angelegt (mit Ports aus dem Katalogmodell, auf der HE, wenn frei); vorhandene Geräte gleichen Namens werden verknüpft. OpenPlan bekommt am Vorgang den Verweis „portwerk“ mit Link auf das Gerät. Erlaubt für Planer am Standort und Bereichs-Administratoren.
+
 ## 0.11.0 – 2026-11-24
 - Abwesenheiten aus OpenPlan: Ist der Abgleich eingeschaltet (Verwaltung → OpenPlan), übernimmt Portwerk stündlich die persönlichen Abwesenheiten aus OpenPlan für ein Jahr im Voraus. Die Zuordnung läuft über den Benutzernamen, sonst über die E-Mail-Adresse. Übernommene Einträge sind in Portwerk nur lesbar; „krank“ erscheint nur als „abwesend“. Voraussetzung: OpenPlan ab 0.15.0, API-Zugang mit Freigabe „Abwesenheiten“.
 - Standard-Vertretung im Profil: Sie gilt für Abwesenheiten aus OpenPlan und wird beim Eintragen einer Abwesenheit vorgeschlagen. Administratoren können sie auch für andere setzen.

@@ -1,14 +1,15 @@
 <template>
   <div class="max-w-6xl space-y-4">
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Geräte <span class="text-sm font-normal text-slate-400">({{ total }})</span></h1>
-      <div v-if="canWrite || canOrder" class="flex gap-2">
+    <div class="flex items-start justify-between gap-3">
+      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">Geräte <span class="text-sm font-normal text-slate-400">({{ total }})</span></h1>
+      <div v-if="canWrite || canOrder" class="flex flex-wrap justify-end gap-2 [&>button]:whitespace-nowrap">
         <button @click="wizard = 'switch'" :class="btnPrimary">Assistent: Gerät platzieren</button>
         <button @click="wizard = 'patchpanel'" :class="btnPrimary">Assistent: Patchfeld</button>
         <button @click="wizard = 'vertical'" :class="btnGhost">Hochkant (PDU …)</button>
         <button @click="cableWizard = true" :class="btnPrimary">Assistent: Kabel einbauen</button>
         <button @click="bulkWizard = true" :class="btnPrimary">Assistent: Massenverkabelung</button>
         <button @click="wizard = 'placeholder'" :class="btnGhost">Platzhalter einplanen</button>
+        <button v-if="opEnabled && (canOrder || canWrite)" @click="opDevices = true" :class="btnGhost" title="Geräte aus einem Geräte-Rollout in OpenPlan als „geplant“ übernehmen">Aus OpenPlan …</button>
         <button v-if="canWrite" @click="openNew" :class="btnGhost">+ Gerät (einfach)</button>
       </div>
     </div>
@@ -68,6 +69,7 @@
     </ModalDialog>
     <CableWizard v-if="cableWizard" @close="cableWizard = false" @done="cableDone" />
     <BulkCableWizard v-if="bulkWizard" @close="bulkWizard = false" @done="bulkDone" />
+    <OpenPlanDevicesDialog v-if="opDevices" @close="opDevices = false; reload()" @done="reload" />
     <DeviceWizard v-if="wizard" :kind="wizard" :title="TITLES[wizard]" @close="wizard = null" @done="wizardDone" />
   </div>
 </template>
@@ -80,12 +82,13 @@ import { api, errText, canWriteMaster, hasRole } from '../api.js'
 import DeviceWizard from '../components/DeviceWizard.vue'
 import CableWizard from '../components/CableWizard.vue'
 import BulkCableWizard from '../components/BulkCableWizard.vue'
+import OpenPlanDevicesDialog from '../components/OpenPlanDevicesDialog.vue'
 import { inp, lbl, card, th, td, btnPrimary, btnGhost, DEVICE_TYPES, DEVICE_STATUS, SOURCES, typeLabel, statusLabel, sourceLabel, statusClass } from '../ui.js'
 
 const router = useRouter(), route = useRoute()
 const canWrite = canWriteMaster()
 const canOrder = hasRole('planer')
-const wizard = ref(null), cableWizard = ref(false), bulkWizard = ref(false)
+const wizard = ref(null), cableWizard = ref(false), bulkWizard = ref(false), opDevices = ref(false), opEnabled = ref(false)
 function bulkDone(r) { bulkWizard.value = false; if (r.workorder) router.push(`/workorders/${r.workorder.id}`); else reload() }
 async function cableDone() { cableWizard.value = false; reload() }
 const TITLES = { switch: 'Assistent: Gerät platzieren', patchpanel: 'Assistent: Patchfeld platzieren', placeholder: 'Assistent: Platzhalter einplanen', vertical: 'Assistent: Hochkant-Gerät (PDU …) platzieren' }
@@ -114,5 +117,8 @@ async function create() {
   catch (e) { formError.value = errText(e) }
 }
 
-onMounted(async () => { try { sites.value = await api.sites() } catch {} ; load() })
+onMounted(async () => {
+  try { sites.value = await api.sites() } catch {} ; load()
+  api.openplanStatus().then(s => { opEnabled.value = s.enabled }).catch(() => {})
+})
 </script>
