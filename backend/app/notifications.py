@@ -5,6 +5,7 @@
 * ``my_orders``           mein Auftrag (angelegt von mir) wurde freigegeben, abgelehnt, auf Nacharbeit gesetzt oder bestätigt
 * ``lldp_problem``        LLDP meldet eine Abweichung bei einem Auftrag, den ich ausgeführt habe
 * ``reservation_expiry``  meine Reservierung läuft in wenigen Tagen ab (tägliche Prüfung, eine Sammelmail je Person)
+* ``cleanup_report``      globale Administratoren: wöchentlicher Aufräumbericht (montags, nur wenn es offene Punkte gibt)
 
 Hauptschalter bleibt der E-Mail-Versand in der Verwaltung (für „zur Bestätigung vorgeschlagen“ zusätzlich ``notify_confirm_suggest``).
 Versand im Hintergrund; ein Fehler beim Versand stört nie den auslösenden Vorgang. Wer eine Änderung selbst auslöst, bekommt keine Mail dazu.
@@ -34,7 +35,8 @@ PREFS = {"confirm_suggest": "Aufträge zur Bestätigung vorgeschlagen (Freigeber
          "my_orders": "Mein Auftrag wurde freigegeben, abgelehnt, auf Nacharbeit gesetzt oder bestätigt",
          "lldp_problem": "LLDP meldet eine Abweichung bei einem Auftrag, den ich ausgeführt habe",
          "reservation_expiry": f"Meine Reservierung läuft in {REMIND_DAYS} Tagen ab",
-         "new_user": "Ein neuer Benutzer ohne Rechte hat sich angemeldet (globale Administratoren)"}
+         "new_user": "Ein neuer Benutzer ohne Rechte hat sich angemeldet (globale Administratoren)",
+         "cleanup_report": "Wöchentlicher Aufräumbericht (globale Administratoren)"}
 
 
 def prefs(raw: str) -> dict:
@@ -217,6 +219,13 @@ def new_user_waiting(u: dict) -> int:
                     _link(cfg, "/admin"), "new_user", "user", u["id"], eligible=is_admin, wait=True)
 
 
+def send_cleanup_report(subject: str, lines: list[str]) -> int:
+    """Aufräumbericht (``cleanup.weekly_mail``) an die globalen Administratoren; Vertretung nur, wenn sie selbst globaler Administrator ist."""
+    is_admin = lambda d: "admin" in (d.get("roles") or "").split(",")                          # noqa: E731
+    return _deliver(global_admins(), "cleanup_report", subject, lines, _link(mailer.settings(), "/cleanup"), "cleanup_report", "report", "cleanup",
+                    eligible=is_admin, wait=True)
+
+
 # ── Techniker: LLDP-Abweichung ────────────────────────────────────────────────
 
 def lldp_problem(wid: int, items: list[dict]) -> int:
@@ -272,5 +281,10 @@ def start_background(interval: float = 3600.0) -> None:
                 reservation_reminders()
             except Exception:
                 log.exception("Erinnerungen")
+            try:
+                from . import cleanup
+                cleanup.weekly_mail()
+            except Exception:
+                log.exception("Aufräumbericht")
             time.sleep(interval)
     threading.Thread(target=loop, daemon=True, name="notify-reminders").start()

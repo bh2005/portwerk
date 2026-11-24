@@ -85,6 +85,8 @@ export const api = {
   stats: () => get('/api/stats'),
   capacity:        params => get('/api/capacity', params),
   capacitySummary: () => get('/api/capacity/summary'),
+  cleanup:         params => get('/api/cleanup', params),
+  cleanupMail:     () => post('/api/cleanup/mail'),
 
   // Standorte und Locations
   sites:          () => get('/api/sites'),

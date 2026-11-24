@@ -16,8 +16,6 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
   OpenPlan führt Abwesenheiten (Urlaub, Schulung, Krankheit); diese könnten in Portwerk automatisch gelten, statt sie doppelt einzutragen.
 - **Historie für Geräte-Orte und Patchfeld-Paare**
   Historisiert sind nur Verbindungen; Zeitreise und „Pfad am Datum“ zeigen Orte und Durchschleifungen mit dem heutigen Stand.
-- **Kabelliste mit Filter „vorläufig“**
-  `GET /api/cables?provisional=true` gibt es; eine Oberfläche, die alle noch nachzudokumentierenden Strecken auflistet, fehlt.
 - **Checkmk-Anbindung über HTTPS**
   Die REST-Anbindung funktioniert mit jeder Adresse; sie sollte nach Möglichkeit über HTTPS laufen (Secret im Klartext vermeiden).
 - **Sicherungsziel SFTP**
@@ -52,9 +50,10 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Checkmk-REST-Anbindung: Host prüfen, mit Ping und Standort-Tag anlegen (Aktivierung in Checkmk) | #26 |
 | Strecken-Editor: ganze Strecke als Seitenleiste, Kabel bearbeiten, Zwischenstationen einfügen/entfernen | #26 |
 | Dokumentation der Abläufe mit Beispielen (`docs/workflows/`) | #26 |
-| Autorouting: fehlende Patchungen zwischen Quell- und Zielport automatisch planen, neues Gerät als „geplant“ anlegen | (dieser PR) |
-| Strecken-Editor: Umstecken (Ziel ändern) | (dieser PR) |
-| Externe Sicherungsziele (NAS-Verzeichnis, S3, WebDAV), optional verschlüsselt, Wiederherstellung vom Ziel | (dieser PR) |
-| Filter für Locations bei Racks & Schränke und bei den Standorten | (dieser PR) |
-| Dark Mode: Standard-Textfarbe, Audit-Log lesbar | (dieser PR) |
-| Checkmk: ausstehende Änderungen anzeigen und aus Portwerk aktivieren (nur ohne fremde Änderungen) | (dieser PR) |
+| Autorouting: fehlende Patchungen zwischen Quell- und Zielport automatisch planen, neues Gerät als „geplant“ anlegen | #26 |
+| Strecken-Editor: Umstecken (Ziel ändern) | #26 |
+| Externe Sicherungsziele (NAS-Verzeichnis, S3, WebDAV), optional verschlüsselt, Wiederherstellung vom Ziel | #26 |
+| Filter für Locations bei Racks & Schränke und bei den Standorten | #26 |
+| Dark Mode: Standard-Textfarbe, Audit-Log lesbar | #26 |
+| Checkmk: ausstehende Änderungen anzeigen und aus Portwerk aktivieren (nur ohne fremde Änderungen) | #26 |
+| Aufräumen: vorläufige Kabel, von LLDP nicht gesehene Verbindungen, abgelaufene Reservierungen, liegengebliebene Aufträge, geplante Geräte ohne Auftrag; wöchentlicher Bericht an die Admins | (dieser PR) |

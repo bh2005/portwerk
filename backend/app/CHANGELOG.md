@@ -2,6 +2,10 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.10.0 – 2026-11-24
+- Aufräumen: Neue Seite sammelt Stellen, die nachgepflegt werden sollten – vorläufige Kabel aus dem Soll/Ist-Abgleich (mit Alter, Absprung in den Strecken-Editor), dokumentierte Verbindungen, die LLDP nicht sieht (mögliche tote Patchung), abgelaufene Reservierungen (gesammelt löschbar), offene Aufträge ohne Änderung seit X Tagen und geplante Geräte ohne Auftrag. Filter nach Standort, Schwelle für „alt“ wählbar.
+- Wöchentlicher Aufräumbericht: Montags eine Zusammenfassung per E-Mail an die globalen Administratoren (nur wenn es offene Punkte gibt; abbestellbar im Profil, „Bericht mailen“ sendet sofort).
+
 ## 0.9.0 – 2026-11-24
 - Autorouting: Von einem Quellport (z. B. NIC eines neuen Servers) zu einem Zielport (z. B. Switchport) schlägt Portwerk die fehlenden Patchungen vor – über vorhandene Kabel, Patchfelder und Dosen (bis zu 3 Stationen), neue Patchkabel nur zwischen freien Ports im selben Raum (im selben Rack bevorzugt). Bis zu drei Vorschläge; daraus entsteht ein Patchauftrag, die Ports sind verplant.
 - Neues Gerät wird bei Bedarf mit angelegt: Als „geplant“ samt Einbau-Position im Auftrag; es gilt nach der Bestätigung als eingebaut. Aufruf in der Rack-Ansicht („Autorouting“) und am Port im Gerätedetail.
