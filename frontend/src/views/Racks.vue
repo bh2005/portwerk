@@ -10,10 +10,19 @@
         </div>
         <select v-model="rackId" :class="inp" class="!w-72" @change="changeRack">
           <option :value="null" disabled>Rack wählen …</option>
-          <option v-for="r in racks" :key="r.id" :value="r.id">{{ kindLabel(r.kind) }}: {{ r.path }}<template v-if="r.rack_units"> ({{ r.rack_units }} HE)</template></option>
+          <option v-for="r in shownRacks" :key="r.id" :value="r.id">{{ kindLabel(r.kind) }}: {{ r.path }}<template v-if="r.rack_units"> ({{ r.rack_units }} HE)</template></option>
         </select>
       </div>
     </div>
+    <!-- Filter für die Auswahl -->
+    <div v-if="racks.length > 1" class="flex items-center gap-2 flex-wrap">
+      <select v-model="fSite" :class="inp" class="!w-56" title="Standort"><option value="">alle Standorte</option><option v-for="s in siteChoices" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
+      <select v-model="fKind" :class="inp" class="!w-48" title="Art"><option value="">alle Arten</option><option v-for="k in kindChoices" :key="k" :value="k">{{ kindLabel(k) }}</option></select>
+      <input v-model="fText" :class="inp" class="!w-64" placeholder="Location suchen (Name, Pfad, Kennung) …" />
+      <button v-if="fSite || fKind || fText" type="button" :class="btnLink" @click="fSite = ''; fKind = ''; fText = ''">Filter zurücksetzen</button>
+      <span class="text-xs text-slate-400">{{ shownRacks.length }} von {{ racks.length }}</span>
+    </div>
+    <p v-if="loaded && racks.length && !shownRacks.length" class="text-sm text-slate-400">Keine Racks oder Schränke für diese Filter.</p>
     <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
     <p v-if="notice" class="text-sm text-green-600">{{ notice }}</p>
     <p v-if="loaded && !racks.length" class="text-sm text-slate-400">Noch kein Rack, Schaltschrank oder keine Anlage angelegt. Lege unter „Standorte“ eine passende Location an.</p>
@@ -178,6 +187,16 @@ import { inp, card, th, td, btnPrimary, btnGhost, btnLink, typeLabel, fmtSpeed, 
 const UNIT = 26                      // Pixel pro Höheneinheit
 const view = ref('front')            // Ansicht: Vorderseite oder Rückseite
 const racks = ref([]), rackId = ref(null), devices = ref([])
+const sites = ref([]), fSite = ref(''), fKind = ref(''), fText = ref('')
+const siteChoices = computed(() => sites.value.filter(s => racks.value.some(r => r.site_id === s.id)))
+const kindChoices = computed(() => [...new Set(racks.value.map(r => r.kind))])
+const shownRacks = computed(() => {
+  const q = fText.value.trim().toLowerCase()
+  return racks.value.filter(r => (!fSite.value || r.site_id === fSite.value) && (!fKind.value || r.kind === fKind.value) &&
+    (!q || `${r.path} ${r.ident || ''} ${r.name}`.toLowerCase().includes(q)))
+})
+// Wird das gewählte Rack ausgefiltert, springt die Auswahl auf den ersten Treffer
+watch(shownRacks, async l => { if (l.length && !l.some(r => r.id === rackId.value)) { rackId.value = l[0].id; await changeRack() } })
 const error = ref(''), notice = ref(''), loaded = ref(false)
 const rack = computed(() => racks.value.find(r => r.id === rackId.value) || null)
 const selected = ref(null), ports = ref([]), portsLoading = ref(false), portFilter = ref('all')
@@ -258,6 +277,7 @@ const route = useRoute()
 // Sprung aus der Schnellsuche: /racks?device=ID wählt Rack und Gerät, /racks?location=ID das Rack
 async function applyQuery() {
   const dev = Number(route.query.device), loc = Number(route.query.location)
+  if (dev || loc) { fSite.value = ''; fKind.value = ''; fText.value = '' }                      // Sprungziel soll nicht durch einen Filter verdeckt sein
   try {
     if (dev) {
       const d = await api.device(dev)
@@ -275,6 +295,7 @@ watch(() => [route.query.device, route.query.location], () => { if (racks.value.
 onMounted(async () => {
   loadCheckmk()
   try {
+    try { sites.value = await api.sites() } catch { /* Filter ohne Standortnamen */ }
     racks.value = (await api.locations()).filter(l => PLACE_KINDS.includes(l.kind) && l.kind !== 'room')
     if (racks.value.length) { rackId.value = racks.value[0].id; await load(); await applyQuery() }
   } catch (e) { error.value = errText(e) }
