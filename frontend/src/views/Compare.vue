@@ -45,6 +45,7 @@
             <td :class="td" class="text-right whitespace-nowrap">
               <button v-if="r.adopt && canWrite" :class="btnLink" class="mr-3" :disabled="busy === r.port_id"
                 :title="`Als Direktkabel zu ${r.adopt.label} dokumentieren (vorläufig – Dosen und Patchfelder später nachtragen)`" @click="adopt(r)">Verbindung übernehmen</button>
+              <button v-if="r.port_id" :class="btnLink" class="mr-3" title="Ganze Strecke ansehen und bearbeiten" @click="strecke = r.port_id">Strecke</button>
               <button v-if="r.port_id" :class="btnLink" class="mr-3" title="Frühere Verbindungen dieses Ports" @click="hist = { id: r.port_id, name: r.port, hostname: r.device, deviceId: r.device_id }">Historie</button>
               <router-link v-if="r.soll?.label || r.ist[0]?.port_id" class="text-xs text-ks-600 dark:text-ks-400 hover:underline" :to="`/devices/${r.device_id}`">Gerät →</router-link></td>
           </tr>
@@ -93,6 +94,7 @@
           <button :class="btnPrimary" :disabled="!dev || !dev.hostname.trim() || dev.busy" @click="adoptDevice">Übernehmen</button></div>
       </template>
     </SidePanel>
+    <PathEditor :open="!!strecke" :port-id="strecke" @close="strecke = null" @changed="load" />
     <CableHistoryPanel :open="!!hist" :port-id="hist?.id ?? null" :device-id="hist?.deviceId ?? null" :hostname="hist?.hostname || ''" :port-name="hist?.name || ''" @close="hist = null" />
   </div>
 </template>
@@ -104,6 +106,7 @@ import { api, errText, getToken, defaultSite, canWriteMaster } from '../api.js'
 import { inp, lbl, card, btnGhost, btnPrimary, btnLink, th, td, DEVICE_TYPES } from '../ui.js'
 import SidePanel from '../components/SidePanel.vue'
 import CableHistoryPanel from '../components/CableHistoryPanel.vue'
+import PathEditor from '../components/PathEditor.vue'
 import VlanCompare from '../components/VlanCompare.vue'
 
 const TABS = [['lldp', 'Verkabelung (LLDP/CDP)'], ['vlan', 'VLANs (Checkmk)']]
@@ -111,7 +114,7 @@ const route = useRoute(), router = useRouter()
 const tab = ref(route.query.tab === 'vlan' ? 'vlan' : 'lldp')
 function setTab(k) { tab.value = k; router.replace({ query: k === 'vlan' ? { tab: 'vlan' } : {} }) }
 
-const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), dev = ref(null), cmkOn = ref(false), cmkFolders = ref([]), cmkDefault = ref('/')
+const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), strecke = ref(null), dev = ref(null), cmkOn = ref(false), cmkFolders = ref([]), cmkDefault = ref('/')
 const canWrite = canWriteMaster()
 const cmkTags = computed(() => sites.value.filter(s => /^LOC\d+$/i.test(s.code)).map(s => ({ code: s.code, name: s.name })))
 const active = ref(new Set(['mismatch', 'port_mismatch', 'undocumented', 'not_seen', 'unmapped']))

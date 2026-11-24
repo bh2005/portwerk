@@ -38,13 +38,11 @@ lässt den Abgleich grün werden, ohne die Strecke zu behaupten.
 
 ### Später: Strecke vervollständigen
 
-Wenn Sie die tatsächliche Strecke kennen (z. B. `sw-a1:Gi0/3 → PP1:12 → Dose B-04 → sw-a2:Gi0/7`):
+Wenn Sie die tatsächliche Strecke kennen (z. B. `sw-a1:Gi0/3 → PP1:12 → Dose B-04 → sw-a2:Gi0/7`), öffnen Sie in der Zeile **Strecke** (oder im Gerätedetail **Verbindung**)
+und fügen am Kabel mit **+ Zwischenstation** Patchfeld und Dose ein, siehe [Strecken-Editor](strecken-editor.md#zwischenstation-einfügen). Der Abgleich läuft weiter über Patchfelder und Dosen
+und zeigt weiterhin *stimmt*.
 
-1. Direktkabel im Gerätedetail unter **Verbindung** lösen.
-2. Mit dem **Kabel-Assistenten** die Strecke über Patchfeld und Dose neu anlegen.
-3. Der Abgleich läuft weiter über Patchfelder und Dosen und zeigt weiterhin *stimmt*.
-
-Bleibt das Direktkabel richtig, genügt in der Port-Tabelle **vollständig** neben dem Kennzeichen *vorläufig*. Danach gilt die Verbindung als abschließend dokumentiert.
+Bleibt das Direktkabel richtig, genügt in der Leiste **Strecke vollständig** (oder in der Port-Tabelle **vollständig** neben dem Kennzeichen *vorläufig*). Danach gilt die Verbindung als abschließend dokumentiert.
 
 **Alle noch offenen Kabel auflisten:**
 
