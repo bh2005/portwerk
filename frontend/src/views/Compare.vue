@@ -80,7 +80,7 @@
             <div><label :class="lbl">Ordner in Checkmk</label>
               <select v-model="dev.cmk.folder" :class="inp"><option v-for="f in cmkFolders" :key="f.path" :value="f.path">{{ f.path }} · {{ f.title }}</option></select></div>
             <div><label :class="lbl">Standort-Tag (location)</label>
-              <select v-model="dev.cmk.location" :class="inp"><option value="">keins</option><option v-for="t in cmkTags" :key="t" :value="t">{{ t }}</option></select>
+              <select v-model="dev.cmk.location" :class="inp"><option value="">keins</option><option v-for="t in cmkTags" :key="t.code" :value="t.code">{{ t.code }} · {{ t.name }}</option></select>
               <p v-if="dev.cmk.locationHint" class="text-xs text-slate-400 mt-1">{{ dev.cmk.locationHint }}</p></div>
             <button :class="btnGhost" :disabled="dev.cmk.busy || !dev.hostname.trim()" @click="createCmk">In Checkmk anlegen (nur Ping)</button>
             <p class="text-xs text-slate-400">Host mit reinem Host-Check, ohne Agent und SNMP; wird als ausstehende Änderung angelegt.</p>
@@ -111,8 +111,9 @@ const route = useRoute(), router = useRouter()
 const tab = ref(route.query.tab === 'vlan' ? 'vlan' : 'lldp')
 function setTab(k) { tab.value = k; router.replace({ query: k === 'vlan' ? { tab: 'vlan' } : {} }) }
 
-const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), dev = ref(null), cmkOn = ref(false), cmkFolders = ref([]), cmkTags = ref([]), cmkDefault = ref('/')
+const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), dev = ref(null), cmkOn = ref(false), cmkFolders = ref([]), cmkDefault = ref('/')
 const canWrite = canWriteMaster()
+const cmkTags = computed(() => sites.value.filter(s => /^LOC\d+$/i.test(s.code)).map(s => ({ code: s.code, name: s.name })))
 const active = ref(new Set(['mismatch', 'port_mismatch', 'undocumented', 'not_seen', 'unmapped']))
 const chips = [['mismatch', 'anderes Gerät'], ['port_mismatch', 'anderer Port'], ['undocumented', 'nicht dokumentiert'], ['not_seen', 'nicht gesehen'], ['unmapped', 'Port unbekannt'], ['unknown', 'keine Daten'], ['ok', 'stimmt']]
 const chipClass = s => ({ ok: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', mismatch: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
@@ -150,10 +151,9 @@ async function checkCmk() {
     c.exists = r.exists; c.folder = r.exists ? r.folder : (c.folder || cmkDefault.value); c.ipaddress = r.ipaddress
     if (!r.exists) {
       if (!cmkFolders.value.length) cmkFolders.value = await api.checkmkFolders()
-      if (!cmkTags.value.length) cmkTags.value = await api.checkmkLocationTags()
       const code = sites.value.find(s => s.id === dev.value.row.site_id)?.code || ''
-      c.location = cmkTags.value.includes(code) ? code : ''
-      c.locationHint = c.location ? `aus dem Standort von ${dev.value.row.device} (${code})` : (code ? `Standort ${code} ist in Checkmk kein Tag – bitte wählen` : '')
+      c.location = cmkTags.value.some(t => t.code === code) ? code : ''
+      c.locationHint = c.location ? `aus dem Standort von ${dev.value.row.device} (${code})` : (code ? `Standort ${code} ist kein Checkmk-Tag – bitte wählen oder leer lassen` : '')
     }
   } catch (e) { c.error = errText(e) } finally { c.loading = false }
 }

@@ -95,11 +95,6 @@ def checkmk_folders(_: Principal = Depends(require_writer)):
     return checkmk_api.folders()
 
 
-@router.get("/api/checkmk/location-tags")
-def checkmk_location_tags(_: Principal = Depends(require_writer)):
-    return checkmk_api.location_tags()
-
-
 class CheckmkHostIn(BaseModel):
     hostname: str = Field(min_length=1, max_length=120)
     ip: str = Field(default="", max_length=80)

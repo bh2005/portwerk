@@ -246,8 +246,6 @@ def test_checkmk_api(client, admin, monkeypatch):
             return 200, {"value": [{"id": "~", "title": "Main"}, {"id": "~eu~de_germany", "title": "Deutschland"}]}
         if path == "/objects/host_config/vorhanden":
             return 200, {"id": "vorhanden", "extensions": {"folder": "/eu", "attributes": {"ipaddress": "10.1.1.1", "labels": {"a": "b"}}}}
-        if path == "/objects/host_tag_group/location":
-            return 200, {"extensions": {"tags": [{"id": "-----"}, {"id": "LOC001"}, {"id": "LOC026"}]}}
         if path.startswith("/objects/host_config/"):
             return 404, {"title": "Not Found"}
         if path.startswith("/domain-types/host_config/collections/all"):
@@ -278,10 +276,9 @@ def test_checkmk_api(client, admin, monkeypatch):
     assert c.status_code == 201, c.text
     assert c.json() == {"host_name": "ap-neu", "folder": "/eu/de_germany", "ping_only": True, "pending_activation": True, "location_tag": ""}
     assert "tag_location" not in calls[n][2]["attributes"]
-    assert client.get("/api/checkmk/location-tags", headers=admin).json() == ["LOC001", "LOC026"]
     c2 = client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-loc", "location_tag": "LOC026"})
     assert c2.status_code == 201 and c2.json()["location_tag"] == "LOC026" and calls[-1][2]["attributes"]["tag_location"] == "LOC026"
-    assert client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-x", "location_tag": "LOC999"}).status_code == 422
+    assert client.post("/api/checkmk/hosts", headers=admin, json={"hostname": "ap-x", "location_tag": "LOC 9"}).status_code == 422
     m, path, body, user, secret = calls[n]
     assert m == "POST" and "bake_agent=false" in path and (user, secret) == ("neu", "geheim")
     assert body["folder"] == "/eu/de_germany" and body["attributes"]["tag_agent"] == "no-agent" and body["attributes"]["tag_snmp_ds"] == "no-snmp"

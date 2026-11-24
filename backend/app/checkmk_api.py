@@ -142,17 +142,6 @@ def folders() -> list[dict]:
     return sorted(out, key=lambda x: x["path"])
 
 
-def location_tags() -> list[str]:
-    """Werte der Tag-Gruppe ``location`` (z. B. LOC026) – ohne den Platzhalter „keine Angabe“."""
-    cfg = configured()
-    st, js = request(cfg, "GET", "/objects/host_tag_group/location")
-    if st == 404:
-        return []
-    if st != 200:
-        raise _fail(st, js)
-    return [t["id"] for t in (js or {}).get("extensions", {}).get("tags", []) if t.get("id") and not set(str(t["id"])) <= {"-"}]
-
-
 def host(name: str) -> dict:
     """Existiert der Host in Checkmk? (Antwort mit Ordner, IP und Link-Pfad, sonst ``exists: False``.)"""
     cfg = configured()
@@ -184,14 +173,16 @@ def create_host(name: str, ip: str = "", folder: str = "", labels: Optional[dict
         attrs["ipaddress"] = ip
         attrs["tag_address_family"] = "ip-v6-only" if ":" in ip else "ip-v4-only"
     tag = str(location_tag or "").strip()
-    if tag:
-        if tag not in location_tags():
-            raise HTTPException(422, f"Das Standort-Tag „{tag}“ gibt es in Checkmk nicht")
+    if tag:                                                    # Tag-Gruppe ``location``; ob der Wert existiert, prüft Checkmk beim Anlegen
+        if not re.match(r"^[A-Za-z0-9_\-]{1,40}$", tag):
+            raise HTTPException(422, "Standort-Tag ungültig")
         attrs["tag_location"] = tag
     st, js = request(cfg, "POST", "/domain-types/host_config/collections/all?bake_agent=false",
                      {"host_name": n, "folder": normalize_folder(folder or cfg["default_folder"]), "attributes": attrs})
     if st == 400 and "already" in _detail(js).lower():
         raise HTTPException(409, "Der Host existiert in Checkmk bereits")
+    if st == 400 and tag and "tag_location" in _detail(js):
+        raise HTTPException(422, f"Das Standort-Tag „{tag}“ gibt es in Checkmk nicht")
     if st not in (200, 201):
         raise _fail(st, js)
     return {"host_name": n, "folder": normalize_folder(folder or cfg["default_folder"]), "ping_only": True, "pending_activation": True, "location_tag": tag}
