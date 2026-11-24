@@ -24,6 +24,21 @@
     </fieldset>
 
     <fieldset :class="box">
+      <legend :class="legend">Abwesenheiten aus OpenPlan (optional)</legend>
+      <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="checkbox" v-model="f.sync_absences" /> Abwesenheiten übernehmen (stündlich)</label>
+      <p :class="hint">Urlaub, Schulung usw. aus „Mein Profil“ in OpenPlan gelten dann auch in Portwerk: Benachrichtigungen gehen an die <b>Standard-Vertretung</b>,
+        die jeder im Profil festlegt. Zuordnung über den Benutzernamen, sonst über die E-Mail-Adresse. Übernommen wird ein Jahr im Voraus; „krank“ erscheint nur als „abwesend“, Notizen nicht.
+        In OpenPlan braucht der API-Zugang die Freigabe <b>„Abwesenheiten“</b> (Verwaltung → API-Zugänge). Ausschalten entfernt die übernommenen Einträge.</p>
+      <div class="flex items-center gap-3 flex-wrap text-sm">
+        <button type="button" :class="btnGhost" class="!py-1.5" :disabled="busy || !meta.configured" @click="syncAbsences">jetzt abgleichen</button>
+        <span v-if="abs.at" :class="abs.ok ? 'text-slate-600 dark:text-slate-300' : 'text-red-500 dark:text-red-400'">
+          Letzter Abgleich {{ fmtTime(abs.at) }}:
+          <template v-if="abs.ok">{{ abs.imported }} Abwesenheit(en) für {{ abs.users }} Benutzer übernommen</template><template v-else>{{ abs.error }}</template></span>
+      </div>
+      <p v-if="abs.ok && abs.unmatched?.length" class="text-xs text-amber-700 dark:text-amber-300">Ohne passenden Benutzer in Portwerk: {{ abs.unmatched.join(', ') }}</p>
+    </fieldset>
+
+    <fieldset :class="box">
       <legend :class="legend">Rückrichtung (optional): Webhook von OpenPlan</legend>
       <div class="grid sm:grid-cols-2 gap-3">
         <div><label :class="lbl">Adresse dieser Anwendung (für Links in OpenPlan)</label><input v-model="f.own_url" :class="inp" placeholder="https://opp.example.test" />
@@ -51,18 +66,19 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { api, errText } from '../api.js'
-import { inp, lbl, btnPrimary, btnGhost } from '../ui.js'
+import { inp, lbl, btnPrimary, btnGhost, fmtTime } from '../ui.js'
 
 const box = 'border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3'
 const legend = 'px-2 text-sm font-semibold text-slate-700 dark:text-slate-200'
 const hint = 'text-xs text-slate-400 mt-1'
 
-const f = reactive({ enabled: false, base_url: '', link_url: '', token: '', clear_token: false, default_project_id: '', ca_pem: '', verify_tls: true, auto_sync: true, own_url: '', webhook_secret: '', clear_webhook_secret: false })
+const f = reactive({ enabled: false, base_url: '', link_url: '', token: '', clear_token: false, default_project_id: '', ca_pem: '', verify_tls: true, auto_sync: true, sync_absences: false, own_url: '', webhook_secret: '', clear_webhook_secret: false })
 const meta = reactive({ token_set: false, webhook_secret_set: false, webhook_url: '', configured: false })
-const busy = ref(false), msg = ref(''), err = ref(''), result = ref(null)
+const busy = ref(false), msg = ref(''), err = ref(''), result = ref(null), abs = ref({})
 
 function fill(s) {
-  const { token_set, webhook_secret_set, webhook_url, account, ...rest } = s
+  const { token_set, webhook_secret_set, webhook_url, account, absences_status, ...rest } = s
+  abs.value = absences_status || {}
   Object.assign(f, rest, { token: '', webhook_secret: '', clear_token: false, clear_webhook_secret: false })
   Object.assign(meta, { token_set, webhook_secret_set, webhook_url, configured: !!(rest.base_url || rest.enabled) })
 }
@@ -72,6 +88,12 @@ onMounted(async () => { try { fill(await api.openplanSettings()) } catch (e) { e
 async function save() {
   busy.value = true; msg.value = err.value = ''
   try { fill(await api.saveOpenplanSettings(payload())); msg.value = 'Gespeichert' } catch (e) { err.value = errText(e) } finally { busy.value = false }
+}
+async function syncAbsences() {
+  busy.value = true; msg.value = err.value = ''
+  try { abs.value = await api.syncOpenplanAbsences(); msg.value = 'Abwesenheiten abgeglichen' }
+  catch (e) { err.value = errText(e); try { abs.value = (await api.openplanSettings()).absences_status || {} } catch { /* bleibt */ } }
+  finally { busy.value = false }
 }
 async function test() {
   busy.value = true; result.value = null; err.value = ''

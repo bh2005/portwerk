@@ -97,11 +97,29 @@ def add_my_absence(body: AbsenceIn, p: Principal = Depends(require_user)):
 
 @router.delete("/auth/me/absences/{aid}")
 def delete_my_absence(aid: int, p: Principal = Depends(require_user)):
-    if not db.row("SELECT id FROM user_absences WHERE id = ? AND user_id = ?", (aid, p.user_id)):
-        raise HTTPException(404, "Abwesenheit nicht gefunden")
-    db.execute("DELETE FROM user_absences WHERE id = ?", (aid,))
+    from .. import absences
+    absences.delete(p.user_id, aid)
     audit.log(p.name, "user.absence_delete", "user", p.user_id, str(aid))
     return {"ok": True}
+
+
+class DeputyIn(BaseModel):
+    deputy_id: Optional[int] = None                  # None = keine Standard-Vertretung
+
+
+@router.get("/auth/me/deputy")
+def my_default_deputy(p: Principal = Depends(require_user)):
+    from .. import absences
+    return {"deputy": absences.default_deputy(p.user_id)}
+
+
+@router.put("/auth/me/deputy")
+def set_my_default_deputy(body: DeputyIn, p: Principal = Depends(require_user)):
+    """Standard-Vertretung: gilt für Abwesenheiten aus OpenPlan (dort gibt es keine Vertretung)."""
+    from .. import absences
+    d = absences.set_default_deputy(p.user_id, body.deputy_id)
+    audit.log(p.name, "user.default_deputy", "user", p.user_id, d["username"] if d else "keine")
+    return {"deputy": d}
 
 
 @router.get("/api/users/{uid}/absences")
@@ -123,11 +141,28 @@ def add_user_absence(uid: int, body: AbsenceIn, me: Principal = Depends(require_
 
 @router.delete("/api/users/{uid}/absences/{aid}")
 def delete_user_absence(uid: int, aid: int, me: Principal = Depends(require_admin)):
-    if not db.row("SELECT id FROM user_absences WHERE id = ? AND user_id = ?", (aid, uid)):
-        raise HTTPException(404, "Abwesenheit nicht gefunden")
-    db.execute("DELETE FROM user_absences WHERE id = ?", (aid,))
+    from .. import absences
+    absences.delete(uid, aid)
     audit.log(me.name, "user.absence_delete", "user", uid, str(aid))
     return {"ok": True}
+
+
+@router.get("/api/users/{uid}/deputy")
+def user_default_deputy(uid: int, me: Principal = Depends(require_admin)):
+    from .. import absences
+    if not db.row("SELECT id FROM users WHERE id = ?", (uid,)):
+        raise HTTPException(404, "Benutzer nicht gefunden")
+    return {"deputy": absences.default_deputy(uid)}
+
+
+@router.put("/api/users/{uid}/deputy")
+def set_user_default_deputy(uid: int, body: DeputyIn, me: Principal = Depends(require_admin)):
+    from .. import absences
+    if not db.row("SELECT id FROM users WHERE id = ?", (uid,)):
+        raise HTTPException(404, "Benutzer nicht gefunden")
+    d = absences.set_default_deputy(uid, body.deputy_id)
+    audit.log(me.name, "user.default_deputy", "user", uid, (d["username"] if d else "keine") + f" (gesetzt von {me.name})")
+    return {"deputy": d}
 
 
 @router.get("/auth/me/sessions")

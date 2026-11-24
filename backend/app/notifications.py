@@ -286,5 +286,10 @@ def start_background(interval: float = 3600.0) -> None:
                 cleanup.weekly_mail()
             except Exception:
                 log.exception("Aufräumbericht")
+            try:
+                from . import openplan
+                openplan.sync_absences()                                  # nur wenn eingeschaltet
+            except Exception:
+                log.exception("Abwesenheiten aus OpenPlan")
             time.sleep(interval)
     threading.Thread(target=loop, daemon=True, name="notify-reminders").start()

@@ -1,4 +1,4 @@
-"""OpenPlan-Anbindung gegen eine simulierte OpenPlan-API (Verhalten nach docs/integration-api.md von OpenPlan, Stand 0.14.0).
+"""OpenPlan-Anbindung gegen eine simulierte OpenPlan-API (Verhalten nach docs/integration-api.md von OpenPlan, Stand 0.15.0).
 
 Die Simulation prüft dieselben Grenzen wie OpenPlan (Projektarten des Assistenten, erlaubte Referenzsysteme) – damit fallen
 Vertragslücken in den Tests auf und nicht erst im Zusammenspiel mit dem echten OpenPlan."""
@@ -23,6 +23,7 @@ class FakeOpenPlan:
         self.projects, self.tasks, self.refs, self.calls = {}, {}, {}, []
         self.users = [{"id": 10, "username": "anna", "display_name": "Anna"}, {"id": 11, "username": "bernd", "display_name": "Bernd"}, {"id": 99, "username": "svc-opp", "display_name": "OPP"}]
         self.fail = None                                  # z. B. OpenPlanError(0, "...") für alle Aufrufe
+        self.absences, self.absences_allowed = [], True   # GET /api/absences: Token braucht in OpenPlan die Freigabe „Abwesenheiten“
         self.seq = 100
         self.add_project(1, "Netz-Rollout", with_section=True)
 
@@ -98,6 +99,12 @@ class FakeOpenPlan:
             self.add_project(pid, body["name"], with_section=body["kind"] == "patchpanel")
             self.wizard_body = body
             return self.project_json(pid)
+        if method == "GET" and path.startswith("/api/absences"):
+            if not self.absences_allowed:
+                raise OpenPlanError(403, "OpenPlan antwortet 403: Nur für Administratoren oder API-Zugänge mit Freigabe „Abwesenheiten“")
+            q = dict(x.split("=") for x in path.split("?")[1].split("&"))
+            hit = [a for a in self.absences if a["end_date"] >= q["start"] and a["start_date"] <= q["end"]]
+            return {"start": q["start"], "end": q["end"], "absences": [{**a, "kind": "other" if a["kind"] == "sick" else a["kind"]} for a in hit]}
         if method == "GET" and path.startswith("/api/users/directory"):
             q = path.split("q=")[1].split("&")[0].lower()
             return [u for u in self.users if q in u["username"]]

@@ -450,6 +450,7 @@ class OpenPlanSettingsIn(BaseModel):
     ca_pem: Optional[str] = Field(None, max_length=20000)
     verify_tls: Optional[bool] = None
     auto_sync: Optional[bool] = None
+    sync_absences: Optional[bool] = None                               # Abwesenheiten aus OpenPlan übernehmen (stündlich)
     own_url: Optional[str] = Field(None, max_length=300)
     link_url: Optional[str] = Field(None, max_length=300)              # OpenPlan-Adresse für Links im Browser (leer = base_url)
     webhook_secret: Optional[str] = Field(None, max_length=200)
