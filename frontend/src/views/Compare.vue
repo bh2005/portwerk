@@ -64,7 +64,7 @@
           Das Gerät wird am selben Ort wie {{ dev.row.device }} angelegt.</p>
         <div><label :class="lbl">Hostname</label><input v-model="dev.hostname" :class="inp" /></div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label :class="lbl">Typ</label><select v-model="dev.type" :class="inp"><option v-for="t in DEVICE_TYPES" :key="t[0]" :value="t[0]">{{ t[1] }}</option></select>
+          <div><label :class="lbl">Typ</label><select v-model="dev.type" :class="inp"><option v-for="t in DEVICE_TYPES" :key="t[0]" :value="t[0]">{{ $t(t[1]) }}</option></select>
             <p v-if="dev.ist.capabilities" class="text-xs text-slate-400 mt-1">Gemeldet: {{ dev.ist.capabilities }}</p></div>
           <div><label :class="lbl">Verwaltungs-IP</label><input v-model="dev.mgmt_ip" :class="inp" placeholder="optional" /></div>
         </div>

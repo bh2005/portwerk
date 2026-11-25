@@ -37,7 +37,7 @@
         <p :class="hint">Nur Mitglieder dürfen sich anmelden. Leer = jeder Benutzer im Verzeichnis.</p></div>
       <p :class="hint">Je Rolle eine AD-Gruppe (DN). Ein Benutzer erhält alle Rollen, deren Gruppe er angehört; die Rollen werden bei jeder Anmeldung abgeglichen.</p>
       <div class="grid sm:grid-cols-2 gap-3">
-        <div v-for="[k, l, d] in ROLES" :key="k"><label :class="lbl">{{ l }} <span class="normal-case text-slate-300">– {{ d }}</span></label>
+        <div v-for="[k, l, d] in ROLES" :key="k"><label :class="lbl">{{ $t(l) }} <span class="normal-case text-slate-300">– {{ $t(d) }}</span></label>
           <input v-model="f.group_roles[k]" :class="inp" :placeholder="`CN=OPP-${l},OU=Groups,DC=example,DC=test`" /></div>
       </div>
       <div>
@@ -46,7 +46,7 @@
         <p :class="hint">Mitglieder der Gruppe erhalten die Rolle nur für diesen Standort und sehen auch nur ihn. Wer nur solche Gruppen hat, bekommt keine globale Rolle (auch nicht die „Rolle ohne passende Gruppe“).</p>
         <div v-for="(x, i) in f.scoped_groups" :key="i" class="grid grid-cols-12 gap-2 mt-1.5">
           <input v-model="x.group" :class="inp" class="col-span-6" placeholder="CN=Standort-A-Admins,OU=Groups,DC=example,DC=test" />
-          <select v-model="x.role" :class="inp" class="col-span-2"><option v-for="[k, l] in ROLES" :key="k" :value="k">{{ l }}</option></select>
+          <select v-model="x.role" :class="inp" class="col-span-2"><option v-for="[k, l] in ROLES" :key="k" :value="k">{{ $t(l) }}</option></select>
           <select v-model="x.site_id" :class="inp" class="col-span-3"><option :value="null" disabled>Standort …</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }}</option></select>
           <button type="button" class="col-span-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400" @click="f.scoped_groups.splice(i, 1)">✕</button>
         </div>
@@ -55,7 +55,7 @@
       <div class="grid sm:grid-cols-2 gap-3 items-end">
         <div><label :class="lbl">Rolle ohne passende Gruppe</label>
           <select v-model="f.default_role" :class="inp"><option value="">keine – Konto ohne Rechte, Hinweis zur Freischaltung</option>
-            <option v-for="[k, l] in ROLES.filter(r => r[0] !== 'admin')" :key="k" :value="k">{{ l }}</option></select></div>
+            <option v-for="[k, l] in ROLES.filter(r => r[0] !== 'admin')" :key="k" :value="k">{{ $t(l) }}</option></select></div>
         <div class="space-y-1">
           <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="f.auto_create" /> Konto beim ersten Login automatisch anlegen</label>
           <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="f.nested_groups" /> verschachtelte Gruppen auflösen (AD)</label>

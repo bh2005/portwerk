@@ -34,7 +34,7 @@
         <div v-if="notify" class="space-y-2">
           <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ $t('E-Mail-Benachrichtigungen') }}</h3>
           <label v-for="[k, l] in notifyShown" :key="k" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
-            <input type="checkbox" :checked="notify[k]" @change="setNotify(k, $event.target.checked)" /> {{ $t(l) }}</label>
+            <input type="checkbox" :checked="notify[k]" @change="setNotify(k, $event.target.checked)" />{{ ' ' + $t(l) }}</label>
           <p class="text-xs text-slate-400">{{ me.email ? $t('an {mail}', { mail: me.email }) : $t('Keine E-Mail-Adresse hinterlegt – es kommen keine Mails.') }}
             {{ $t('Ob überhaupt Mails verschickt werden, legt die Verwaltung fest.') }}</p>
           <p v-if="notifyMsg" class="text-xs text-green-600 dark:text-green-400">{{ notifyMsg }}</p>
@@ -96,7 +96,7 @@
             <p v-if="confirm && next !== confirm" class="text-[11px] text-red-500 mt-1 dark:text-red-400">{{ $t('Passwörter stimmen nicht überein') }}</p>
           </div>
           <label class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
-            <input v-model="show" type="checkbox" class="rounded border-slate-300 text-ks-600 focus:ring-ks-500" /> {{ $t('Passwörter anzeigen') }}
+            <input v-model="show" type="checkbox" class="rounded border-slate-300 text-ks-600 focus:ring-ks-500" />{{ ' ' + $t('Passwörter anzeigen') }}
           </label>
         </div>
       </div>

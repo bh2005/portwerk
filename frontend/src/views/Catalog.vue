@@ -17,7 +17,7 @@
       <div class="flex gap-2 flex-wrap">
         <input v-model="q" :class="inp" class="!w-64" placeholder="Suche: Hersteller, Modell, Artikelnr." @input="loadModels" />
         <select v-model="typeFilter" :class="inp" class="!w-48" @change="loadModels">
-          <option value="">Alle Typen</option><option v-for="[k, l] in DEVICE_TYPES" :key="k" :value="k">{{ l }}</option></select>
+          <option value="">Alle Typen</option><option v-for="[k, l] in DEVICE_TYPES" :key="k" :value="k">{{ $t(l) }}</option></select>
         <label class="flex items-center gap-2 text-sm text-slate-500"><input type="checkbox" v-model="withInactive" @change="loadModels" /> auch deaktivierte</label>
       </div>
       <div :class="card" class="overflow-x-auto">
@@ -78,7 +78,7 @@
         <div><label :class="lbl">Hersteller</label><input v-model="mForm.vendor" :class="inp" /></div>
         <div><label :class="lbl">Modell</label><input v-model="mForm.model" :class="inp" placeholder="z. B. C9300-48P" /></div>
         <div><label :class="lbl">Typ</label>
-          <select v-model="mForm.type" :class="inp"><option v-for="[k, l] in DEVICE_TYPES" :key="k" :value="k">{{ l }}</option></select></div>
+          <select v-model="mForm.type" :class="inp"><option v-for="[k, l] in DEVICE_TYPES" :key="k" :value="k">{{ $t(l) }}</option></select></div>
         <div><label :class="lbl">Höhe (HE)</label><input v-model.number="mForm.height_u" type="number" min="1" max="50" :class="inp" /></div>
         <div><label :class="lbl">Artikelnummer</label><input v-model="mForm.article_no" :class="inp" /></div>
         <div><label :class="lbl">Einbau</label>
@@ -121,7 +121,7 @@
         <input v-model="cForm.name" :class="inp" :disabled="!!cForm.id" placeholder="z. B. Telefon-Cu 20x2" />
         <p v-if="cForm.id" class="text-[11px] text-slate-400 mt-1">Der Name ist unveränderlich, weil bestehende Kabel darauf verweisen. Für einen neuen Namen eine neue Kabelart anlegen und diese deaktivieren.</p></div>
       <div><label :class="lbl">Kategorie</label>
-        <select v-model="cForm.category" :class="inp"><option v-for="[k, l] in CABLE_CATEGORIES" :key="k" :value="k">{{ l }}</option></select></div>
+        <select v-model="cForm.category" :class="inp"><option v-for="[k, l] in CABLE_CATEGORIES" :key="k" :value="k">{{ $t(l) }}</option></select></div>
       <div><label :class="lbl">Zählfeld (leer = keins)</label>
         <input v-model="cForm.count_label" :class="inp" list="count-labels" placeholder="Fasern, Adern oder Paare" />
         <datalist id="count-labels"><option>Fasern</option><option>Adern</option><option>Paare</option></datalist></div>

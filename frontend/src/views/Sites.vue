@@ -1,25 +1,25 @@
 <template>
   <div class="max-w-6xl space-y-4">
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Standorte</h1>
+      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Standorte') }}</h1>
       <div v-if="canWrite" class="flex gap-2">
-        <button @click="wizard = { siteId: null }" :class="btnPrimary">Assistent: Neuer Standort</button>
-        <button @click="openSite()" :class="btnGhost">+ Standort (einfach)</button>
+        <button @click="wizard = { siteId: null }" :class="btnPrimary">{{ $t('Assistent: Neuer Standort') }}</button>
+        <button @click="openSite()" :class="btnGhost">{{ $t('+ Standort (einfach)') }}</button>
       </div>
     </div>
     <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
 
     <div class="grid md:grid-cols-3 gap-4">
       <div :class="card" class="p-2 md:col-span-1">
-        <div v-if="sites.length > 5" class="p-1 pb-2"><input v-model="siteQ" :class="inp" class="!py-1" placeholder="Standort suchen (Code, Name, Adresse) …" />
-          <p v-if="siteQ" class="text-[11px] text-slate-400 mt-1">{{ shownSites.length }} von {{ sites.length }}</p></div>
-        <p v-if="!sites.length" class="text-sm text-slate-400 p-3">Noch kein Standort angelegt.</p>
-        <p v-else-if="!shownSites.length" class="text-sm text-slate-400 p-3">Kein Standort für diese Suche.</p>
+        <div v-if="sites.length > 5" class="p-1 pb-2"><input v-model="siteQ" :class="inp" class="!py-1" :placeholder="$t('Standort suchen (Code, Name, Adresse) …')" />
+          <p v-if="siteQ" class="text-[11px] text-slate-400 mt-1">{{ $t('{a} von {b}', { a: shownSites.length, b: sites.length }) }}</p></div>
+        <p v-if="!sites.length" class="text-sm text-slate-400 p-3">{{ $t('Noch kein Standort angelegt.') }}</p>
+        <p v-else-if="!shownSites.length" class="text-sm text-slate-400 p-3">{{ $t('Kein Standort für diese Suche.') }}</p>
         <button v-for="s in shownSites" :key="s.id" @click="select(s)"
           class="w-full text-left px-3 py-2 rounded-lg transition-colors"
           :class="sel?.id === s.id ? 'bg-ks-50 dark:bg-ks-900/30' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'">
           <div class="text-sm font-medium text-slate-800 dark:text-slate-100">{{ s.code }} <span class="font-normal text-slate-400">· {{ s.name }}</span></div>
-          <div class="text-[11px] text-slate-400">{{ s.locations }} Locations · {{ s.devices }} Geräte</div>
+          <div class="text-[11px] text-slate-400">{{ $t('{a} Locations · {b} Geräte', { a: s.locations, b: s.devices }) }}</div>
         </button>
       </div>
 
@@ -31,33 +31,33 @@
             <p v-if="sel.note" class="text-xs text-slate-400">{{ sel.note }}</p>
           </div>
           <div v-if="canWrite" class="flex gap-3 items-center">
-            <button :class="btnLink" @click="openSite(sel)">Bearbeiten</button>
-            <button :class="btnDanger" @click="removeSite">Löschen</button>
-            <button :class="btnGhost" @click="wizard = { siteId: sel.id, siteLabel: sel.code }">Struktur-Assistent</button>
-            <button :class="btnPrimary" @click="openLoc()">+ Location</button>
+            <button :class="btnLink" @click="openSite(sel)">{{ $t('Bearbeiten') }}</button>
+            <button :class="btnDanger" @click="removeSite">{{ $t('Löschen') }}</button>
+            <button :class="btnGhost" @click="wizard = { siteId: sel.id, siteLabel: sel.code }">{{ $t('Struktur-Assistent') }}</button>
+            <button :class="btnPrimary" @click="openLoc()">{{ $t('+ Location') }}</button>
           </div>
         </div>
 
-        <p v-if="!tree.length" class="text-sm text-slate-400">Noch keine Gebäude, Räume oder Racks.</p>
+        <p v-if="!tree.length" class="text-sm text-slate-400">{{ $t('Noch keine Gebäude, Räume oder Racks.') }}</p>
         <div v-if="tree.length > 6" class="flex items-center gap-2 flex-wrap mb-2">
-          <input v-model="locQ" :class="inp" class="!py-1 !w-64" placeholder="Locations filtern (Name, Kennung) …" />
-          <select v-model="locKind" :class="inp" class="!py-1 !w-44"><option value="">alle Arten</option><option v-for="k in locKinds" :key="k" :value="k">{{ kindLabel(k) }}</option></select>
-          <button v-if="locQ || locKind" type="button" :class="btnLink" @click="locQ = ''; locKind = ''">Filter zurücksetzen</button>
-          <span v-if="locQ || locKind" class="text-xs text-slate-400">{{ treeShown.length }} von {{ tree.length }}</span>
+          <input v-model="locQ" :class="inp" class="!py-1 !w-64" :placeholder="$t('Locations filtern (Name, Kennung) …')" />
+          <select v-model="locKind" :class="inp" class="!py-1 !w-44"><option value="">{{ $t('alle Arten') }}</option><option v-for="k in locKinds" :key="k" :value="k">{{ kindLabel(k) }}</option></select>
+          <button v-if="locQ || locKind" type="button" :class="btnLink" @click="locQ = ''; locKind = ''">{{ $t('Filter zurücksetzen') }}</button>
+          <span v-if="locQ || locKind" class="text-xs text-slate-400">{{ $t('{a} von {b}', { a: treeShown.length, b: tree.length }) }}</span>
         </div>
-        <p v-if="tree.length && !treeShown.length" class="text-sm text-slate-400">Keine Location für diesen Filter.</p>
+        <p v-if="tree.length && !treeShown.length" class="text-sm text-slate-400">{{ $t('Keine Location für diesen Filter.') }}</p>
         <ul class="text-sm">
           <li v-for="n in treeShown" :key="n.id" class="flex items-center gap-2 py-1 border-b border-slate-50 dark:border-slate-700/50" :style="{ paddingLeft: n.depth * 18 + 'px' }">
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300">{{ kindLabel(n.kind) }}</span>
             <span class="text-slate-800 dark:text-slate-100">{{ n.name }}</span>
             <span v-if="n.ident" class="text-xs font-mono text-slate-500">{{ n.ident }}</span>
-            <span v-if="n.rack_units" class="text-xs text-slate-400">{{ n.rack_units }} HE</span>
-            <router-link v-if="n.devices" :to="{ path: '/devices', query: { location_id: n.id } }" class="text-xs text-ks-600 dark:text-ks-400 hover:underline">{{ n.devices }} Geräte</router-link>
+            <span v-if="n.rack_units" class="text-xs text-slate-400">{{ n.rack_units }} {{ $t('HE') }}</span>
+            <router-link v-if="n.devices" :to="{ path: '/devices', query: { location_id: n.id } }" class="text-xs text-ks-600 dark:text-ks-400 hover:underline">{{ $t('{n} Geräte', { n: n.devices }) }}</router-link>
             <span v-if="canWrite" class="ml-auto flex gap-3">
-              <button :class="btnLink" @click="openLoc(n)">Bearbeiten</button>
-              <button v-if="MOVABLE_KINDS.includes(n.kind)" :class="btnLink" :title="n.kind === 'vehicle' ? 'Mobile Maschine an einen anderen Standort verlegen (samt Geräten)' : 'An einen anderen Standort/Ort verlegen (samt Geräten)'" @click="openMove(n)">Verlegen</button>
-              <button v-if="!CONTAINER_KINDS.includes(n.kind)" :class="btnLink" @click="openLoc(null, n)">+ darunter</button>
-              <button :class="btnDanger" @click="removeLoc(n)">Löschen</button>
+              <button :class="btnLink" @click="openLoc(n)">{{ $t('Bearbeiten') }}</button>
+              <button v-if="MOVABLE_KINDS.includes(n.kind)" :class="btnLink" :title="n.kind === 'vehicle' ? 'Mobile Maschine an einen anderen Standort verlegen (samt Geräten)' : 'An einen anderen Standort/Ort verlegen (samt Geräten)'" @click="openMove(n)">{{ $t('Verlegen') }}</button>
+              <button v-if="!CONTAINER_KINDS.includes(n.kind)" :class="btnLink" @click="openLoc(null, n)">{{ $t('+ darunter') }}</button>
+              <button :class="btnDanger" @click="removeLoc(n)">{{ $t('Löschen') }}</button>
             </span>
           </li>
         </ul>
@@ -67,48 +67,49 @@
     <SiteWizard v-if="wizard" :site-id="wizard.siteId" :site-label="wizard.siteLabel || ''" @close="wizard = null" @done="wizardDone" />
 
     <ModalDialog v-if="siteForm" :title="siteForm.id ? 'Standort bearbeiten' : 'Neuer Standort'" :error="formError" @close="siteForm = null">
-      <div><label :class="lbl">Code</label><input v-model="siteForm.code" :class="inp" placeholder="z. B. SITE-A" /></div>
-      <div><label :class="lbl">Name</label><input v-model="siteForm.name" :class="inp" /></div>
-      <div><label :class="lbl">Adresse</label><input v-model="siteForm.address" :class="inp" /></div>
-      <div><label :class="lbl">Notiz</label><input v-model="siteForm.note" :class="inp" /></div>
+      <div><label :class="lbl">{{ $t('Code') }}</label><input v-model="siteForm.code" :class="inp" :placeholder="$t('z. B. SITE-A')" /></div>
+      <div><label :class="lbl">{{ $t('Name') }}</label><input v-model="siteForm.name" :class="inp" /></div>
+      <div><label :class="lbl">{{ $t('Adresse') }}</label><input v-model="siteForm.address" :class="inp" /></div>
+      <div><label :class="lbl">{{ $t('Notiz') }}</label><input v-model="siteForm.note" :class="inp" /></div>
       <template #footer>
-        <button @click="siteForm = null" :class="btnGhost">Abbrechen</button>
-        <button @click="saveSite" :class="btnPrimary" :disabled="!siteForm.code || !siteForm.name">Speichern</button>
+        <button @click="siteForm = null" :class="btnGhost">{{ $t('Abbrechen') }}</button>
+        <button @click="saveSite" :class="btnPrimary" :disabled="!siteForm.code || !siteForm.name">{{ $t('Speichern') }}</button>
       </template>
     </ModalDialog>
 
     <ModalDialog v-if="moveForm" :title="`${kindLabel(moveForm.node.kind)} „${moveForm.node.name}“ verlegen`" :error="formError" @close="moveForm = null">
-      <p class="text-sm text-slate-500">Die Location wird samt Gehäusen und Geräten darunter an den neuen Ort gestellt (z. B. eine mobile Maschine in ein anderes Werk). Die Änderung steht im Audit-Log.</p>
-      <div><label :class="lbl">Standort</label>
+      <p class="text-sm text-slate-500">{{ $t('Die Location wird samt Gehäusen und Geräten darunter an den neuen Ort gestellt (z. B. eine mobile Maschine in ein anderes Werk). Die Änderung steht im Audit-Log.') }}</p>
+      <div><label :class="lbl">{{ $t('Standort') }}</label>
         <select v-model="moveForm.site_id" :class="inp" @change="loadMoveTargets"><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select></div>
-      <div><label :class="lbl">Darunter (optional)</label>
-        <select v-model="moveForm.parent_id" :class="inp"><option :value="null">(direkt am Standort)</option>
+      <div><label :class="lbl">{{ $t('Darunter (optional)') }}</label>
+        <select v-model="moveForm.parent_id" :class="inp"><option :value="null">{{ $t('(direkt am Standort)') }}</option>
           <option v-for="n in moveForm.targets" :key="n.id" :value="n.id">{{ n.path }}</option></select></div>
       <template #footer>
-        <button @click="moveForm = null" :class="btnGhost">Abbrechen</button>
-        <button @click="saveMove" :class="btnPrimary">Verlegen</button>
+        <button @click="moveForm = null" :class="btnGhost">{{ $t('Abbrechen') }}</button>
+        <button @click="saveMove" :class="btnPrimary">{{ $t('Verlegen') }}</button>
       </template>
     </ModalDialog>
 
     <ModalDialog v-if="locForm" :title="locForm.id ? 'Location bearbeiten' : 'Neue Location'" :error="formError" @close="locForm = null">
-      <div><label :class="lbl">Art</label>
-        <select v-model="locForm.kind" :class="inp"><option v-for="[k, l] in LOCATION_KINDS" :key="k" :value="k">{{ l }}</option></select></div>
-      <div><label :class="lbl">Name</label><input v-model="locForm.name" :class="inp" /></div>
-      <div><label :class="lbl">Übergeordnet</label>
-        <select v-model="locForm.parent_id" :class="inp"><option :value="null">(oberste Ebene)</option>
+      <div><label :class="lbl">{{ $t('Art') }}</label>
+        <select v-model="locForm.kind" :class="inp"><option v-for="[k, l] in LOCATION_KINDS" :key="k" :value="k">{{ $t(l) }}</option></select></div>
+      <div><label :class="lbl">{{ $t('Name') }}</label><input v-model="locForm.name" :class="inp" /></div>
+      <div><label :class="lbl">{{ $t('Übergeordnet') }}</label>
+        <select v-model="locForm.parent_id" :class="inp"><option :value="null">{{ $t('(oberste Ebene)') }}</option>
           <option v-for="n in parentChoices" :key="n.id" :value="n.id">{{ '– '.repeat(n.depth) }}{{ n.name }}</option></select></div>
-      <div v-if="CONTAINER_KINDS.includes(locForm.kind)"><label :class="lbl">Höheneinheiten (HE){{ locForm.kind === 'cabinet' ? ' – optional' : '' }}</label><input v-model.number="locForm.rack_units" type="number" min="1" max="100" :class="inp" :placeholder="locForm.kind === 'cabinet' ? 'leer = keine HE-Teilung (Hutschiene/Montageplatte)' : ''" /></div>
+      <div v-if="CONTAINER_KINDS.includes(locForm.kind)"><label :class="lbl">{{ $t('Höheneinheiten (HE)') }}{{ locForm.kind === 'cabinet' ? ' – ' + $t('optional') : '' }}</label><input v-model.number="locForm.rack_units" type="number" min="1" max="100" :class="inp" :placeholder="locForm.kind === 'cabinet' ? $t('leer = keine HE-Teilung (Hutschiene/Montageplatte)') : ''" /></div>
       <div v-if="['machine', 'vehicle', 'cabinet', 'wallrack', 'rack'].includes(locForm.kind)"><label :class="lbl">{{ locForm.kind === 'vehicle' ? 'Kennzeichen / Fahrzeugnummer' : locForm.kind === 'machine' ? 'Anlagen-/Maschinennummer' : 'Bezeichnung / Nummer' }}</label><input v-model="locForm.ident" :class="inp" /></div>
-      <div><label :class="lbl">Notiz</label><input v-model="locForm.note" :class="inp" /></div>
+      <div><label :class="lbl">{{ $t('Notiz') }}</label><input v-model="locForm.note" :class="inp" /></div>
       <template #footer>
-        <button @click="locForm = null" :class="btnGhost">Abbrechen</button>
-        <button @click="saveLoc" :class="btnPrimary" :disabled="!locForm.name">Speichern</button>
+        <button @click="locForm = null" :class="btnGhost">{{ $t('Abbrechen') }}</button>
+        <button @click="saveLoc" :class="btnPrimary" :disabled="!locForm.name">{{ $t('Speichern') }}</button>
       </template>
     </ModalDialog>
   </div>
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
@@ -187,7 +188,7 @@ async function saveSite() {
   } catch (e) { formError.value = errText(e) }
 }
 async function removeSite() {
-  if (!confirm(`Standort ${sel.value.code} löschen?`)) return
+  if (!confirm(t('Standort {code} löschen?', { code: sel.value.code }))) return
   try { await api.deleteSite(sel.value.id); await load() } catch (e) { error.value = errText(e) }
 }
 
@@ -204,7 +205,7 @@ async function saveLoc() {
   } catch (e) { formError.value = errText(e) }
 }
 async function removeLoc(n) {
-  if (!confirm(`„${n.name}“ löschen?`)) return
+  if (!confirm(t('„{name}“ löschen?', { name: n.name }))) return
   try { await api.deleteLocation(n.id); await load(sel.value.id) } catch (e) { error.value = errText(e) }
 }
 

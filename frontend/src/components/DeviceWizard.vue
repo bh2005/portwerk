@@ -16,114 +16,114 @@
         ? 'Platzhalter belegen Rackplatz ohne Ports, z. B. Kabelführung, Blindblende oder Fachboden. Die Vorlagen stehen im Katalog.'
         : (isPanel ? 'Wähle eine Patchfeld-Vorlage (Cat6A oder LWL, 8/12/24 Ports). Jeder Port hat Vorder- und Rückseite, bereits miteinander verknüpft.'
           : 'Wähle ein Modell aus dem Katalog – die Ports werden daraus erzeugt. Fehlt das Modell, lege es unter „Katalog“ an oder nutze eigene Ports.') }}</p>
-      <input v-model="q" :class="inp" placeholder="Suchen (Hersteller, Modell, Artikelnr.) …" @input="loadModels" />
+      <input v-model="q" :class="inp" :placeholder="$t('Suchen (Hersteller, Modell, Artikelnr.) …')" @input="loadModels" />
       <div class="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-700">
         <button v-for="m in models" :key="m.id" type="button" @click="pickModel(m)"
           class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/40"
           :class="form.model_id === m.id ? 'bg-ks-50 dark:bg-ks-900/30' : ''">
           <span class="font-medium text-slate-800 dark:text-slate-100">{{ m.vendor }} {{ m.model }}</span>
-          <span class="text-xs text-slate-400"> · {{ typeLabel(m.type) }} · {{ m.height_u }} HE<template v-if="!placeholder"> · {{ portSummary(m) }}</template></span>
+          <span class="text-xs text-slate-400"> · {{ typeLabel(m.type) }} · {{ m.height_u }} {{ $t('HE') }}<template v-if="!placeholder"> · {{ portSummary(m) }}</template></span>
           <span v-if="m.description" class="block text-xs text-slate-400">{{ m.description }}</span>
         </button>
-        <p v-if="!models.length" class="px-3 py-4 text-sm text-slate-400">Keine Modelle gefunden.</p>
+        <p v-if="!models.length" class="px-3 py-4 text-sm text-slate-400">{{ $t('Keine Modelle gefunden.') }}</p>
       </div>
       <template v-if="!placeholder">
-        <button type="button" class="text-xs text-ks-600 dark:text-ks-400 hover:underline" @click="pickCustom">Ohne Katalog: eigene Ports angeben</button>
+        <button type="button" class="text-xs text-ks-600 dark:text-ks-400 hover:underline" @click="pickCustom">{{ $t('Ohne Katalog: eigene Ports angeben') }}</button>
         <div v-if="custom && isPanel" class="grid grid-cols-4 gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-700/40">
-          <div><label :class="lbl">Hersteller</label><input v-model="form.vendor" :class="inp" /></div>
-          <div><label :class="lbl">Modell</label><input v-model="form.model" :class="inp" /></div>
-          <div><label :class="lbl">Höhe (HE)</label><input v-model.number="form.height_u" type="number" min="1" max="50" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Hersteller') }}</label><input v-model="form.vendor" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Modell') }}</label><input v-model="form.model" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Höhe (HE)') }}</label><input v-model.number="form.height_u" type="number" min="1" max="50" :class="inp" /></div>
           <div></div>
-          <div><label :class="lbl">Ports (je Vorder- + Rückseite)</label><input v-model.number="custom.count" type="number" min="1" max="96" :class="inp" /></div>
-          <div><label :class="lbl">Medium</label><select v-model="custom.medium" :class="inp"><option value="RJ45">Kupfer (RJ45)</option><option value="LWL">LWL</option></select></div>
+          <div><label :class="lbl">{{ $t('Ports (je Vorder- + Rückseite)') }}</label><input v-model.number="custom.count" type="number" min="1" max="96" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Medium') }}</label><select v-model="custom.medium" :class="inp"><option value="RJ45">{{ $t('Kupfer (RJ45)') }}</option><option value="LWL">{{ $t('LWL') }}</option></select></div>
         </div>
         <div v-else-if="custom" class="grid grid-cols-4 gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-700/40">
-          <div><label :class="lbl">Hersteller</label><input v-model="form.vendor" :class="inp" /></div>
-          <div><label :class="lbl">Modell</label><input v-model="form.model" :class="inp" /></div>
-          <div><label :class="lbl">Höhe (HE)</label><input v-model.number="form.height_u" type="number" min="1" max="50" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Hersteller') }}</label><input v-model="form.vendor" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Modell') }}</label><input v-model="form.model" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Höhe (HE)') }}</label><input v-model.number="form.height_u" type="number" min="1" max="50" :class="inp" /></div>
           <div></div>
-          <div><label :class="lbl">Kupferports (RJ45)</label><input v-model.number="custom.rj45" type="number" min="0" max="512" :class="inp" /></div>
-          <div><label :class="lbl">SFP-Ports</label><input v-model.number="custom.sfp" type="number" min="0" max="64" :class="inp" /></div>
-          <div><label :class="lbl">SFP+-Ports</label><input v-model.number="custom.sfpp" type="number" min="0" max="64" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Kupferports (RJ45)') }}</label><input v-model.number="custom.rj45" type="number" min="0" max="512" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('SFP-Ports') }}</label><input v-model.number="custom.sfp" type="number" min="0" max="64" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('SFP+-Ports') }}</label><input v-model.number="custom.sfpp" type="number" min="0" max="64" :class="inp" /></div>
         </div>
       </template>
-      <p v-if="selection" class="text-sm text-green-600 dark:text-green-400">Gewählt: {{ selection }}</p>
+      <p v-if="selection" class="text-sm text-green-600 dark:text-green-400">{{ $t('Gewählt:') }} {{ selection }}</p>
     </div>
 
     <!-- 2: Ort -->
     <div v-if="stepKey === 'place'" class="space-y-3">
       <div class="grid grid-cols-2 gap-3">
-        <div><label :class="lbl">Standort</label>
-          <select v-model="siteId" :class="inp" @change="loadLocations"><option :value="null" disabled>wählen …</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select></div>
-        <div><label :class="lbl">Rack / Location</label>
-          <select v-model="form.location_id" :class="inp" @change="onLocation"><option :value="null" disabled>wählen …</option>
-            <option v-for="l in locations" :key="l.id" :value="l.id">{{ kindLabel(l.kind) }}: {{ l.path }}<template v-if="l.rack_units"> ({{ l.rack_units }} HE)</template></option></select></div>
+        <div><label :class="lbl">{{ $t('Standort') }}</label>
+          <select v-model="siteId" :class="inp" @change="loadLocations"><option :value="null" disabled>{{ $t('wählen …') }}</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select></div>
+        <div><label :class="lbl">{{ $t('Rack / Location') }}</label>
+          <select v-model="form.location_id" :class="inp" @change="onLocation"><option :value="null" disabled>{{ $t('wählen …') }}</option>
+            <option v-for="l in locations" :key="l.id" :value="l.id">{{ kindLabel(l.kind) }}: {{ l.path }}<template v-if="l.rack_units"> ({{ l.rack_units }} {{ $t('HE') }})</template></option></select></div>
       </div>
       <div class="grid grid-cols-3 gap-3">
-        <div><label :class="lbl">Einbau</label>
+        <div><label :class="lbl">{{ $t('Einbau') }}</label>
           <select v-model="form.orientation" :class="inp" @change="mountChanged"><option v-for="[k, l] in orientationOptions" :key="k" :value="k">{{ l }}</option></select></div>
-        <div v-if="loc?.kind === 'rack' && form.orientation !== 'din_rail'"><label :class="lbl">Seite</label>
-          <select v-model="form.mount_side" :class="inp" @change="mountChanged"><option value="front">Vorderseite</option><option value="rear">Rückseite</option>
-            <option v-if="form.orientation === 'horizontal'" value="both">beide Seiten (durchgehend)</option></select></div>
-        <div v-if="form.orientation === 'vertical'"><label :class="lbl">Seitenkanal</label>
-          <select v-model="form.side_slot" :class="inp" @change="mountChanged"><option value="left">links</option><option value="right">rechts</option></select>
-          <p class="text-[11px] text-slate-400 mt-1">aus Sicht der {{ form.mount_side === 'rear' ? 'Rückseite' : 'Vorderseite' }}</p></div>
+        <div v-if="loc?.kind === 'rack' && form.orientation !== 'din_rail'"><label :class="lbl">{{ $t('Seite') }}</label>
+          <select v-model="form.mount_side" :class="inp" @change="mountChanged"><option value="front">{{ $t('Vorderseite') }}</option><option value="rear">{{ $t('Rückseite') }}</option>
+            <option v-if="form.orientation === 'horizontal'" value="both">{{ $t('beide Seiten (durchgehend)') }}</option></select></div>
+        <div v-if="form.orientation === 'vertical'"><label :class="lbl">{{ $t('Seitenkanal') }}</label>
+          <select v-model="form.side_slot" :class="inp" @change="mountChanged"><option value="left">{{ $t('links') }}</option><option value="right">{{ $t('rechts') }}</option></select>
+          <p class="text-[11px] text-slate-400 mt-1">{{ form.mount_side === 'rear' ? $t('aus Sicht der Rückseite') : $t('aus Sicht der Vorderseite') }}</p></div>
       </div>
-      <p v-if="form.orientation === 'vertical' && form.location_id && loc?.kind !== 'rack'" class="text-xs text-red-500 dark:text-red-400">Hochkant-Geräte brauchen ein Rack.</p>
+      <p v-if="form.orientation === 'vertical' && form.location_id && loc?.kind !== 'rack'" class="text-xs text-red-500 dark:text-red-400">{{ $t('Hochkant-Geräte brauchen ein Rack.') }}</p>
       <div v-if="isRack">
         <label :class="lbl">{{ form.orientation === 'vertical' ? 'Beginnt bei HE (Länge höchstens bis zur Rackhöhe)' : 'Position im Rack (unterste HE)' }}</label>
         <div class="flex gap-3 items-center flex-wrap">
-          <select v-model="form.rack_position" :class="inp" class="!w-48" @change="conflict = null"><option :value="null">ohne Position</option>
-            <option v-for="p in startChoices" :key="p" :value="p">HE {{ p }}<template v-if="heightU > 1"> – {{ p + heightU - 1 }}</template><template v-if="!slots.free_starts.includes(p)"> (belegt)</template></option></select>
+          <select v-model="form.rack_position" :class="inp" class="!w-48" @change="conflict = null"><option :value="null">{{ $t('ohne Position') }}</option>
+            <option v-for="p in startChoices" :key="p" :value="p">{{ $t('HE') }} {{ p }}<template v-if="heightU > 1"> – {{ p + heightU - 1 }}</template><template v-if="!slots.free_starts.includes(p)">{{ ' ' + $t('(belegt)') }}</template></option></select>
           <span class="text-xs text-slate-400">{{ slots.free_starts?.length ? `${slots.free_starts.length} freie Positionen für ${heightU} HE` : 'Keine freie Position für diese Höhe' }}</span>
         </div>
-        <p class="text-[11px] text-slate-400 mt-1">Ist die gewählte HE belegt, fragt der Assistent später, ob das alte Gerät zurückgebaut werden soll.</p>
-        <div class="mt-2 text-xs text-slate-500" v-if="slots.devices?.length">Belegt:
-          <span v-for="d in slots.devices" :key="d.id" class="inline-block mr-2" :class="d.pending_removal ? 'line-through opacity-60' : ''">{{ d.hostname }} (HE {{ d.rack_position }}<template v-if="d.height_u > 1">–{{ d.rack_position + d.height_u - 1 }}</template>)</span></div>
+        <p class="text-[11px] text-slate-400 mt-1">{{ $t('Ist die gewählte HE belegt, fragt der Assistent später, ob das alte Gerät zurückgebaut werden soll.') }}</p>
+        <div class="mt-2 text-xs text-slate-500" v-if="slots.devices?.length">{{ $t('Belegt:') }}
+          <span v-for="d in slots.devices" :key="d.id" class="inline-block mr-2" :class="d.pending_removal ? 'line-through opacity-60' : ''">{{ d.hostname }} ({{ $t('HE') }} {{ d.rack_position }}<template v-if="d.height_u > 1">–{{ d.rack_position + d.height_u - 1 }}</template>)</span></div>
       </div>
-      <p v-else-if="form.location_id" class="text-xs text-slate-400">Hier gibt es keine HE-Teilung – das Gerät wird auf Hutschiene/Montageplatte bzw. frei in „{{ loc?.name }}“ montiert und bekommt keine HE-Position.</p>
+      <p v-else-if="form.location_id" class="text-xs text-slate-400">{{ $t('Hier gibt es keine HE-Teilung – das Gerät wird auf Hutschiene/Montageplatte bzw. frei in „{name}“ montiert und bekommt keine HE-Position.', { name: loc?.name }) }}</p>
     </div>
 
     <!-- 3: Gerät -->
     <div v-if="stepKey === 'device'" class="space-y-3">
       <div class="grid grid-cols-2 gap-3">
-        <div><label :class="lbl">Hostname {{ passive ? '(optional)' : '*' }}</label><input v-model="form.hostname" :class="inp" :placeholder="passive ? 'leer = automatischer Name (z. B. KF-R1-HE5)' : (isPanel ? 'z. B. PF-R1-HE1' : 'z. B. sw-eg-01')" />
-          <p v-if="nameTaken" class="text-xs text-red-500 mt-1 dark:text-red-400">Dieser Hostname existiert bereits.</p></div>
-        <div v-if="!passive && !isPanel"><label :class="lbl">Mgmt-IP</label><input v-model="form.mgmt_ip" :class="inp" /></div>
-        <div v-if="!passive && !isPanel"><label :class="lbl">Seriennummer</label><input v-model="form.serial" :class="inp" /></div>
-        <div><label :class="lbl">Status</label>
-          <select v-model="form.status" :class="inp"><option value="active">aktiv (eingebaut)</option><option value="planned">geplant</option></select>
-          <p class="text-[11px] text-slate-400 mt-1">Bei Umsetzung per Patchauftrag ist das Gerät immer „geplant“, bis der Auftrag bestätigt ist.</p></div>
+        <div><label :class="lbl">{{ $t('Hostname') }} {{ passive ? $t('(optional)') : '*' }}</label><input v-model="form.hostname" :class="inp" :placeholder="passive ? $t('leer = automatischer Name (z. B. KF-R1-HE5)') : (isPanel ? $t('z. B. PF-R1-HE1') : $t('z. B. sw-eg-01'))" />
+          <p v-if="nameTaken" class="text-xs text-red-500 mt-1 dark:text-red-400">{{ $t('Dieser Hostname existiert bereits.') }}</p></div>
+        <div v-if="!passive && !isPanel"><label :class="lbl">{{ $t('Mgmt-IP') }}</label><input v-model="form.mgmt_ip" :class="inp" /></div>
+        <div v-if="!passive && !isPanel"><label :class="lbl">{{ $t('Seriennummer') }}</label><input v-model="form.serial" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Status') }}</label>
+          <select v-model="form.status" :class="inp"><option value="active">{{ $t('aktiv (eingebaut)') }}</option><option value="planned">{{ $t('geplant') }}</option></select>
+          <p class="text-[11px] text-slate-400 mt-1">{{ $t('Bei Umsetzung per Patchauftrag ist das Gerät immer „geplant“, bis der Auftrag bestätigt ist.') }}</p></div>
       </div>
-      <div><label :class="lbl">Notiz</label><input v-model="form.note" :class="inp" /></div>
+      <div><label :class="lbl">{{ $t('Notiz') }}</label><input v-model="form.note" :class="inp" /></div>
     </div>
 
     <!-- 4: Verkabelung -->
     <div v-if="stepKey === 'cable'" class="space-y-3">
-      <p v-if="!portNames.length" class="text-sm text-slate-500">Dieses Gerät hat keine Ports – es gibt nichts zu verkabeln.</p>
+      <p v-if="!portNames.length" class="text-sm text-slate-500">{{ $t('Dieses Gerät hat keine Ports – es gibt nichts zu verkabeln.') }}</p>
       <PortMappingEditor v-else-if="isPanel" v-model="mappings" :front-names="frontNames" :back-names="backNames" :hostname="form.hostname.trim()" :site-id="siteId" />
       <template v-else>
-        <label class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><input type="checkbox" v-model="withUplink" /> Einen Port gleich verbinden (z. B. Uplink zum Patchfeld oder Core)</label>
+        <label class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><input type="checkbox" v-model="withUplink" />{{ ' ' + $t('Einen Port gleich verbinden (z. B. Uplink zum Patchfeld oder Core)') }}</label>
         <template v-if="withUplink">
           <div class="grid grid-cols-2 gap-3">
-            <div><label :class="lbl">Port am neuen Gerät</label>
+            <div><label :class="lbl">{{ $t('Port am neuen Gerät') }}</label>
               <select v-model="uplink.port_name" :class="inp"><option v-for="n in portNames" :key="n" :value="n">{{ n }}</option></select></div>
-            <div><label :class="lbl">Zielgerät suchen</label><input v-model="targetQ" :class="inp" placeholder="Hostname (mind. 2 Zeichen)" @input="searchTargets" /></div>
+            <div><label :class="lbl">{{ $t('Zielgerät suchen') }}</label><input v-model="targetQ" :class="inp" :placeholder="$t('Hostname (mind. 2 Zeichen)')" @input="searchTargets" /></div>
           </div>
           <div v-if="targets.length" class="max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-700">
             <button v-for="d in targets" :key="d.id" type="button" @click="pickTarget(d)" class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/40"
               :class="target?.id === d.id ? 'bg-ks-50 dark:bg-ks-900/30' : ''">{{ d.hostname }} <span class="text-xs text-slate-400">· {{ typeLabel(d.type) }} · {{ d.location_path }}</span></button>
           </div>
-          <div v-if="target"><label :class="lbl">Zielport an {{ target.hostname }}</label>
-            <select v-model="uplink.target_port_id" :class="inp" @change="conflict = null"><option :value="null" disabled>wählen …</option>
+          <div v-if="target"><label :class="lbl">{{ $t('Zielport an {name}', { name: target.hostname }) }}</label>
+            <select v-model="uplink.target_port_id" :class="inp" @change="conflict = null"><option :value="null" disabled>{{ $t('wählen …') }}</option>
               <option v-for="p in targetPorts" :key="p.id" :value="p.id">{{ p.name }}{{ p.cable ? ` – belegt (${p.cable.device_hostname}:${p.cable.port_name})` : '' }}</option></select>
-            <p class="text-[11px] text-slate-400 mt-1">Ein belegter Port ist wählbar: Der Assistent fragt dann, ob der alte Patch zurückgebaut werden soll.</p></div>
+            <p class="text-[11px] text-slate-400 mt-1">{{ $t('Ein belegter Port ist wählbar: Der Assistent fragt dann, ob der alte Patch zurückgebaut werden soll.') }}</p></div>
           <div class="grid grid-cols-3 gap-3">
-            <div><label :class="lbl">Kabelart</label><select v-model="uplink.cable_type" :class="inp"><option v-for="t in cableTypes" :key="t.name" :value="t.name">{{ t.name }}</option></select></div>
-            <div><label :class="lbl">Kabelnummer</label><input v-model="uplink.cable_label" :class="inp" /></div>
-            <div><label :class="lbl">Länge (m)</label><input v-model.number="uplink.length_m" type="number" min="0" step="0.5" :class="inp" /></div>
+            <div><label :class="lbl">{{ $t('Kabelart') }}</label><select v-model="uplink.cable_type" :class="inp"><option v-for="t in cableTypes" :key="t.name" :value="t.name">{{ t.name }}</option></select></div>
+            <div><label :class="lbl">{{ $t('Kabelnummer') }}</label><input v-model="uplink.cable_label" :class="inp" /></div>
+            <div><label :class="lbl">{{ $t('Länge (m)') }}</label><input v-model.number="uplink.length_m" type="number" min="0" step="0.5" :class="inp" /></div>
             <div v-if="countLabel(uplink.cable_type)"><label :class="lbl">{{ countLabel(uplink.cable_type) }}</label><input v-model.number="uplink.fiber_count" type="number" min="1" :class="inp" /></div>
-            <div><label :class="lbl">Farbe</label><input v-model="uplink.color" :class="inp" /></div>
+            <div><label :class="lbl">{{ $t('Farbe') }}</label><input v-model="uplink.color" :class="inp" /></div>
           </div>
         </template>
       </template>
@@ -132,57 +132,58 @@
     <!-- 5: Umsetzung und Prüfen -->
     <div v-if="stepKey === 'mode'" class="space-y-3">
       <div v-if="canDirect && canOrder" class="space-y-1">
-        <label :class="lbl">Umsetzung</label>
+        <label :class="lbl">{{ $t('Umsetzung') }}</label>
         <label class="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="radio" value="direct" v-model="form.mode" @change="modeChanged" class="mt-1" />
-          <span><b>Sofort anlegen</b> – Gerät, Ports und Kabel werden direkt in den Bestand geschrieben.</span></label>
+          <span><b>{{ $t('Sofort anlegen') }}</b>{{ ' ' + $t('– Gerät, Ports und Kabel werden direkt in den Bestand geschrieben.') }}</span></label>
         <label class="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="radio" value="workorder" v-model="form.mode" @change="modeChanged" class="mt-1" />
-          <span><b>Per Patchauftrag</b> – das Gerät wird als „geplant“ angelegt; Einbau{{ (withUplink || panelLinks.links.length) ? ' und Kabel werden Positionen' : ' wird eine Position' }} im Auftrag (Freigabe → Ausführung → Bestätigung).</span></label>
+          <span><b>{{ $t('Per Patchauftrag') }}</b> – {{ (withUplink || panelLinks.links.length) ? $t('das Gerät wird als „geplant“ angelegt; Einbau und Kabel werden Positionen im Auftrag (Freigabe → Ausführung → Bestätigung).') : $t('das Gerät wird als „geplant“ angelegt; Einbau wird eine Position im Auftrag (Freigabe → Ausführung → Bestätigung).') }}</span></label>
       </div>
-      <p v-else class="text-sm text-slate-500">Umsetzung: <b>{{ canOrder && !canDirect ? 'per Patchauftrag (du darfst Stammdaten nicht direkt ändern)' : 'sofort' }}</b></p>
+      <p v-else class="text-sm text-slate-500">{{ $t('Umsetzung:') + ' ' }}<b>{{ canOrder && !canDirect ? 'per Patchauftrag (du darfst Stammdaten nicht direkt ändern)' : 'sofort' }}</b></p>
       <div v-if="form.mode === 'workorder'" class="grid grid-cols-2 gap-3">
-        <div><label :class="lbl">Patchauftrag</label>
-          <select v-model="form.workorder_id" :class="inp" @change="check"><option :value="null">Neuen Auftrag anlegen</option>
+        <div><label :class="lbl">{{ $t('Patchauftrag') }}</label>
+          <select v-model="form.workorder_id" :class="inp" @change="check"><option :value="null">{{ $t('Neuen Auftrag anlegen') }}</option>
             <option v-for="w in openOrders" :key="w.id" :value="w.id">{{ w.number }} · {{ w.title }}</option></select></div>
-        <div v-if="!form.workorder_id"><label :class="lbl">Titel des neuen Auftrags</label><input v-model="form.workorder_title" :class="inp" :placeholder="`Einbau ${form.hostname || selection}`" @change="check" /></div>
+        <div v-if="!form.workorder_id"><label :class="lbl">{{ $t('Titel des neuen Auftrags') }}</label><input v-model="form.workorder_title" :class="inp" :placeholder="`Einbau ${form.hostname || selection}`" @change="check" /></div>
       </div>
 
       <!-- Rückfrage bei Konflikt -->
       <div v-if="conflict" class="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 space-y-2">
-        <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ conflict.code === 'slot_busy' ? 'Die Höheneinheiten sind belegt' : conflict.code === 'port_reserved' ? 'Zielport reserviert bzw. schon verplant' : (conflict.conflicts.length > 1 ? `${conflict.conflicts.length} Zielports sind belegt` : 'Der Zielport ist belegt') }}</p>
+        <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ conflict.code === 'slot_busy' ? $t('Die Höheneinheiten sind belegt') : conflict.code === 'port_reserved' ? $t('Zielport reserviert bzw. schon verplant') : (conflict.conflicts.length > 1 ? $t('{n} Zielports sind belegt', { n: conflict.conflicts.length }) : $t('Der Zielport ist belegt')) }}</p>
         <p class="text-sm text-amber-900 dark:text-amber-200">{{ conflict.message }}</p>
         <div class="flex gap-2">
           <button :class="btnPrimary" @click="resolveConflict(true)">{{ conflict.code === 'port_reserved' ? 'Ja, trotzdem verwenden' : 'Ja, zurückbauen' }}</button>
-          <button :class="btnGhost" @click="resolveConflict(false)">Nein, andere Wahl treffen</button>
+          <button :class="btnGhost" @click="resolveConflict(false)">{{ $t('Nein, andere Wahl treffen') }}</button>
         </div>
       </div>
 
-      <p v-if="busy" class="text-sm text-slate-400">Prüfe …</p>
+      <p v-if="busy" class="text-sm text-slate-400">{{ $t('Prüfe …') }}</p>
       <div v-else-if="preview" class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm space-y-1">
-        <div v-if="preview.device.temporary_hostname" class="text-xs text-amber-700 dark:text-amber-400">Das Gerät heißt bis zum Rückbau des alten Geräts „{{ preview.device.temporary_hostname }}“ und übernimmt den Namen „{{ preview.device.hostname }}“ danach automatisch.</div>
-        <div><b>{{ preview.device.hostname }}</b> <span class="text-slate-400">· {{ [preview.device.vendor, preview.device.model].filter(Boolean).join(' ') || typeLabel(preview.device.type) }} · {{ preview.device.height_u }} HE · Status {{ statusLabel(preview.device.status) }}</span></div>
-        <div class="text-slate-500">Ort: {{ preview.device.location_path }}<template v-if="preview.device.rack_position"> · HE {{ preview.device.rack_position }}<template v-if="preview.device.orientation === 'vertical'">–{{ preview.device.rack_position + preview.device.height_u - 1 }}</template></template>
+        <div v-if="preview.device.temporary_hostname" class="text-xs text-amber-700 dark:text-amber-400">{{ $t('Das Gerät heißt bis zum Rückbau des alten Geräts „{tmp}“ und übernimmt den Namen „{name}“ danach automatisch.', { tmp: preview.device.temporary_hostname, name: preview.device.hostname }) }}</div>
+        <div><b>{{ preview.device.hostname }}</b> <span class="text-slate-400">· {{ [preview.device.vendor, preview.device.model].filter(Boolean).join(' ') || typeLabel(preview.device.type) }} · {{ preview.device.height_u }} {{ $t('HE') }} · {{ $t('Status') }} {{ statusLabel(preview.device.status) }}</span></div>
+        <div class="text-slate-500">{{ $t('Ort:') }} {{ preview.device.location_path }}<template v-if="preview.device.rack_position"> · {{ $t('HE') }} {{ preview.device.rack_position }}<template v-if="preview.device.orientation === 'vertical'">–{{ preview.device.rack_position + preview.device.height_u - 1 }}</template></template>
           · {{ preview.device.orientation === 'vertical' ? `hochkant ${mountLabel(preview.device.mount_side)} ${preview.device.side_slot === 'left' ? 'links' : 'rechts'}` : mountLabel(preview.device.mount_side) }}</div>
-        <div v-if="preview.ports.count" class="text-slate-500">{{ preview.ports.count }} Ports{{ isPanel ? ' (Vorder- und Rückseite)' : '' }}<template v-if="preview.ports.first.length"> ({{ preview.ports.first.join(', ') }}<template v-if="preview.ports.last.length"> … {{ preview.ports.last.join(', ') }}</template>)</template></div>
-        <div v-if="preview.cables && preview.cables.length > 1" class="text-slate-500">{{ preview.cables.length }} Kabel ({{ preview.cables[0].via }}): {{ preview.cables[0].from }} ↔ {{ preview.cables[0].to }} … {{ preview.cables[preview.cables.length - 1].from }} ↔ {{ preview.cables[preview.cables.length - 1].to }} · {{ preview.cables[0].type }}</div>
-        <div v-else-if="preview.cable" class="text-slate-500">Kabel ({{ preview.cable.via }}): {{ preview.cable.from }} ↔ {{ preview.cable.to }} · {{ preview.cable.type }}</div>
-        <div v-if="preview.workorder" class="text-slate-500">Patchauftrag: {{ preview.workorder.existing ? `Positionen in ${preview.workorder.existing}` : `neu „${preview.workorder.new}“` }}</div>
-        <div v-if="preview.removals" class="text-amber-700 dark:text-amber-400">Rückbau ({{ preview.removals.via }}):
-          <span v-if="preview.removals.devices.length">Gerät {{ preview.removals.devices.join(', ') }}</span>
-          <span v-if="preview.removals.cables.length"> Patch {{ preview.removals.cables.join(', ') }}</span>
-          <span v-if="form.mode === 'workorder'"> – der neue Auftrag startet erst nach bestätigtem Rückbau.</span></div>
+        <div v-if="preview.ports.count" class="text-slate-500">{{ preview.ports.count }} {{ $t('Ports') }}{{ isPanel ? ' (' + $t('Vorder- und Rückseite') + ')' : '' }}<template v-if="preview.ports.first.length"> ({{ preview.ports.first.join(', ') }}<template v-if="preview.ports.last.length"> … {{ preview.ports.last.join(', ') }}</template>)</template></div>
+        <div v-if="preview.cables && preview.cables.length > 1" class="text-slate-500">{{ $t('{n} Kabel', { n: preview.cables.length }) }} ({{ $t(preview.cables[0].via) }}): {{ preview.cables[0].from }} ↔ {{ preview.cables[0].to }} … {{ preview.cables[preview.cables.length - 1].from }} ↔ {{ preview.cables[preview.cables.length - 1].to }} · {{ preview.cables[0].type }}</div>
+        <div v-else-if="preview.cable" class="text-slate-500">{{ $t('Kabel') }} ({{ $t(preview.cable.via) }}): {{ preview.cable.from }} ↔ {{ preview.cable.to }} · {{ preview.cable.type }}</div>
+        <div v-if="preview.workorder" class="text-slate-500">{{ $t('Patchauftrag:') }} {{ preview.workorder.existing ? $t('Positionen in {n}', { n: preview.workorder.existing }) : $t('neu „{t}“', { t: preview.workorder.new }) }}</div>
+        <div v-if="preview.removals" class="text-amber-700 dark:text-amber-400">{{ $t('Rückbau') }} ({{ $t(preview.removals.via) }}):
+          <span v-if="preview.removals.devices.length">{{ $t('Gerät') }} {{ preview.removals.devices.join(', ') }}</span>
+          <span v-if="preview.removals.cables.length">{{ ' ' + $t('Patch') }} {{ preview.removals.cables.join(', ') }}</span>
+          <span v-if="form.mode === 'workorder'">{{ ' ' + $t('– der neue Auftrag startet erst nach bestätigtem Rückbau.') }}</span></div>
       </div>
     </div>
 
     <template #footer>
-      <button :class="btnGhost" @click="$emit('close')">Abbrechen</button>
-      <button v-if="step > 0" :class="btnGhost" :disabled="busy" @click="back">Zurück</button>
-      <button v-if="step < STEPS.length - 1" :class="btnPrimary" :disabled="!canNext" @click="next">Weiter</button>
+      <button :class="btnGhost" @click="$emit('close')">{{ $t('Abbrechen') }}</button>
+      <button v-if="step > 0" :class="btnGhost" :disabled="busy" @click="back">{{ $t('Zurück') }}</button>
+      <button v-if="step < STEPS.length - 1" :class="btnPrimary" :disabled="!canNext" @click="next">{{ $t('Weiter') }}</button>
       <button v-else :class="btnPrimary" :disabled="busy || !preview || !!conflict" @click="create">{{ busy ? '…' : 'Anlegen' }}</button>
     </template>
   </ModalDialog>
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import ModalDialog from './ModalDialog.vue'
 import PortMappingEditor, { buildLinks } from './PortMappingEditor.vue'
@@ -192,7 +193,7 @@ import { inp, lbl, btnPrimary, btnGhost, typeLabel, statusLabel, PASSIVE_TYPES, 
 
 const props = defineProps({
   kind: { type: String, default: 'switch' },                 // 'switch' (Geräte mit Ports), 'patchpanel' (Patchfeld mit Vorder-/Rückseite) oder 'placeholder' (Kabelführung, Blindblende, Fachboden)
-  title: { type: String, default: 'Assistent: Gerät platzieren' },
+  title: { type: String, default: t('Assistent: Gerät platzieren') },
   locationId: { type: Number, default: null },               // Vorbelegung, z. B. aus der Rack-Ansicht
   rackPosition: { type: Number, default: null },
   mountSide: { type: String, default: '' },                  // Ansicht, aus der geplant wird (front | rear)
@@ -203,8 +204,8 @@ const emit = defineEmits(['close', 'done'])
 const placeholder = computed(() => props.kind === 'placeholder')
 const isPanel = computed(() => props.kind === 'patchpanel')
 const isVertical = computed(() => props.kind === 'vertical')
-const STEPS = computed(() => placeholder.value ? ['Vorlage', 'Ort & Position', 'Platzhalter', 'Umsetzung']
-  : isPanel.value ? ['Vorlage', 'Ort & Position', 'Patchfeld', 'Port-Zuordnung', 'Umsetzung'] : ['Modell', 'Ort & Position', 'Gerät', 'Verkabelung', 'Umsetzung'])
+const STEPS = computed(() => placeholder.value ? [t('Vorlage'), t('Ort & Position'), t('Platzhalter'), t('Umsetzung')]
+  : isPanel.value ? [t('Vorlage'), t('Ort & Position'), t('Patchfeld'), t('Port-Zuordnung'), t('Umsetzung')] : [t('Modell'), t('Ort & Position'), t('Gerät'), t('Verkabelung'), t('Umsetzung')])
 const keyOf = i => placeholder.value ? ['model', 'place', 'device', 'mode'][i] : ['model', 'place', 'device', 'cable', 'mode'][i]
 const step = ref(0)
 const stepKey = computed(() => keyOf(step.value))
@@ -241,18 +242,18 @@ const loc = computed(() => locations.value.find(l => l.id === form.location_id))
 const isRack = computed(() => !!loc.value && CONTAINER_KINDS.includes(loc.value.kind) && !!loc.value.rack_units)      // Gehäuse mit HE-Teilung
 const orientationOptions = computed(() => {
   const k = loc.value?.kind
-  if (!k || k === 'rack') return [['horizontal', '19 Zoll (HE-Platz)'], ['vertical', 'Hochkant im Seitenkanal (0 HE, z. B. PDU)'], ['din_rail', 'Hutschiene / Montageplatte (ohne HE)']]
-  if (k === 'wallrack' || k === 'cabinet') return [['horizontal', '19 Zoll (HE-Platz)'], ['din_rail', 'Hutschiene / Montageplatte (ohne HE)']]
-  return [['din_rail', 'Montage in Anlage / Maschine / Raum (ohne HE)']]
+  if (!k || k === 'rack') return [['horizontal', t('19 Zoll (HE-Platz)')], ['vertical', t('Hochkant im Seitenkanal (0 HE, z. B. PDU)')], ['din_rail', t('Hutschiene / Montageplatte (ohne HE)')]]
+  if (k === 'wallrack' || k === 'cabinet') return [['horizontal', t('19 Zoll (HE-Platz)')], ['din_rail', t('Hutschiene / Montageplatte (ohne HE)')]]
+  return [['din_rail', t('Montage in Anlage / Maschine / Raum (ohne HE)')]]
 })
 const heightU = computed(() => form.height_u || picked.value?.height_u || 1)
-const selection = computed(() => picked.value ? `${picked.value.vendor} ${picked.value.model}` : (custom.value ? 'eigene Ports' : ''))
+const selection = computed(() => picked.value ? `${picked.value.vendor} ${picked.value.model}` : (custom.value ? t('eigene Ports') : ''))
 const startChoices = computed(() => {
   const units = loc.value?.rack_units || 42
   return Array.from({ length: Math.max(0, units - heightU.value + 1) }, (_, i) => i + 1)
 })
 
-const portSummary = m => !m.ports.length ? 'keine Ports' : m.ports.map(g => `${g.count}× ${g.medium}${g.dual ? ' dual' : ''}`).join(', ')
+const portSummary = m => !m.ports.length ? t('keine Ports') : m.ports.map(g => `${g.count}× ${g.medium}${g.dual ? ' dual' : ''}`).join(', ')
 const groups = computed(() => {
   if (picked.value) return picked.value.ports
   if (!custom.value) return []

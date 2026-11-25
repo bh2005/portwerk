@@ -1,16 +1,16 @@
 <template>
-  <SidePanel :open="open" title="Verbindungs-Historie" @close="$emit('close')">
+  <SidePanel :open="open" :title="$t('Verbindungs-Historie')" @close="$emit('close')">
     <template #title>
-      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Verbindungs-Historie</h2>
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('Verbindungs-Historie') }}</h2>
       <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ subtitle }}</p>
     </template>
     <div class="flex flex-wrap items-end gap-2">
-      <div><label :class="lbl">Stand am</label><input v-model="at" type="datetime-local" :class="inp" class="!py-1" @change="load" /></div>
-      <button v-if="at" :class="btnLink" @click="at = ''; load()">alle Zeitpunkte</button>
-      <button v-if="portId && deviceId" :class="btnLink" @click="$emit('all-ports')">alle Ports des Geräts</button>
+      <div><label :class="lbl">{{ $t('Stand am') }}</label><input v-model="at" type="datetime-local" :class="inp" class="!py-1" @change="load" /></div>
+      <button v-if="at" :class="btnLink" @click="at = ''; load()">{{ $t('alle Zeitpunkte') }}</button>
+      <button v-if="portId && deviceId" :class="btnLink" @click="$emit('all-ports')">{{ $t('alle Ports des Geräts') }}</button>
     </div>
     <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
-    <p v-else-if="loading" class="text-sm text-slate-400">Lade …</p>
+    <p v-else-if="loading" class="text-sm text-slate-400">{{ $t('Lade …') }}</p>
     <p v-else-if="!rows.length" class="text-sm text-slate-400">{{ at ? 'Zu diesem Zeitpunkt war nichts verbunden.' : 'Noch keine Verbindungen.' }}</p>
     <ul v-else class="space-y-2">
       <li v-for="h in rows" :key="h.id" class="rounded-lg border px-3 py-2 text-sm"
@@ -19,19 +19,19 @@
           <span>{{ h.local.hostname !== hostname ? h.local.hostname + ':' : '' }}{{ h.local.port_name }}</span>
           <span class="text-slate-400">↔</span>
           <router-link v-if="h.remote.device_id" :to="`/devices/${h.remote.device_id}`" class="text-ks-600 dark:text-ks-400 hover:underline" @click="$emit('close')">{{ h.remote.hostname }}:{{ h.remote.port_name }}</router-link>
-          <span v-else title="Port existiert nicht mehr">{{ h.remote.hostname }}:{{ h.remote.port_name }}</span>
-          <span v-if="h.active" class="ml-auto text-green-600 dark:text-green-400 font-sans font-medium">steckt</span>
+          <span v-else :title="$t('Port existiert nicht mehr')">{{ h.remote.hostname }}:{{ h.remote.port_name }}</span>
+          <span v-if="h.active" class="ml-auto text-green-600 dark:text-green-400 font-sans font-medium">{{ $t('steckt') }}</span>
         </div>
         <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {{ fmtTime(h.valid_from) }}<template v-if="!h.active"> – {{ fmtTime(h.valid_to) }}</template>
           <template v-if="h.cable_label || (h.cable_type && h.cable_type !== 'other')"> · {{ [h.cable_label, h.cable_type !== 'other' ? h.cable_type : ''].filter(Boolean).join(' ') }}</template>
         </div>
         <div class="text-xs text-slate-400 mt-0.5">
-          hergestellt:
+          {{ $t('hergestellt:') }}
           <router-link v-if="h.workorder" :to="`/workorders/${h.workorder.id}`" class="text-ks-600 dark:text-ks-400 hover:underline" @click="$emit('close')">{{ h.workorder.number }}</router-link>
           <template v-else>{{ h.created_by || '–' }}</template>
           <template v-if="!h.active">
-            · getrennt:
+            {{ $t('· getrennt:') }}
             <router-link v-if="h.ended_workorder" :to="`/workorders/${h.ended_workorder.id}`" class="text-ks-600 dark:text-ks-400 hover:underline" @click="$emit('close')">{{ h.ended_workorder.number }}</router-link>
             <template v-else>{{ h.ended_by || '–' }}</template>
             {{ END_REASONS[h.end_reason] || '' }}
@@ -43,6 +43,7 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { computed, ref, watch } from 'vue'
 import SidePanel from './SidePanel.vue'
 import { api, errText } from '../api.js'
@@ -53,7 +54,7 @@ const props = defineProps({ open: Boolean, portId: { type: Number, default: null
                             hostname: { type: String, default: '' }, portName: { type: String, default: '' } })
 defineEmits(['close', 'all-ports'])
 
-const END_REASONS = { manual: '(direkt)', workorder: '', wizard: '(Assistent)', retire: '(Rückbau)', '': '(Port/Gerät gelöscht)' }
+const END_REASONS = { manual: t('(direkt)'), workorder: '', wizard: t('(Assistent)'), retire: t('(Rückbau)'), '': t('(Port/Gerät gelöscht)') }
 const rows = ref([]), at = ref(''), error = ref(''), loading = ref(false)
 const subtitle = computed(() => props.portId ? `${props.hostname}:${props.portName}` : props.hostname)
 

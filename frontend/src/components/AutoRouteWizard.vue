@@ -28,7 +28,7 @@
           <div class="col-span-2"><label :class="lbl">Rack / Schrank</label>
             <select v-model="nd.location_id" :class="inp" @change="reset"><option :value="null" disabled>Rack wählen …</option>
               <option v-for="l in racks" :key="l.id" :value="l.id">{{ l.path }}</option></select></div>
-          <div><label :class="lbl">Typ</label><select v-model="nd.type" :class="inp" @change="reset"><option v-for="t in DEVICE_TYPES" :key="t[0]" :value="t[0]">{{ t[1] }}</option></select></div>
+          <div><label :class="lbl">Typ</label><select v-model="nd.type" :class="inp" @change="reset"><option v-for="t in DEVICE_TYPES" :key="t[0]" :value="t[0]">{{ $t(t[1]) }}</option></select></div>
           <div><label :class="lbl">Höhe (HE) / Position</label>
             <div class="flex gap-2"><input v-model.number="nd.height_u" type="number" min="1" :class="inp" /><input v-model.number="nd.rack_position" type="number" min="1" :class="inp" placeholder="Pos." /></div></div>
           <div><label :class="lbl">Netzwerk-Ports</label>

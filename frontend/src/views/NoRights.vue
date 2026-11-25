@@ -7,7 +7,7 @@
       </div>
       <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Noch keine Berechtigung') }}</h1>
       <p class="text-sm text-slate-600 dark:text-slate-300">
-        {{ $t('Sie sind als') }} <b>{{ user.full_name || user.username }}</b><span v-if="user.full_name" class="text-slate-400"> ({{ user.username }})</span> {{ $t('angemeldet, haben in Portwerk aber noch keine Rechte.') }}
+        {{ $t('Sie sind als') + ' ' }}<b>{{ user.full_name || user.username }}</b><span v-if="user.full_name" class="text-slate-400"> ({{ user.username }})</span>{{ ' ' + $t('angemeldet, haben in Portwerk aber noch keine Rechte.') }}
       </p>
       <p class="text-sm text-slate-600 dark:text-slate-300">
         {{ $t('Bitte wenden Sie sich für die Vergabe von Rechten an einen Administrator. Nennen Sie dabei Ihren Benutzernamen und den Standort, für den Sie Zugriff brauchen.') }}

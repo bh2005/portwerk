@@ -2,7 +2,7 @@
   <div class="space-y-2">
     <label :class="lbl">{{ label }}</label>
     <div v-if="!device" class="space-y-1">
-      <input v-model="q" :class="inp" placeholder="Gerät suchen (Hostname, mind. 2 Zeichen)" @input="search" />
+      <input v-model="q" :class="inp" :placeholder="$t('Gerät suchen (Hostname, mind. 2 Zeichen)')" @input="search" />
       <div v-if="results.length" class="max-h-36 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-700">
         <button v-for="d in results" :key="d.id" type="button" @click="pickDevice(d.id)" class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/40">
           {{ d.hostname }} <span class="text-xs text-slate-400">· {{ typeLabel(d.type) }} · {{ d.location_path || 'ohne Location' }}</span></button>
@@ -11,14 +11,14 @@
     <template v-else>
       <div class="flex items-center justify-between gap-2 text-sm">
         <span class="font-medium text-slate-800 dark:text-slate-100">{{ device.hostname }} <span class="text-xs font-normal text-slate-400">· {{ typeLabel(device.type) }}</span></span>
-        <button v-if="!locked" type="button" :class="btnLink" @click="reset">anderes Gerät</button>
+        <button v-if="!locked" type="button" :class="btnLink" @click="reset">{{ $t('anderes Gerät') }}</button>
       </div>
       <select :value="modelValue" :class="inp" @change="choose($event.target.value)">
-        <option :value="''" disabled>Port wählen …</option>
+        <option :value="''" disabled>{{ $t('Port wählen …') }}</option>
         <option v-for="p in shown" :key="p.id" :value="p.id">{{ p.name }} · {{ p.medium }}{{ p.cable ? ` – belegt (${p.cable.device_hostname}:${p.cable.port_name})` : '' }}{{ fits(p) ? '' : ' – Medium passt nicht' }}</option>
       </select>
-      <label class="flex items-center gap-2 text-xs text-slate-500"><input type="checkbox" v-model="onlyFree" /> nur freie Ports zeigen</label>
-      <p v-if="!shown.length" class="text-xs text-slate-400">Keine passenden Ports.</p>
+      <label class="flex items-center gap-2 text-xs text-slate-500"><input type="checkbox" v-model="onlyFree" />{{ ' ' + $t('nur freie Ports zeigen') }}</label>
+      <p v-if="!shown.length" class="text-xs text-slate-400">{{ $t('Keine passenden Ports.') }}</p>
     </template>
   </div>
 </template>

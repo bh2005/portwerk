@@ -1,32 +1,32 @@
 <template>
   <div class="max-w-6xl space-y-4">
     <div class="flex items-center justify-between gap-3 flex-wrap">
-      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Racks &amp; Schränke</h1>
+      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Racks & Schränke') }}</h1>
       <div class="flex items-center gap-3 flex-wrap">
-        <div v-if="rack?.kind === 'rack'" class="inline-flex rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600" role="group" aria-label="Ansicht">
+        <div v-if="rack?.kind === 'rack'" class="inline-flex rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600" role="group" :aria-label="$t('Ansicht')">
           <button v-for="[k, l] in [['front', 'Vorderseite'], ['rear', 'Rückseite']]" :key="k" type="button" @click="view = k"
             class="px-3 py-1.5 text-sm transition-colors"
-            :class="view === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'">{{ l }}</button>
+            :class="view === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'">{{ $t(l) }}</button>
         </div>
-        <button v-if="canPlace" type="button" :class="btnGhost" title="Neues Gerät als geplant anlegen und die Patchungen zum Ziel automatisch planen" @click="autoRoute = true">Autorouting</button>
+        <button v-if="canPlace" type="button" :class="btnGhost" :title="$t('Neues Gerät als geplant anlegen und die Patchungen zum Ziel automatisch planen')" @click="autoRoute = true">{{ $t('Autorouting') }}</button>
         <select v-model="rackId" :class="inp" class="!w-72" @change="changeRack">
-          <option :value="null" disabled>Rack wählen …</option>
-          <option v-for="r in shownRacks" :key="r.id" :value="r.id">{{ kindLabel(r.kind) }}: {{ r.path }}<template v-if="r.rack_units"> ({{ r.rack_units }} HE)</template></option>
+          <option :value="null" disabled>{{ $t('Rack wählen …') }}</option>
+          <option v-for="r in shownRacks" :key="r.id" :value="r.id">{{ kindLabel(r.kind) }}: {{ r.path }}<template v-if="r.rack_units"> ({{ r.rack_units }} {{ $t('HE') }})</template></option>
         </select>
       </div>
     </div>
     <!-- Filter für die Auswahl -->
     <div v-if="racks.length > 1" class="flex items-center gap-2 flex-wrap">
-      <select v-model="fSite" :class="inp" class="!w-56" title="Standort"><option value="">alle Standorte</option><option v-for="s in siteChoices" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
-      <select v-model="fKind" :class="inp" class="!w-48" title="Art"><option value="">alle Arten</option><option v-for="k in kindChoices" :key="k" :value="k">{{ kindLabel(k) }}</option></select>
-      <input v-model="fText" :class="inp" class="!w-64" placeholder="Location suchen (Name, Pfad, Kennung) …" />
-      <button v-if="fSite || fKind || fText" type="button" :class="btnLink" @click="fSite = ''; fKind = ''; fText = ''">Filter zurücksetzen</button>
-      <span class="text-xs text-slate-400">{{ shownRacks.length }} von {{ racks.length }}</span>
+      <select v-model="fSite" :class="inp" class="!w-56" :title="$t('Standort')"><option value="">{{ $t('alle Standorte') }}</option><option v-for="s in siteChoices" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
+      <select v-model="fKind" :class="inp" class="!w-48" :title="$t('Art')"><option value="">{{ $t('alle Arten') }}</option><option v-for="k in kindChoices" :key="k" :value="k">{{ kindLabel(k) }}</option></select>
+      <input v-model="fText" :class="inp" class="!w-64" :placeholder="$t('Location suchen (Name, Pfad, Kennung) …')" />
+      <button v-if="fSite || fKind || fText" type="button" :class="btnLink" @click="fSite = ''; fKind = ''; fText = ''">{{ $t('Filter zurücksetzen') }}</button>
+      <span class="text-xs text-slate-400">{{ $t('{a} von {b}', { a: shownRacks.length, b: racks.length }) }}</span>
     </div>
-    <p v-if="loaded && racks.length && !shownRacks.length" class="text-sm text-slate-400">Keine Racks oder Schränke für diese Filter.</p>
+    <p v-if="loaded && racks.length && !shownRacks.length" class="text-sm text-slate-400">{{ $t('Keine Racks oder Schränke für diese Filter.') }}</p>
     <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <p v-if="notice" class="text-sm text-green-600 dark:text-green-400">{{ notice }}</p>
-    <p v-if="loaded && !racks.length" class="text-sm text-slate-400">Noch kein Rack, Schaltschrank oder keine Anlage angelegt. Lege unter „Standorte“ eine passende Location an.</p>
+    <p v-if="loaded && !racks.length" class="text-sm text-slate-400">{{ $t('Noch kein Rack, Schaltschrank oder keine Anlage angelegt. Lege unter „Standorte“ eine passende Location an.') }}</p>
 
     <div v-if="rack" class="grid lg:grid-cols-5 gap-4">
       <!-- Schrank -->
@@ -34,22 +34,22 @@
       <div v-if="!drawn" :class="card" class="p-4 lg:col-span-2">
         <div class="flex items-start justify-between gap-2 mb-1">
           <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ kindLabel(rack.kind) }} · {{ rack.path }}</h2>
-          <button v-if="canPlace" type="button" :class="btnLink" @click="startList">+ Gerät platzieren</button>
+          <button v-if="canPlace" type="button" :class="btnLink" @click="startList">{{ $t('+ Gerät platzieren') }}</button>
         </div>
-        <p class="text-xs text-slate-400 mb-3"><span v-if="rack.ident" class="font-mono text-slate-500">{{ rack.ident }} · </span>Keine HE-Teilung – die Geräte sind auf Hutschiene/Montageplatte bzw. frei montiert. Klick auf ein Gerät zeigt rechts die Portbelegung.</p>
-        <p v-if="!devices.length" class="text-sm text-slate-400">Noch keine Geräte hier.</p>
+        <p class="text-xs text-slate-400 mb-3"><span v-if="rack.ident" class="font-mono text-slate-500">{{ rack.ident }} · </span>{{ $t('Keine HE-Teilung – die Geräte sind auf Hutschiene/Montageplatte bzw. frei montiert. Klick auf ein Gerät zeigt rechts die Portbelegung.') }}</p>
+        <p v-if="!devices.length" class="text-sm text-slate-400">{{ $t('Noch keine Geräte hier.') }}</p>
         <ul class="text-sm divide-y divide-slate-100 dark:divide-slate-700">
           <li v-for="d in devices" :key="d.id"><button type="button" @click="select(d)" class="w-full text-left py-1.5 px-1 rounded hover:bg-slate-50 dark:hover:bg-slate-700/40"
             :class="selected?.id === d.id ? 'bg-ks-50 dark:bg-ks-900/30' : ''"><span class="font-medium text-slate-800 dark:text-slate-100">{{ d.hostname }}</span>
-            <span class="text-xs text-slate-400"> · {{ typeLabel(d.type) }}<template v-if="d.status === 'planned'"> · geplant</template></span></button></li>
+            <span class="text-xs text-slate-400"> · {{ typeLabel(d.type) }}<template v-if="d.status === 'planned'">{{ ' ' + $t('· geplant') }}</template></span></button></li>
         </ul>
       </div>
 
       <div v-if="drawn" :class="card" class="p-4 lg:col-span-2">
-        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">{{ kindLabel(rack.kind) }} · {{ rack.path }}<template v-if="rack.kind === 'rack'"> · {{ view === 'front' ? 'Vorderseite' : 'Rückseite' }}</template></h2>
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">{{ kindLabel(rack.kind) }} · {{ rack.path }}<template v-if="rack.kind === 'rack'"> · {{ view === 'front' ? $t('Vorderseite') : $t('Rückseite') }}</template></h2>
         <p v-if="rack.ident" class="text-xs font-mono text-slate-500 mb-1">{{ rack.ident }}</p>
-        <p class="text-xs text-slate-400 mb-3">Klick auf ein Gerät zeigt rechts die Portbelegung.<template v-if="canPlace"> Klick auf einen freien Platz platziert ein neues Gerät, Klick in einen Seitenkanal ein Hochkant-Gerät (z. B. PDU).</template>
-          Links/rechts gelten aus Sicht dieser Ansicht.</p>
+        <p class="text-xs text-slate-400 mb-3">{{ $t('Klick auf ein Gerät zeigt rechts die Portbelegung.') }}<template v-if="canPlace">{{ ' ' + $t('Klick auf einen freien Platz platziert ein neues Gerät, Klick in einen Seitenkanal ein Hochkant-Gerät (z. B. PDU).') }}</template>
+          {{ $t('Links/rechts gelten aus Sicht dieser Ansicht.') }}</p>
         <div class="flex border-2 border-slate-400 dark:border-slate-500 rounded bg-slate-100 dark:bg-slate-900 min-w-[300px]">
           <!-- Seitenkanal links -->
           <div class="relative w-9 shrink-0 border-r border-slate-300 dark:border-slate-600 bg-slate-200/60 dark:bg-slate-800/60"
@@ -68,10 +68,10 @@
               <button v-if="row.device" type="button" @click="select(row.device)"
                 class="flex-1 px-2 flex items-center text-xs font-medium text-white overflow-hidden whitespace-nowrap text-left transition-colors"
                 :class="[deviceColor(row.device), selected?.id === row.device.id ? 'ring-2 ring-offset-1 ring-ks-400 dark:ring-offset-slate-900' : '']">
-                {{ row.device.hostname }} <span class="ml-2 opacity-70 font-normal">{{ typeLabel(row.device.type) }} · {{ row.device.height_u }} HE<template v-if="row.device.mount_side === 'both'"> · durchgehend</template><template v-if="row.device.status === 'planned'"> · geplant</template></span>
+                {{ row.device.hostname }} <span class="ml-2 opacity-70 font-normal">{{ typeLabel(row.device.type) }} · {{ row.device.height_u }} {{ $t('HE') }}<template v-if="row.device.mount_side === 'both'">{{ ' ' + $t('· durchgehend') }}</template><template v-if="row.device.status === 'planned'">{{ ' ' + $t('· geplant') }}</template></span>
               </button>
-              <button v-else-if="canPlace" type="button" @click="askPlace(row.u)" title="Freier Platz – neues Gerät platzieren"
-                class="flex-1 text-left px-2 text-[11px] text-transparent hover:text-ks-600 hover:bg-ks-50 dark:hover:bg-ks-900/20 transition-colors">+ Gerät platzieren</button>
+              <button v-else-if="canPlace" type="button" @click="askPlace(row.u)" :title="$t('Freier Platz – neues Gerät platzieren')"
+                class="flex-1 text-left px-2 text-[11px] text-transparent hover:text-ks-600 hover:bg-ks-50 dark:hover:bg-ks-900/20 transition-colors">{{ $t('+ Gerät platzieren') }}</button>
               <div v-else class="flex-1"></div>
             </div>
           </div>
@@ -98,31 +98,31 @@
                 <template v-if="selected.mgmt_ip"> · {{ selected.mgmt_ip }}</template></p>
             </div>
             <div class="flex gap-3 items-center">
-              <a v-if="checkmkUrl(selected)" :href="checkmkUrl(selected)" target="_blank" rel="noopener" :class="btnLink" title="Host-Seite in Checkmk öffnen">In Checkmk öffnen ↗</a>
-              <router-link :to="`/devices/${selected.id}`" :class="btnLink">Details öffnen →</router-link>
-              <button :class="btnLink" @click="selected = null; ports = []">Schließen</button>
+              <a v-if="checkmkUrl(selected)" :href="checkmkUrl(selected)" target="_blank" rel="noopener" :class="btnLink" :title="$t('Host-Seite in Checkmk öffnen')">{{ $t('In Checkmk öffnen ↗') }}</a>
+              <router-link :to="`/devices/${selected.id}`" :class="btnLink">{{ $t('Details öffnen →') }}</router-link>
+              <button :class="btnLink" @click="selected = null; ports = []">{{ $t('Schließen') }}</button>
             </div>
           </div>
-          <p v-if="portsLoading" class="text-sm text-slate-400 mt-3">Lade Ports …</p>
-          <p v-else-if="!ports.length" class="text-sm text-slate-400 mt-3">Dieses Gerät hat keine Ports.</p>
+          <p v-if="portsLoading" class="text-sm text-slate-400 mt-3">{{ $t('Lade Ports …') }}</p>
+          <p v-else-if="!ports.length" class="text-sm text-slate-400 mt-3">{{ $t('Dieses Gerät hat keine Ports.') }}</p>
           <template v-else>
             <div class="flex items-center gap-3 mt-3 text-xs">
-              <span class="text-slate-500">{{ usedPorts }} von {{ ports.length }} Ports belegt</span>
+              <span class="text-slate-500">{{ $t('{a} von {b} Ports belegt', { a: usedPorts, b: ports.length }) }}</span>
               <span class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><span class="block h-full bg-ks-500" :style="{ width: (100 * usedPorts / ports.length) + '%' }"></span></span>
-              <select v-model="portFilter" :class="inp" class="!w-28 !py-1 !text-xs"><option value="all">alle</option><option value="used">belegt</option><option value="free">frei</option></select>
+              <select v-model="portFilter" :class="inp" class="!w-28 !py-1 !text-xs"><option value="all">{{ $t('alle') }}</option><option value="used">{{ $t('belegt') }}</option><option value="free">{{ $t('frei') }}</option></select>
             </div>
             <div class="mt-2 max-h-[28rem] overflow-y-auto">
               <table class="w-full text-sm">
-                <thead class="sticky top-0 bg-white dark:bg-slate-800"><tr><th :class="th">Port</th><th :class="th">Medium</th><th :class="th">Verbunden mit</th><th :class="th">Kabel</th></tr></thead>
+                <thead class="sticky top-0 bg-white dark:bg-slate-800"><tr><th :class="th">{{ $t('Port') }}</th><th :class="th">{{ $t('Medium') }}</th><th :class="th">{{ $t('Verbunden mit') }}</th><th :class="th">{{ $t('Kabel') }}</th></tr></thead>
                 <tbody>
                   <tr v-for="p in shownPorts" :key="p.id" class="border-t border-slate-100 dark:border-slate-700">
                     <td :class="td" class="font-mono text-xs">{{ p.name }}</td>
                     <td :class="td" class="text-xs text-slate-500">{{ p.medium }}<template v-if="p.speed_mbps"> · {{ fmtSpeed(p.speed_mbps) }}</template></td>
                     <td :class="td">
                       <template v-if="p.cable"><router-link :to="`/devices/${p.cable.device_id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ p.cable.device_hostname }}</router-link><span class="font-mono text-xs text-slate-500">:{{ p.cable.port_name }}</span></template>
-                      <span v-else-if="p.peer_port_name" class="text-xs text-slate-400">durchgeschleift: {{ p.peer_port_name }}</span>
-                      <span v-else class="text-xs text-green-600 dark:text-green-400">frei</span>
-                      <button v-if="!p.cable && canPlace" type="button" :class="btnLink" class="ml-2" @click="startCable(p)">verbinden …</button>
+                      <span v-else-if="p.peer_port_name" class="text-xs text-slate-400">{{ $t('durchgeschleift:') }} {{ p.peer_port_name }}</span>
+                      <span v-else class="text-xs text-green-600 dark:text-green-400">{{ $t('frei') }}</span>
+                      <button v-if="!p.cable && canPlace" type="button" :class="btnLink" class="ml-2" @click="startCable(p)">{{ $t('verbinden …') }}</button>
                     </td>
                     <td :class="td" class="text-xs text-slate-500"><template v-if="p.cable"><span class="font-mono text-slate-700 dark:text-slate-200">{{ p.cable.cable_label }}</span> {{ p.cable.cable_type }}<template v-if="p.cable.length_m"> · {{ p.cable.length_m }} m</template></template></td>
                   </tr>
@@ -134,35 +134,35 @@
 
         <div :class="card" class="p-4">
           <template v-if="drawn && onRail.length">
-            <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Auf Hutschiene / Montageplatte</h2>
+            <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">{{ $t('Auf Hutschiene / Montageplatte') }}</h2>
             <ul class="text-sm space-y-1 mb-4">
               <li v-for="x in onRail" :key="x.id"><button type="button" class="text-ks-600 dark:text-ks-400 hover:underline" @click="select(x)">{{ x.hostname }}</button>
                 <span class="text-xs text-slate-400"> · {{ typeLabel(x.type) }}</span></li>
             </ul>
           </template>
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Ohne Position</h2>
-          <p v-if="!loose.length" class="text-sm text-slate-400">Alle Geräte haben eine HE-Position{{ drawn ? '' : ' bzw. keine HE-Teilung' }}.</p>
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">{{ $t('Ohne Position') }}</h2>
+          <p v-if="!loose.length" class="text-sm text-slate-400">{{ drawn ? $t('Alle Geräte haben eine HE-Position.') : $t('Alle Geräte haben eine HE-Position bzw. keine HE-Teilung.') }}</p>
           <ul class="text-sm space-y-1">
             <li v-for="x in loose" :key="x.id"><button type="button" class="text-ks-600 dark:text-ks-400 hover:underline" @click="select(x)">{{ x.hostname }}</button>
               <span class="text-xs text-slate-400"> · {{ typeLabel(x.type) }}</span></li>
           </ul>
-          <p v-if="drawn" class="text-xs text-slate-400 mt-3">{{ used }} von {{ rack.rack_units || '?' }} HE{{ rack.kind === 'rack' ? ` (${view === 'front' ? 'Vorderseite' : 'Rückseite'})` : '' }} belegt.</p>
+          <p v-if="drawn" class="text-xs text-slate-400 mt-3">{{ $t('{a} von {b} HE belegt', { a: used, b: rack.rack_units || '?' }) }}{{ rack.kind === 'rack' ? ` (${view === 'front' ? $t('Vorderseite') : $t('Rückseite')})` : '' }}.</p>
         </div>
       </div>
     </div>
 
     <!-- Frage: freien Platz belegen -->
-    <ModalDialog v-if="place" :title="place.slot ? `Seitenkanal ${place.slot === 'left' ? 'links' : 'rechts'} (${view === 'front' ? 'vorne' : 'hinten'})` : `HE ${place.u} ist frei (${view === 'front' ? 'Vorderseite' : 'Rückseite'})`" @close="place = null">
+    <ModalDialog v-if="place" :title="place.slot ? `${$t('Seitenkanal')} ${place.slot === 'left' ? $t('links') : $t('rechts')} (${view === 'front' ? $t('vorne') : $t('hinten')})` : `${$t('HE {n} ist frei', { n: place.u })} (${view === 'front' ? $t('Vorderseite') : $t('Rückseite')})`" @close="place = null">
       <p class="text-sm text-slate-600 dark:text-slate-300">{{ place.slot ? 'Soll hier ein Hochkant-Gerät (z. B. PDU) platziert werden?' : 'Soll hier ein neues Gerät platziert werden?' }}</p>
       <template #footer>
-        <button :class="btnGhost" @click="place = null">Nein</button>
+        <button :class="btnGhost" @click="place = null">{{ $t('Nein') }}</button>
         <template v-if="place.slot">
-          <button :class="btnPrimary" @click="startWizard('vertical')">Ja, Hochkant-Gerät platzieren</button>
+          <button :class="btnPrimary" @click="startWizard('vertical')">{{ $t('Ja, Hochkant-Gerät platzieren') }}</button>
         </template>
         <template v-else>
-          <button :class="btnGhost" @click="startWizard('placeholder')">Platzhalter (Kabelführung, Blindblende …)</button>
-          <button :class="btnGhost" @click="startWizard('patchpanel')">Patchfeld</button>
-          <button :class="btnPrimary" @click="startWizard('switch')">Ja, Gerät platzieren</button>
+          <button :class="btnGhost" @click="startWizard('placeholder')">{{ $t('Platzhalter (Kabelführung, Blindblende …)') }}</button>
+          <button :class="btnGhost" @click="startWizard('patchpanel')">{{ $t('Patchfeld') }}</button>
+          <button :class="btnPrimary" @click="startWizard('switch')">{{ $t('Ja, Gerät platzieren') }}</button>
         </template>
       </template>
     </ModalDialog>
@@ -177,6 +177,7 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
@@ -228,8 +229,8 @@ const deviceColor = d => PASSIVE_TYPES.includes(d.type)
   ? 'bg-slate-400 hover:bg-slate-500 dark:bg-slate-600 dark:hover:bg-slate-500'
   : (d.status === 'planned' ? 'bg-amber-500 hover:bg-amber-600' : (d.type === 'pdu' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-ks-600 hover:bg-ks-700'))
 const mountText = d => d.orientation === 'vertical'
-  ? `hochkant, ${mountLabel(d.mount_side)} ${d.side_slot === 'left' ? 'links' : 'rechts'}${d.rack_position ? `, HE ${d.rack_position}–${d.rack_position + d.height_u - 1}` : ', volle Höhe'}`
-  : `${d.rack_position ? `HE ${d.rack_position}${d.height_u > 1 ? '–' + (d.rack_position + d.height_u - 1) : ''}` : 'ohne HE'}, ${mountLabel(d.mount_side)}`
+  ? `${t('hochkant')}, ${mountLabel(d.mount_side)} ${d.side_slot === 'left' ? t('links') : t('rechts')}${d.rack_position ? `, ${t('HE')} ${d.rack_position}–${d.rack_position + d.height_u - 1}` : ', ' + t('volle Höhe')}`
+  : `${d.rack_position ? `${t('HE')} ${d.rack_position}${d.height_u > 1 ? '–' + (d.rack_position + d.height_u - 1) : ''}` : t('ohne HE')}, ${mountLabel(d.mount_side)}`
 
 // Zeilen von oben (höchste HE) nach unten; ein mehrhöhiges Gerät belegt eine Zeile mit span > 1
 const rows = computed(() => {
@@ -265,14 +266,14 @@ function startWizard(kind) { wizard.value = { kind, u: place.value.slot ? 1 : pl
 async function wizardDone(r) {
   wizard.value = null
   notice.value = r.workorder
-    ? `„${r.device.hostname}“ wurde als geplant angelegt – Patchauftrag ${r.workorder.number}${r.workorder.removal_order ? ` (Voraussetzung: Rückbau ${r.workorder.removal_order.number})` : ''}.`
+    ? t('„{name}“ wurde als geplant angelegt – Patchauftrag {n}', { name: r.device.hostname, n: r.workorder.number }) + (r.workorder.removal_order ? ' (' + t('Voraussetzung: Rückbau {n}', { n: r.workorder.removal_order.number }) + ')' : '') + '.'
     : `„${r.device.hostname}“ wurde angelegt${r.cable_ids?.length ? ` und mit ${r.cable_ids.length} Kabel(n) verkabelt` : ''}.`
   await load()
 }
 function startCable(p) { cableWiz.value = { portId: p.id } }
 async function cableDone(r) {
   cableWiz.value = null
-  notice.value = r.workorder ? `Kabel als Position in ${r.workorder.number} angelegt.` : 'Kabel angelegt.'
+  notice.value = r.workorder ? t('Kabel als Position in {n} angelegt.', { n: r.workorder.number }) : t('Kabel angelegt.')
   if (selected.value) { portsLoading.value = true; try { ports.value = (await api.device(selected.value.id)).ports } finally { portsLoading.value = false } }
 }
 
