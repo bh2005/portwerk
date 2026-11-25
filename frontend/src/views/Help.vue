@@ -1,12 +1,13 @@
 <template>
   <div class="max-w-4xl flex gap-8">
     <nav class="hidden md:block w-44 flex-shrink-0 sticky top-0 self-start text-sm">
-      <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Inhalt</h2>
+      <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">{{ $t('Inhalt') }}</h2>
       <a v-for="s in sections" :key="s.id" :href="`#${s.id}`" @click.prevent="jump(s.id)"
         class="block py-1 text-slate-600 dark:text-slate-300 hover:text-ks-600 dark:hover:text-ks-400">{{ s.title }}</a>
     </nav>
     <div class="flex-1 min-w-0 space-y-6">
-      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Handbuch</h1>
+      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Handbuch') }}</h1>
+      <p v-if="lang === 'en'" class="text-sm rounded-lg px-3 py-2 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">The manual is currently only available in German.</p>
       <section v-for="s in sections" :id="s.id" :key="s.id" :class="card" class="p-5">
         <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">{{ s.title }}</h2>
         <div class="manual" v-html="s.html"></div>
@@ -16,6 +17,7 @@
 </template>
 
 <script setup>
+import { lang } from '../i18n.js'
 import { sections } from '../content/helpContent.js'
 import { card } from '../ui.js'
 

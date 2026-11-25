@@ -5,10 +5,9 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 ## Offen
 
 - **Englisch – weitere Etappen**
-  Etappe 1 (Grundgerüst, Sprachwahl, Rahmen, Übersicht, Profil), Etappe 2 (Bestand), Etappe 3 (Patchaufträge) und Etappe 4 (Analyse) sind umgesetzt.
-  Offen: Etappe 5 Verwaltung und Import, die übrigen Server-Meldungen
-  (`frontend/src/locales/en.api.js`) und vom Server gelieferte Beschriftungen (Auftragsstatus, Kapazitätskategorien), danach Handbuch/Hilfe,
-  Mails (in der Sprache des Empfängers), Arbeitsanweisung als PDF und Etiketten.
+  Etappe 1 (Grundgerüst, Sprachwahl, Rahmen, Übersicht, Profil), Etappe 2 (Bestand), Etappe 3 (Patchaufträge), Etappe 4 (Analyse) und Etappe 5 (Verwaltung, Import) sind umgesetzt –
+  die Oberfläche ist vollständig umstellbar. Offen: Handbuch/Hilfe, Mails (in der Sprache des Empfängers), Arbeitsanweisung als PDF,
+  Etiketten und seltene Server-Meldungen, die noch nicht in `frontend/src/locales/en.api.js` stehen (sie erscheinen dann deutsch).
 
 - **VLAN-Soll/Ist für Trunks, Voice-VLANs und andere Hersteller**
   Checkmk liefert VLANs nur für Cisco und nur Access-VLANs (Plugin `inv_cisco_vlans`). Für Trunks/Voice bräuchte es eigene Daten
@@ -68,4 +67,5 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Englisch, Etappe 1: Grundgerüst (`i18n.js`, `locales/`), Sprachwahl im Profil und auf der Anmeldeseite, Rahmen und Übersicht | #34 |
 | Englisch, Etappe 2: Bestand (Standorte, Geräte, Racks, Strecken, Geräte-Assistent) | #35 |
 | Englisch, Etappe 3: Patchaufträge (Liste, Detail, mobile Ansicht, Patchliste, Etiketten, Reservierungen, Kabel-Assistenten) | #36 |
-| Englisch, Etappe 4: Analyse (Soll/Ist, Kapazität, Zeitreise, Aufräumen, VLANs, WAN, Katalog) | (dieser PR) |
+| Englisch, Etappe 4: Analyse (Soll/Ist, Kapazität, Zeitreise, Aufräumen, VLANs, WAN, Katalog) | #37 |
+| Englisch, Etappe 5: Verwaltung und Import (Oberfläche vollständig) | (dieser PR) |

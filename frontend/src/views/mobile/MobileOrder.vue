@@ -43,7 +43,7 @@
               <span v-if="x.cable_label" class="ml-auto font-mono font-bold text-lg px-2 rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100">{{ x.cable_label }}</span>
             </div>
             <End label="von" :name="x.a" :where="x.a_location" :unit="x.a_unit" />
-            <End v-if="x.b" :label="x.action === 'disconnect' ? $t('steckt an') : 'nach'" :name="x.b" :where="x.b_location !== x.a_location ? x.b_location : ''" :unit="x.b_unit" />
+            <End v-if="x.b" :label="x.action === 'disconnect' ? $t('steckt an') : $t('nach')" :name="x.b" :where="x.b_location !== x.a_location ? x.b_location : ''" :unit="x.b_unit" />
             <p v-if="x.old_b" class="text-sm text-slate-500">{{ $t('bisher:') + ' ' }}<span class="font-mono">{{ x.old_b }}</span></p>
             <p v-if="details(x)" class="text-sm text-slate-600 dark:text-slate-300">{{ details(x) }}</p>
             <p v-if="x.cfg_text" class="text-sm font-medium text-indigo-700 dark:text-indigo-300">{{ $t('VLAN:') }} {{ x.cfg_text }}</p>

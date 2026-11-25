@@ -51,9 +51,9 @@
           </div>
           <p v-if="links[i].note" class="text-xs text-slate-400 mt-0.5">{{ links[i].note }}</p>
           <div v-if="canWrite" class="flex gap-3 mt-1">
-            <button :class="btnLink" @click="toggleEdit(i)">{{ edit?.i === i ? $t('schließen') : 'bearbeiten' }}</button>
-            <button :class="btnLink" @click="toggleMove(i)">{{ mv?.i === i ? 'abbrechen' : 'umstecken' }}</button>
-            <button :class="btnLink" @click="toggleInsert(i)">{{ ins?.i === i ? 'abbrechen' : $t('+ Zwischenstation') }}</button>
+            <button :class="btnLink" @click="toggleEdit(i)">{{ edit?.i === i ? $t('schließen') : $t('bearbeiten') }}</button>
+            <button :class="btnLink" @click="toggleMove(i)">{{ mv?.i === i ? $t('abbrechen') : $t('umstecken') }}</button>
+            <button :class="btnLink" @click="toggleInsert(i)">{{ ins?.i === i ? $t('abbrechen') : $t('+ Zwischenstation') }}</button>
             <button :class="btnDanger" :disabled="busy" @click="unplug(i)">{{ $t('lösen') }}</button>
           </div>
 
