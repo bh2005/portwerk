@@ -1,11 +1,11 @@
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4" @click.self="$emit('close')">
     <div class="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden"
-         role="dialog" aria-modal="true" aria-label="Mein Profil">
+         role="dialog" aria-modal="true" :aria-label="$t('Mein Profil')">
 
       <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700">
-        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Mein Profil</h2>
-        <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Schließen (Esc)">
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('Mein Profil') }}</h2>
+        <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" :title="$t('Schließen (Esc)')">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
@@ -32,37 +32,39 @@
         <hr class="border-slate-100 dark:border-slate-700" />
 
         <div v-if="notify" class="space-y-2">
-          <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">E-Mail-Benachrichtigungen</h3>
+          <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ $t('E-Mail-Benachrichtigungen') }}</h3>
           <label v-for="[k, l] in notifyShown" :key="k" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
-            <input type="checkbox" :checked="notify[k]" @change="setNotify(k, $event.target.checked)" /> {{ l }}</label>
-          <p class="text-xs text-slate-400">{{ me.email ? `an ${me.email}` : 'Keine E-Mail-Adresse hinterlegt – es kommen keine Mails.' }}
-            Ob überhaupt Mails verschickt werden, legt die Verwaltung fest.</p>
+            <input type="checkbox" :checked="notify[k]" @change="setNotify(k, $event.target.checked)" /> {{ $t(l) }}</label>
+          <p class="text-xs text-slate-400">{{ me.email ? $t('an {mail}', { mail: me.email }) : $t('Keine E-Mail-Adresse hinterlegt – es kommen keine Mails.') }}
+            {{ $t('Ob überhaupt Mails verschickt werden, legt die Verwaltung fest.') }}</p>
           <p v-if="notifyMsg" class="text-xs text-green-600 dark:text-green-400">{{ notifyMsg }}</p>
         </div>
 
         <hr v-if="notify" class="border-slate-100 dark:border-slate-700" />
 
         <div v-if="me.id" class="space-y-2">
-          <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Abwesenheit und Vertretung</h3>
-          <p v-if="represents.length" class="text-xs text-sky-700 dark:text-sky-300">Du vertrittst gerade: {{ represents.map(u => u.full_name || u.username).join(', ') }}</p>
+          <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ $t('Abwesenheit und Vertretung') }}</h3>
+          <p v-if="represents.length" class="text-xs text-sky-700 dark:text-sky-300">{{ $t('Du vertrittst gerade:') }} {{ represents.map(u => u.full_name || u.username).join(', ') }}</p>
           <AbsenceEditor @changed="refreshMe" />
         </div>
 
         <hr v-if="me.id" class="border-slate-100 dark:border-slate-700" />
 
         <div v-if="prefs" class="space-y-2">
-          <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Persönliche Einstellungen</h3>
+          <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ $t('Persönliche Einstellungen') }}</h3>
           <div class="grid grid-cols-2 gap-2">
-            <div><label :class="lbl">Standard-Standort</label>
-              <select v-model="prefs.default_site_id" :class="inp" @change="savePrefs"><option :value="null">keiner (alle)</option>
+            <div class="col-span-2"><label :class="lbl">{{ $t('Sprache') }}</label>
+              <select v-model="prefs.lang" :class="inp" @change="saveLang"><option value="de">Deutsch</option><option value="en">English</option></select></div>
+            <div><label :class="lbl">{{ $t('Standard-Standort') }}</label>
+              <select v-model="prefs.default_site_id" :class="inp" @change="savePrefs"><option :value="null">{{ $t('keiner (alle)') }}</option>
                 <option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select></div>
-            <div><label :class="lbl">Startseite</label>
-              <select v-model="prefs.start_page" :class="inp" @change="savePrefs"><option v-for="[k, l] in START_PAGES" :key="k" :value="k">{{ l }}</option></select></div>
+            <div><label :class="lbl">{{ $t('Startseite') }}</label>
+              <select v-model="prefs.start_page" :class="inp" @change="savePrefs"><option v-for="[k, l] in START_PAGES" :key="k" :value="k">{{ $t(l) }}</option></select></div>
           </div>
-          <p class="text-xs text-slate-400">Der Standard-Standort belegt die Filter in Kapazität, Soll/Ist, Zeitreise und VLANs vor. Gilt auf allen Geräten.</p>
+          <p class="text-xs text-slate-400">{{ $t('Der Standard-Standort belegt die Filter in Kapazität, Soll/Ist, Zeitreise und VLANs vor. Gilt auf allen Geräten.') }}</p>
           <div v-if="sessions" class="flex items-center justify-between gap-2 text-sm pt-1">
-            <span class="text-slate-600 dark:text-slate-300">{{ sessions.active }} aktive Anmeldung(en)</span>
-            <button type="button" class="text-xs text-red-600 hover:underline dark:text-red-400" :disabled="sessions.active < 2" @click="logoutOthers">Alle anderen abmelden</button>
+            <span class="text-slate-600 dark:text-slate-300">{{ $t('{n} aktive Anmeldung(en)', { n: sessions.active }) }}</span>
+            <button type="button" class="text-xs text-red-600 hover:underline dark:text-red-400" :disabled="sessions.active < 2" @click="logoutOthers">{{ $t('Alle anderen abmelden') }}</button>
           </div>
           <p v-if="prefsMsg" class="text-xs text-green-600 dark:text-green-400">{{ prefsMsg }}</p>
         </div>
@@ -71,37 +73,37 @@
 
         <div class="space-y-3">
           <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
-            Passwort ändern
-            <HelpHint text="Beim Ändern werden alle anderen Sitzungen dieses Kontos beendet, du bleibst hier angemeldet." />
+            {{ $t('Passwort ändern') }}
+            <HelpHint :text="$t('Beim Ändern werden alle anderen Sitzungen dieses Kontos beendet, du bleibst hier angemeldet.')" />
           </h3>
 
           <p v-if="msg" class="text-sm rounded-lg px-3 py-2"
              :class="msgErr ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'">{{ msg }}</p>
 
           <div>
-            <label :class="lbl">Aktuelles Passwort</label>
+            <label :class="lbl">{{ $t('Aktuelles Passwort') }}</label>
             <input ref="firstField" v-model="current" :type="show ? 'text' : 'password'" autocomplete="current-password" :class="inp" @keyup.enter="save" />
           </div>
           <div>
-            <label :class="lbl">Neues Passwort</label>
+            <label :class="lbl">{{ $t('Neues Passwort') }}</label>
             <input v-model="next" :type="show ? 'text' : 'password'" autocomplete="new-password" :class="inp" @keyup.enter="save" />
-            <p class="text-[11px] mt-1" :class="next && next.length < MIN_LEN ? 'text-red-500' : 'text-slate-400'">Mindestens {{ MIN_LEN }} Zeichen</p>
+            <p class="text-[11px] mt-1" :class="next && next.length < MIN_LEN ? 'text-red-500' : 'text-slate-400'">{{ $t('Mindestens {n} Zeichen', { n: MIN_LEN }) }}</p>
           </div>
           <div>
-            <label :class="lbl">Neues Passwort bestätigen</label>
+            <label :class="lbl">{{ $t('Neues Passwort bestätigen') }}</label>
             <input v-model="confirm" :type="show ? 'text' : 'password'" autocomplete="new-password"
               :class="[inp, confirm && next !== confirm ? 'border-red-400 dark:border-red-500' : '']" @keyup.enter="save" />
-            <p v-if="confirm && next !== confirm" class="text-[11px] text-red-500 mt-1 dark:text-red-400">Passwörter stimmen nicht überein</p>
+            <p v-if="confirm && next !== confirm" class="text-[11px] text-red-500 mt-1 dark:text-red-400">{{ $t('Passwörter stimmen nicht überein') }}</p>
           </div>
           <label class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
-            <input v-model="show" type="checkbox" class="rounded border-slate-300 text-ks-600 focus:ring-ks-500" /> Passwörter anzeigen
+            <input v-model="show" type="checkbox" class="rounded border-slate-300 text-ks-600 focus:ring-ks-500" /> {{ $t('Passwörter anzeigen') }}
           </label>
         </div>
       </div>
 
       <div class="flex items-center justify-end gap-3 px-5 py-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800">
-        <button @click="$emit('close')" class="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">Schließen</button>
-        <button @click="save" :disabled="!canSave" :class="btnPrimary">{{ saving ? 'Speichern…' : 'Passwort ändern' }}</button>
+        <button @click="$emit('close')" class="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">{{ $t('Schließen') }}</button>
+        <button @click="save" :disabled="!canSave" :class="btnPrimary">{{ saving ? $t('Speichern…') : $t('Passwort ändern') }}</button>
       </div>
     </div>
   </div>
@@ -113,6 +115,7 @@ import { api, setToken, setUser, getUser, errText } from '../api.js'
 import { inp, lbl, btnPrimary, roleLabel } from '../ui.js'
 import HelpHint from './HelpHint.vue'
 import AbsenceEditor from './AbsenceEditor.vue'
+import { t, setLang } from '../i18n.js'
 
 const emit = defineEmits(['close'])
 const MIN_LEN = 8      // wie im Backend (OPP_MIN_PASSWORD_LEN)
@@ -135,20 +138,27 @@ async function savePrefs() {
   prefsMsg.value = ''
   try {
     const p = await api.setMyPreferences({ default_site_id: prefs.value.default_site_id || null, start_page: prefs.value.start_page })
-    prefs.value = p; setUser({ ...getUser(), prefs: p }); prefsMsg.value = 'Gespeichert.'
+    prefs.value = p; setUser({ ...getUser(), prefs: p }); prefsMsg.value = t('Gespeichert.')
+  } catch (e) { msgErr.value = true; msg.value = errText(e) }
+}
+/** Sprache speichern und die Seite neu aufbauen (alle Texte, auch bereits berechnete, in der neuen Sprache). */
+async function saveLang() {
+  try {
+    const p = await api.setMyPreferences({ default_site_id: prefs.value.default_site_id || null, start_page: prefs.value.start_page, lang: prefs.value.lang })
+    setUser({ ...getUser(), prefs: p }); setLang(p.lang); location.reload()
   } catch (e) { msgErr.value = true; msg.value = errText(e) }
 }
 async function logoutOthers() {
-  if (!confirm('Alle anderen Anmeldungen (andere Geräte und Browser) beenden?')) return
+  if (!confirm(t('Alle anderen Anmeldungen (andere Geräte und Browser) beenden?'))) return
   try {
     const r = await api.logoutOthers(); setToken(r.token)
-    sessions.value = { active: 1 }; prefsMsg.value = r.ended ? `${r.ended} andere Anmeldung(en) beendet.` : 'Es gab keine anderen Anmeldungen.'
+    sessions.value = { active: 1 }; prefsMsg.value = r.ended ? t('{n} andere Anmeldung(en) beendet.', { n: r.ended }) : t('Es gab keine anderen Anmeldungen.')
   } catch (e) { msgErr.value = true; msg.value = errText(e) }
 }
 const notify = ref(null), notifyMsg = ref('')
 async function setNotify(key, on) {
   notifyMsg.value = ''
-  try { notify.value = await api.setMyNotifications({ [key]: on }); notifyMsg.value = 'Gespeichert.' }
+  try { notify.value = await api.setMyNotifications({ [key]: on }); notifyMsg.value = t('Gespeichert.') }
   catch (e) { msgErr.value = true; msg.value = errText(e) }
 }
 
@@ -157,14 +167,14 @@ const canSave = computed(() => !saving.value && !!current.value && next.value.le
 async function save() {
   if (!canSave.value) return
   msg.value = ''
-  if (next.value === current.value) { msgErr.value = true; msg.value = 'Das neue Passwort muss sich vom aktuellen unterscheiden'; return }
+  if (next.value === current.value) { msgErr.value = true; msg.value = t('Das neue Passwort muss sich vom aktuellen unterscheiden'); return }
   saving.value = true
   try {
     const res = await api.changePassword(current.value, next.value)
     if (res.token) setToken(res.token)
     current.value = next.value = confirm.value = ''
     show.value = false
-    msgErr.value = false; msg.value = 'Passwort geändert. Alle anderen Sitzungen wurden beendet.'
+    msgErr.value = false; msg.value = t('Passwort geändert. Alle anderen Sitzungen wurden beendet.')
   } catch (e) {
     msgErr.value = true; msg.value = errText(e, 'Fehler beim Ändern des Passworts')
   } finally { saving.value = false }

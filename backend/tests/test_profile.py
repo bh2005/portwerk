@@ -97,9 +97,12 @@ def test_reservation_reminder_once_and_after_extension(client, admin, lab, fake_
 
 def test_ui_preferences(client, admin, lab):
     h = lab["h"]["w1"]
-    assert client.get("/auth/me", headers=h).json()["prefs"] == {"default_site_id": None, "start_page": ""}
+    assert client.get("/auth/me", headers=h).json()["prefs"] == {"default_site_id": None, "start_page": "", "lang": "de"}
     r = client.put("/auth/me/preferences", headers=h, json={"default_site_id": lab["site"], "start_page": "m"})
-    assert r.status_code == 200 and r.json() == {"default_site_id": lab["site"], "start_page": "m"}
+    assert r.status_code == 200 and r.json() == {"default_site_id": lab["site"], "start_page": "m", "lang": "de"}
+    assert client.put("/auth/me/preferences", headers=h, json={"default_site_id": lab["site"], "start_page": "m", "lang": "en"}).json()["lang"] == "en"
+    assert client.put("/auth/me/preferences", headers=h, json={"start_page": "m"}).json()["lang"] == "en"        # ohne lang: bleibt
+    assert client.put("/auth/me/preferences", headers=h, json={"lang": "fr"}).status_code == 400
     assert client.get("/auth/me", headers=h).json()["prefs"]["start_page"] == "m"
     assert client.put("/auth/me/preferences", headers=h, json={"start_page": "irgendwo"}).status_code == 400
     assert client.put("/auth/me/preferences", headers=h, json={"default_site_id": lab["site2"]}).status_code == 404   # fremder Standort

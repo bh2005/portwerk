@@ -4,6 +4,12 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 
 ## Offen
 
+- **Englisch – weitere Etappen**
+  Etappe 1 (Grundgerüst, Sprachwahl, Rahmen, Übersicht, Profil) ist umgesetzt. Offen: die Fachansichten (Geräte, Racks, Patchaufträge,
+  Soll/Ist, Kapazität, Zeitreise, VLANs, Katalog, Reservierungen, Aufräumen, Verwaltung, mobile Ansicht), die übrigen Server-Meldungen
+  (`frontend/src/locales/en.api.js`) und vom Server gelieferte Beschriftungen (Auftragsstatus, Kapazitätskategorien), danach Handbuch/Hilfe,
+  Mails (in der Sprache des Empfängers), Arbeitsanweisung als PDF und Etiketten.
+
 - **VLAN-Soll/Ist für Trunks, Voice-VLANs und andere Hersteller**
   Checkmk liefert VLANs nur für Cisco und nur Access-VLANs (Plugin `inv_cisco_vlans`). Für Trunks/Voice bräuchte es eigene Daten
   (z. B. CISCO-VTP-MIB oder ein eigenes Inventar-Plugin).
@@ -55,4 +61,8 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Aufräumen: vorläufige Kabel, von LLDP nicht gesehene Verbindungen, abgelaufene Reservierungen, liegengebliebene Aufträge, geplante Geräte ohne Auftrag; wöchentlicher Bericht an die Admins | #27 |
 | Abwesenheiten aus OpenPlan übernehmen, Standard-Vertretung (OpenPlan: `GET /api/absences`, Token-Freigabe „Abwesenheiten“) | #28 |
 | Geräte aus OpenPlan übernehmen (Geräte-Rollouts → geplante Geräte, Rückverweis in OpenPlan) | #29 |
-| „Nicht gesehen seit …“: LLDP-Verlauf je Verbindung (zuletzt gesehen, fehlt seit) in Soll/Ist und Aufräumbericht | (dieser PR) |
+| „Nicht gesehen seit …“: LLDP-Verlauf je Verbindung (zuletzt gesehen, fehlt seit) in Soll/Ist und Aufräumbericht | #30 |
+| Änderungen anderer bemerken (Revision, Hinweis „Neu laden“) | #31 |
+| Light Mode in Graustufen | #32 |
+| Untertitel „Portwerk – so isses.“ | #33 |
+| Englisch, Etappe 1: Grundgerüst (`i18n.js`, `locales/`), Sprachwahl im Profil und auf der Anmeldeseite, Rahmen und Übersicht | (dieser PR) |

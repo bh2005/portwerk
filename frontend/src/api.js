@@ -1,12 +1,13 @@
 import axios from 'axios'
 import { withOffset } from './ui.js'
+import { setLang, t, tApi } from './i18n.js'
 
 const TOKEN_KEY = 'opp_auth_token'
 const USER_KEY  = 'opp_user'
 
 export function getToken()   { return localStorage.getItem(TOKEN_KEY) || '' }
 export function setToken(t)  { localStorage.setItem(TOKEN_KEY, t) }
-export function setUser(u)   { localStorage.setItem(USER_KEY, JSON.stringify(u || {})) }
+export function setUser(u)   { localStorage.setItem(USER_KEY, JSON.stringify(u || {})); if (u?.prefs?.lang) setLang(u.prefs.lang) }   // Sprache aus dem Profil
 export function getUser()    { try { return JSON.parse(localStorage.getItem(USER_KEY) || '{}') } catch { return {} } }
 export function clearToken() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY) }
 export function isLoggedIn() { return !!getToken() }
@@ -53,10 +54,10 @@ http.interceptors.response.use(r => r, err => {
 /** Lesbare Fehlermeldung aus einer API-Antwort (FastAPI: detail als Text oder als Liste von Validierungsfehlern). */
 export function errText(e, fallback = 'Fehler') {
   const d = e?.response?.data?.detail
-  if (typeof d === 'string') return d
-  if (d && typeof d === 'object' && !Array.isArray(d) && d.message) return d.message
+  if (typeof d === 'string') return tApi(d)
+  if (d && typeof d === 'object' && !Array.isArray(d) && d.message) return tApi(d.message)
   if (Array.isArray(d)) return d.map(x => `${(x.loc || []).slice(1).join('.')}: ${x.msg}`).join('; ')
-  return fallback
+  return t(fallback)
 }
 
 /** Rückfrage-Antwort des Servers („Port belegt“, „HE belegt“): liefert {code, message, conflicts} oder null. */

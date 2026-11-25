@@ -118,16 +118,18 @@ def _absent(uid: int):
 
 
 START_PAGES = ("dashboard", "workorders", "m", "racks", "capacity")
+LANGS = ("de", "en")                                  # Sprache der Oberfläche (Standard: Deutsch)
 
 
 def ui_prefs(raw: str) -> dict:
-    """Persönliche Bedienung: Standard-Standort (Filter vorbelegen) und Startseite nach dem Login."""
+    """Persönliche Bedienung: Standard-Standort (Filter vorbelegen), Startseite nach dem Login und Sprache der Oberfläche."""
     try:
         d = json.loads(raw) if raw else {}
     except ValueError:
         d = {}
     return {"default_site_id": d.get("default_site_id") if isinstance(d.get("default_site_id"), int) else None,
-            "start_page": d.get("start_page") if d.get("start_page") in START_PAGES else ""}
+            "start_page": d.get("start_page") if d.get("start_page") in START_PAGES else "",
+            "lang": d.get("lang") if d.get("lang") in LANGS else "de"}
 
 
 def active_sessions(user_id: int) -> int:
