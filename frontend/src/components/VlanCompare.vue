@@ -1,31 +1,30 @@
 <template>
   <div class="space-y-4">
     <p class="text-sm text-slate-500 dark:text-slate-400">
-      Vergleicht die dokumentierte VLAN-Konfiguration (Soll) mit den VLANs, die Checkmk im Inventar meldet (Ist).
-      Checkmk liefert diese Daten nur für <b>Cisco</b> und nur <b>Access-VLANs</b> – Trunks und Voice-VLANs werden nicht gemeldet.
-      <template v-if="res"> Grundlage: {{ res.devices }} Gerät(e) mit VLAN-Daten.</template></p>
+      {{ $t('Vergleicht die dokumentierte VLAN-Konfiguration (Soll) mit den VLANs, die Checkmk im Inventar meldet (Ist). Checkmk liefert diese Daten nur für') + ' ' }}<b>{{ $t('Cisco') }}</b>{{ ' ' + $t('und nur') + ' ' }}<b>{{ $t('Access-VLANs') }}</b>{{ ' ' + $t('– Trunks und Voice-VLANs werden nicht gemeldet.') }}
+      <template v-if="res">{{ ' ' + $t('Grundlage: {n} Gerät(e) mit VLAN-Daten.', { n: res.devices }) }}</template></p>
     <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
 
     <div class="flex flex-wrap gap-2 items-center">
       <button v-for="[k, l] in chips" :key="k" type="button" @click="toggle(k)" class="px-3 py-1 rounded-full text-xs font-medium border transition-colors"
         :class="active.has(k) ? chipClass(k) + ' border-transparent' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-300 dark:border-slate-600'">
-        {{ l }} <span class="font-semibold">{{ res?.summary[k] ?? 0 }}</span></button>
-      <select v-model="fSite" :class="inp" class="max-w-[14rem] ml-auto" @change="load"><option value="">alle Standorte</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
-      <input v-model="q" :class="inp" class="max-w-xs" placeholder="Gerät/Port filtern …" />
+        {{ $t(l) }} <span class="font-semibold">{{ res?.summary[k] ?? 0 }}</span></button>
+      <select v-model="fSite" :class="inp" class="max-w-[14rem] ml-auto" @change="load"><option value="">{{ $t('alle Standorte') }}</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
+      <input v-model="q" :class="inp" class="max-w-xs" :placeholder="$t('Gerät/Port filtern …')" />
     </div>
 
     <div v-if="canWrite && adoptable.length" class="flex items-center gap-3 text-sm">
-      <span class="text-slate-500">{{ picked.size }} gewählt</span>
-      <button :class="btnPrimary" class="!py-1 !px-3 !text-xs" :disabled="!picked.size" @click="adopt">Ist übernehmen</button>
-      <button :class="btnLink" @click="picked = new Set(adoptable.map(r => r.port_id))">alle übernehmbaren wählen ({{ adoptable.length }})</button>
-      <span class="text-xs text-slate-400">trägt das gemeldete Access-VLAN als Doku ein (Historie: „checkmk“)</span>
+      <span class="text-slate-500">{{ $t('{n} gewählt', { n: picked.size }) }}</span>
+      <button :class="btnPrimary" class="!py-1 !px-3 !text-xs" :disabled="!picked.size" @click="adopt">{{ $t('Ist übernehmen') }}</button>
+      <button :class="btnLink" @click="picked = new Set(adoptable.map(r => r.port_id))">{{ $t('alle übernehmbaren wählen ({n})', { n: adoptable.length }) }}</button>
+      <span class="text-xs text-slate-400">{{ $t('trägt das gemeldete Access-VLAN als Doku ein (Historie: „checkmk“)') }}</span>
     </div>
 
     <div :class="card" class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead><tr><th v-if="canWrite" :class="th" class="w-6"></th><th :class="th">Ergebnis</th><th :class="th">Gerät : Port</th>
-          <th :class="th">Soll (dokumentiert)</th><th :class="th">Ist (Checkmk)</th><th :class="th">Hinweis</th></tr></thead>
+        <thead><tr><th v-if="canWrite" :class="th" class="w-6"></th><th :class="th">{{ $t('Ergebnis') }}</th><th :class="th">{{ $t('Gerät : Port') }}</th>
+          <th :class="th">{{ $t('Soll (dokumentiert)') }}</th><th :class="th">{{ $t('Ist (Checkmk)') }}</th><th :class="th">{{ $t('Hinweis') }}</th></tr></thead>
         <tbody>
           <tr v-for="r in shown" :key="r.port_id" class="border-t border-slate-100 dark:border-slate-700 align-top">
             <td v-if="canWrite" :class="td"><input v-if="r.adoptable" type="checkbox" :checked="picked.has(r.port_id)" @change="pick(r.port_id)" /></td>
@@ -44,6 +43,7 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { computed, onMounted, ref } from 'vue'
 import { api, errText, canWriteMaster, isSiteAdmin, defaultSite } from '../api.js'
 import { inp, card, th, td, btnPrimary, btnLink } from '../ui.js'
@@ -67,10 +67,10 @@ async function load() {
   try { res.value = await api.vlanCompare(fSite.value ? { site_id: fSite.value } : {}) } catch (e) { error.value = errText(e) }
 }
 async function adopt() {
-  if (!confirm(`Für ${picked.value.size} Port(s) das von Checkmk gemeldete Access-VLAN als Doku übernehmen?`)) return
+  if (!confirm(t('Für {n} Port(s) das von Checkmk gemeldete Access-VLAN als Doku übernehmen?', { n: picked.value.size }))) return
   try {
     const r = await api.vlanAdopt([...picked.value])
-    msg.value = `${r.adopted} übernommen` + (r.skipped ? `, ${r.skipped} übersprungen (kein eindeutiges VLAN oder keine Berechtigung)` : '') + '.'
+    msg.value = t('{n} übernommen', { n: r.adopted }) + (r.skipped ? ', ' + t('{n} übersprungen (kein eindeutiges VLAN oder keine Berechtigung)', { n: r.skipped }) : '') + '.'
     picked.value = new Set(); await load()
   } catch (e) { error.value = errText(e) }
 }

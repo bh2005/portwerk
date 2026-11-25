@@ -27,7 +27,7 @@
       <div class="flex bg-white dark:bg-slate-800 rounded-xl p-1 shadow-sm text-sm font-medium">
         <button v-for="[k, l] in FILTERS" :key="k" class="flex-1 py-2 rounded-lg"
           :class="filter === k ? 'bg-ks-600 text-white' : 'text-slate-600 dark:text-slate-300'" @click="filter = k">
-          {{ l }} ({{ count(k) }})</button>
+          {{ $t(l) }} ({{ count(k) }})</button>
       </div>
 
       <!-- Positionen nach Ort -->

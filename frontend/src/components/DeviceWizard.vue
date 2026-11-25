@@ -61,7 +61,7 @@
       </div>
       <div class="grid grid-cols-3 gap-3">
         <div><label :class="lbl">{{ $t('Einbau') }}</label>
-          <select v-model="form.orientation" :class="inp" @change="mountChanged"><option v-for="[k, l] in orientationOptions" :key="k" :value="k">{{ l }}</option></select></div>
+          <select v-model="form.orientation" :class="inp" @change="mountChanged"><option v-for="[k, l] in orientationOptions" :key="k" :value="k">{{ $t(l) }}</option></select></div>
         <div v-if="loc?.kind === 'rack' && form.orientation !== 'din_rail'"><label :class="lbl">{{ $t('Seite') }}</label>
           <select v-model="form.mount_side" :class="inp" @change="mountChanged"><option value="front">{{ $t('Vorderseite') }}</option><option value="rear">{{ $t('Rückseite') }}</option>
             <option v-if="form.orientation === 'horizontal'" value="both">{{ $t('beide Seiten (durchgehend)') }}</option></select></div>

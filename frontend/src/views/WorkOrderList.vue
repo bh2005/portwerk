@@ -14,7 +14,7 @@
     <div class="flex gap-2 flex-wrap">
       <select v-model="filterStatus" :class="inp" class="w-48">
         <option value="">{{ $t('Alle Status') }}</option>
-        <option v-for="[v, l] in STATUS_OPTIONS" :key="v" :value="v">{{ l }}</option>
+        <option v-for="[v, l] in STATUS_OPTIONS" :key="v" :value="v">{{ $t(l) }}</option>
       </select>
       <select v-model="filterAssigned" :class="inp" class="w-44" @change="load"><option value="">{{ $t('Alle Aufträge') }}</option><option value="me">{{ $t('Mir zugewiesen') }}</option></select>
       <input v-model="filterQ" :class="inp" class="flex-1 min-w-48" :placeholder="$t('Suche Nummer / Titel / Ersteller…')" @keyup.enter="load" />
@@ -79,7 +79,7 @@
             <div>
               <label :class="lbl">{{ $t('Priorität') }}</label>
               <select v-model="form.priority" :class="inp">
-                <option v-for="[v, l] in PRIO_OPTIONS" :key="v" :value="v">{{ l }}</option>
+                <option v-for="[v, l] in PRIO_OPTIONS" :key="v" :value="v">{{ $t(l) }}</option>
               </select>
             </div>
             <div>

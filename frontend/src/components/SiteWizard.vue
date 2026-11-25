@@ -38,7 +38,7 @@
       <template v-else-if="preview">
         <div class="flex flex-wrap gap-2 text-xs">
           <span v-if="preview.site.new" class="px-2 py-1 rounded-full bg-ks-50 dark:bg-ks-900/30 text-ks-700 dark:text-ks-300">{{ $t('1 Standort:') }} {{ preview.site.code }}</span>
-          <span v-for="[k, l] in COUNTS" :key="k" v-show="preview.counts[k]" class="px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{{ preview.counts[k] }} {{ l }}</span>
+          <span v-for="[k, l] in COUNTS" :key="k" v-show="preview.counts[k]" class="px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{{ preview.counts[k] }} {{ $t(l) }}</span>
           <span v-if="!preview.items.length" class="text-slate-400">{{ $t('Keine Locations – es wird nur der Standort angelegt.') }}</span>
         </div>
         <ul v-if="preview.items.length" class="text-xs font-mono max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg p-2 space-y-0.5">
