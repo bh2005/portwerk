@@ -10,3 +10,13 @@
   body { @apply text-slate-800; }
   .dark { color: theme('colors.slate.200'); }
 }
+
+/* Light Mode: Graustufen statt reinem Weiß (augenfreundlicher). Die Overrides stehen nach den Tailwind-Utilities und gelten für alle Stellen mit bg-white/bg-slate-50/
+   bg-slate-100; im Dark Mode gewinnen die spezifischeren dark:-Varianten. Beim Drucken (Etiketten, Arbeitsanweisung) bleibt es weiß. */
+.bg-white { background-color: #f1f5f9; }                      /* Karten, Tabellen, Dialoge */
+.bg-slate-50 { background-color: #e8edf3; }                   /* Seitenhintergrund, Eingabefelder, Tabellenköpfe */
+.bg-slate-100 { background-color: #e2e8f0; }                  /* Buttons, Chips */
+.border-slate-200 { border-color: #cbd5e1; }
+@media print {
+  .bg-white { background-color: #fff; } .bg-slate-50 { background-color: #f8fafc; } .bg-slate-100 { background-color: #f1f5f9; } .border-slate-200 { border-color: #e2e8f0; }
+}

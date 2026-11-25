@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.14.1 – 2026-11-25
+- Light Mode in Graustufen: Statt reinem Weiß sind Karten, Tabellen und Dialoge hellgrau, der Seitenhintergrund und die Eingabefelder etwas dunkler – augenfreundlicher. Der Dark Mode und der Druck (Etiketten, Arbeitsanweisung) bleiben unverändert.
+
 ## 0.14.0 – 2026-11-25
 - Änderungen anderer bemerken: Portwerk merkt sich bei jeder erfolgreichen Änderung (Anlegen, Ändern, Löschen, Import, API-Zugang), wer sie gemacht hat. Die Oberfläche fragt alle 20 Sekunden (nur bei sichtbarem Tab) ab, ob **andere** seit dem Laden etwas geändert haben. Dann erscheint oben der Hinweis „… hat Daten geändert“ mit „Neu laden“ und „Ausblenden“ – nichts wird still überschrieben, offene Formulare bleiben unberührt. Die Übersicht lädt bei fremden Änderungen von selbst nach. Eigene Änderungen lösen keinen Hinweis aus; Änderungen durch einen API-Zugang (z. B. der Checkmk-Import) zählen als fremd. Neu: GET /api/live.
 
