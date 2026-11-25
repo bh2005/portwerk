@@ -65,7 +65,7 @@
               <td :class="td" class="font-mono">{{ r.soll }}<span v-if="r.via.length" class="text-xs text-slate-400"> über {{ r.via.join(', ') }}</span></td>
               <td :class="td" class="whitespace-nowrap">
                 <span :class="r.old ? 'text-amber-700 dark:text-amber-300 font-medium' : 'text-slate-600 dark:text-slate-300'">{{ r.missing_since ? ago(r.age_days) : 'unbekannt' }}</span>
-                <span class="block text-xs text-slate-400">{{ r.last_ok ? `zuletzt gesehen ${fmtDate(r.last_ok)}` : 'nie gesehen' }}</span></td>
+                <span class="block text-xs text-slate-400">{{ r.last_ok ? `zuletzt gesehen ${fmtDate(r.last_ok)}` : $t('nie gesehen') }}</span></td>
               <td :class="td" class="text-right"><button :class="btnLink" @click="strecke = r.port_id">Strecke</button></td>
             </tr>
           </tbody>
@@ -103,7 +103,7 @@
           <tbody>
             <tr v-for="w in data.stale_orders" :key="w.id" class="border-t border-slate-100 dark:border-slate-700">
               <td :class="td"><router-link :to="`/workorders/${w.id}`" :class="link">{{ w.number }}</router-link> {{ w.title }}</td>
-              <td :class="td">{{ w.status_label }}</td>
+              <td :class="td">{{ $t(w.status_label) }}</td>
               <td :class="td" class="text-slate-500">{{ w.created_by }}</td>
               <td :class="td" class="text-amber-700 dark:text-amber-300 whitespace-nowrap">{{ ago(w.age_days) }}</td>
             </tr>

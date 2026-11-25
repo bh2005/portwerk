@@ -28,14 +28,14 @@
         <thead><tr><th :class="th">Ergebnis</th><th :class="th">Gerät : Port</th><th :class="th">Soll (dokumentiert)</th><th :class="th">Ist (gesehen)</th><th :class="th"></th></tr></thead>
         <tbody>
           <tr v-for="r in shown" :key="r.device_id + ':' + r.port" class="border-t border-slate-100 dark:border-slate-700 align-top">
-            <td :class="td"><span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" :class="chipClass(r.status)">{{ r.status_label }}</span>
-              <div v-if="r.status === 'not_seen' && r.missing_since" class="text-[11px] text-slate-500 mt-1 whitespace-nowrap" :title="r.last_ok ? `zuletzt gesehen ${fmtDay(r.last_ok)}` : 'seit Beginn der Aufzeichnung nicht gesehen'">
+            <td :class="td"><span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" :class="chipClass(r.status)">{{ $t(r.status_label) }}</span>
+              <div v-if="r.status === 'not_seen' && r.missing_since" class="text-[11px] text-slate-500 mt-1 whitespace-nowrap" :title="r.last_ok ? `zuletzt gesehen ${fmtDay(r.last_ok)}` : $t('seit Beginn der Aufzeichnung nicht gesehen')">
                 seit {{ fmtDay(r.missing_since) }}</div></td>
             <td :class="td" class="font-mono text-xs"><router-link :to="`/devices/${r.device_id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ r.device }}</router-link>:{{ r.port }}</td>
             <td :class="td" class="text-xs">
               <template v-if="r.soll?.label"><span class="font-mono text-slate-700 dark:text-slate-200">{{ r.soll.label }}</span>
                 <span v-if="r.soll.via.length" class="block text-slate-400">über {{ r.soll.via.join(' → ') }}</span></template>
-              <span v-else-if="r.soll?.why" class="text-amber-600 dark:text-amber-400">{{ r.soll.why }}</span>
+              <span v-else-if="r.soll?.why" class="text-amber-600 dark:text-amber-400">{{ $tApi(r.soll.why) }}</span>
               <span v-else class="text-slate-400">nicht dokumentiert</span>
             </td>
             <td :class="td" class="text-xs">
@@ -52,7 +52,7 @@
               <router-link v-if="r.soll?.label || r.ist[0]?.port_id" class="text-xs text-ks-600 dark:text-ks-400 hover:underline" :to="`/devices/${r.device_id}`">Gerät →</router-link></td>
           </tr>
           <tr v-if="!shown.length"><td colspan="5" class="px-3 py-6 text-center text-slate-400">
-            {{ res && !res.devices ? 'Noch keine Nachbardaten – sie kommen mit dem Checkmk-Import (Verwaltung → Checkmk).' : 'Keine Einträge für diese Auswahl.' }}</td></tr>
+            {{ res && !res.devices ? $t('Noch keine Nachbardaten – sie kommen mit dem Checkmk-Import (Verwaltung → Checkmk).') : $t('Keine Einträge für diese Auswahl.') }}</td></tr>
         </tbody>
       </table>
     </div>

@@ -2,71 +2,71 @@
   <div class="max-w-6xl space-y-4">
     <div class="flex items-start justify-between gap-3 flex-wrap print:hidden">
       <div>
-        <button class="text-sm text-slate-400 hover:text-ks-600 dark:hover:text-ks-400" @click="$router.push('/workorders')">← Aufträge</button>
-        <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Patchliste</h1>
+        <button class="text-sm text-slate-400 hover:text-ks-600 dark:hover:text-ks-400" @click="$router.push('/workorders')">{{ $t('← Aufträge') }}</button>
+        <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Patchliste') }}</h1>
       </div>
       <div class="flex gap-2 flex-wrap items-center">
-        <select v-model="group" :class="inp" class="!w-44" @change="load"><option value="location">nach Ort sortiert</option><option value="order">nach Auftrag</option><option value="none">in Auftragsreihenfolge</option></select>
-        <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="onlyOpen" @change="load" /> nur offene</label>
-        <button :class="btnGhost" @click="sendOpen = true">Senden …</button>
-        <button :class="btnGhost" @click="exportPdf">PDF</button>
-        <button :class="btnGhost" @click="exportCsv">CSV-Export</button>
-        <button :class="btnPrimary" @click="print">Drucken</button>
+        <select v-model="group" :class="inp" class="!w-44" @change="load"><option value="location">{{ $t('nach Ort sortiert') }}</option><option value="order">{{ $t('nach Auftrag') }}</option><option value="none">{{ $t('in Auftragsreihenfolge') }}</option></select>
+        <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="onlyOpen" @change="load" />{{ ' ' + $t('nur offene') }}</label>
+        <button :class="btnGhost" @click="sendOpen = true">{{ $t('Senden …') }}</button>
+        <button :class="btnGhost" @click="exportPdf">{{ $t('PDF') }}</button>
+        <button :class="btnGhost" @click="exportCsv">{{ $t('CSV-Export') }}</button>
+        <button :class="btnPrimary" @click="print">{{ $t('Drucken') }}</button>
       </div>
     </div>
     <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
-    <SendDialog v-if="sendOpen" title="Patchliste senden" :submit="b => api.sendPatchlist({ ...b, ids: data.orders.map(o => o.id), group, only_open: onlyOpen })" @close="sendOpen = false" />
+    <SendDialog v-if="sendOpen" :title="$t('Patchliste senden')" :submit="b => api.sendPatchlist({ ...b, ids: data.orders.map(o => o.id), group, only_open: onlyOpen })" @close="sendOpen = false" />
 
     <!-- Kopf (auch im Ausdruck) -->
     <div v-if="data" :class="card" class="p-4 space-y-2">
-      <div class="hidden print:block text-lg font-semibold">Patchliste · {{ today }}</div>
+      <div class="hidden print:block text-lg font-semibold">{{ $t('Patchliste') }} · {{ today }}</div>
       <div class="flex flex-wrap gap-2 text-sm">
         <router-link v-for="o in data.orders" :key="o.id" :to="`/workorders/${o.id}`" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 print:no-underline">
           <span class="font-mono font-semibold text-ks-700 dark:text-ks-400">{{ o.number }}</span> {{ o.title }}
-          <span class="text-xs text-slate-400">· {{ o.status_label }} · {{ o.progress.done }}/{{ o.progress.total }}</span></router-link>
+          <span class="text-xs text-slate-400">· {{ $t(o.status_label) }} · {{ o.progress.done }}/{{ o.progress.total }}</span></router-link>
       </div>
       <div class="flex items-center gap-3 text-sm text-slate-500">
-        <span>{{ data.summary.total }} Positionen<template v-for="(n, k) in data.summary.by_action" :key="k"> · {{ n }}× {{ actionName(k) }}</template></span>
+        <span>{{ $t('{n} Positionen', { n: data.summary.total }) }}<template v-for="(n, k) in data.summary.by_action" :key="k"> · {{ n }}× {{ actionName(k) }}</template></span>
         <span class="flex-1 max-w-xs h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden print:hidden"><span class="block h-full bg-green-500" :style="{ width: pct + '%' }"></span></span>
-        <span>{{ data.summary.done }} erledigt<template v-if="data.summary.deviation"> · {{ data.summary.deviation }} Abweichung</template></span>
+        <span>{{ $t('{n} erledigt', { n: data.summary.done }) }}<template v-if="data.summary.deviation"> · {{ $t('{n} Abweichung', { n: data.summary.deviation }) }}</template></span>
       </div>
     </div>
 
     <!-- Sammelaktionen -->
     <div v-if="data && data.items.length" class="flex items-center gap-3 flex-wrap print:hidden">
-      <span class="text-sm text-slate-500">{{ selected.size }} ausgewählt</span>
-      <button :class="btnPrimary" :disabled="!selected.size || busy" @click="act('execute')">Auswahl abhaken</button>
-      <button :class="btnGhost" :disabled="!selected.size || busy" @click="act('deviation')">Abweichung …</button>
-      <button :class="btnGhost" :disabled="!selected.size || busy" @click="act('reopen')">Zurücksetzen</button>
-      <button :class="btnLink" @click="selectOpen">alle offenen wählen</button>
-      <button v-if="selected.size" :class="btnLink" @click="selected = new Set()">Auswahl aufheben</button>
+      <span class="text-sm text-slate-500">{{ $t('{n} ausgewählt', { n: selected.size }) }}</span>
+      <button :class="btnPrimary" :disabled="!selected.size || busy" @click="act('execute')">{{ $t('Auswahl abhaken') }}</button>
+      <button :class="btnGhost" :disabled="!selected.size || busy" @click="act('deviation')">{{ $t('Abweichung …') }}</button>
+      <button :class="btnGhost" :disabled="!selected.size || busy" @click="act('reopen')">{{ $t('Zurücksetzen') }}</button>
+      <button :class="btnLink" @click="selectOpen">{{ $t('alle offenen wählen') }}</button>
+      <button v-if="selected.size" :class="btnLink" @click="selected = new Set()">{{ $t('Auswahl aufheben') }}</button>
       <span v-if="note" class="text-sm text-green-600 dark:text-green-400">{{ note }}</span>
     </div>
 
     <div v-if="data" :class="card" class="overflow-x-auto print:shadow-none print:border-0">
-      <p v-if="!data.items.length" class="p-6 text-sm text-slate-400">Keine Positionen.</p>
+      <p v-if="!data.items.length" class="p-6 text-sm text-slate-400">{{ $t('Keine Positionen.') }}</p>
       <table v-else class="w-full text-sm">
         <thead class="bg-slate-50 dark:bg-slate-700/40 print:bg-transparent">
           <tr>
             <th :class="th" class="w-8 print:hidden"><input type="checkbox" :checked="allSelected" @change="toggleAll" /></th>
-            <th :class="th">Nr</th><th :class="th">Aktion</th><th :class="th">Seite A</th><th :class="th">Seite B</th><th :class="th">Kabel</th>
-            <th v-if="group !== 'order'" :class="th">Auftrag</th><th :class="th">Status</th><th :class="th" class="hidden print:table-cell">erledigt</th>
+            <th :class="th">{{ $t('Nr') }}</th><th :class="th">{{ $t('Aktion') }}</th><th :class="th">{{ $t('Seite A') }}</th><th :class="th">{{ $t('Seite B') }}</th><th :class="th">{{ $t('Kabel') }}</th>
+            <th v-if="group !== 'order'" :class="th">{{ $t('Auftrag') }}</th><th :class="th">{{ $t('Status') }}</th><th :class="th" class="hidden print:table-cell">{{ $t('erledigt') }}</th>
           </tr>
         </thead>
         <tbody>
           <template v-for="(it, i) in data.items" :key="`${it.workorder_id}-${it.id}`">
             <tr v-if="group !== 'none' && (i === 0 || data.items[i - 1].group !== it.group)" class="bg-slate-100 dark:bg-slate-700/60 print:bg-slate-100 break-after-avoid">
-              <td :colspan="9" class="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-200">{{ it.group }} <span class="font-normal text-slate-400">· {{ countIn(it.group) }} Positionen</span></td>
+              <td :colspan="9" class="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-200">{{ it.group }} <span class="font-normal text-slate-400">· {{ $t('{n} Positionen', { n: countIn(it.group) }) }}</span></td>
             </tr>
             <tr class="border-t border-slate-100 dark:border-slate-700 break-inside-avoid" :class="it.item_status === 'done' ? 'bg-green-50/50 dark:bg-green-900/10' : (it.item_status === 'deviation' ? 'bg-orange-50/60 dark:bg-orange-900/10' : '')">
               <td :class="td" class="print:hidden"><input type="checkbox" :checked="selected.has(key(it))" @change="toggle(it)" /></td>
               <td :class="td" class="text-slate-400">{{ i + 1 }}</td>
-              <td :class="td" class="text-xs">{{ it.action_label }}</td>
+              <td :class="td" class="text-xs">{{ $t(it.action_label) }}</td>
               <td :class="td" class="font-mono text-xs">{{ it.a }}<div v-if="group !== 'location' && it.a_location" class="text-[10px] text-slate-400 font-sans">{{ it.a_location }}</div></td>
               <td :class="td" class="font-mono text-xs">{{ it.b }}<div v-if="it.b_location" class="text-[10px] text-slate-400 font-sans">{{ it.b_location }}</div></td>
               <td :class="td" class="text-xs"><span class="font-mono">{{ it.cable_label }}</span> <span class="text-slate-400">{{ it.cable_type }}<template v-if="it.length_m"> · {{ it.length_m }} m</template></span></td>
               <td v-if="group !== 'order'" :class="td" class="font-mono text-xs text-slate-500">{{ it.order }}</td>
-              <td :class="td" class="text-xs"><span :class="statusClass(it.item_status)" class="px-2 py-0.5 rounded-full">{{ { open: 'offen', done: 'erledigt', deviation: 'Abweichung' }[it.item_status] }}</span>
+              <td :class="td" class="text-xs"><span :class="statusClass(it.item_status)" class="px-2 py-0.5 rounded-full">{{ $t({ open: 'offen', done: 'erledigt', deviation: 'Abweichung' }[it.item_status]) }}</span>
                 <span v-if="it.deviation_note" class="block text-orange-600">{{ it.deviation_note }}</span></td>
               <td :class="td" class="hidden print:table-cell text-lg leading-none">☐</td>
             </tr>
@@ -78,6 +78,7 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import SendDialog from '../components/SendDialog.vue'
@@ -95,7 +96,7 @@ const key = it => `${it.workorder_id}:${it.id}`
 const pct = computed(() => data.value?.summary.total ? Math.round(100 * data.value.summary.done / data.value.summary.total) : 0)
 const allSelected = computed(() => !!data.value?.items.length && data.value.items.every(it => selected.value.has(key(it))))
 const countIn = g => data.value.items.filter(it => it.group === g).length
-const actionName = a => ({ connect: 'verbinden', disconnect: 'trennen', move: 'umstecken', install_device: 'Gerät einbauen', remove_device: 'Gerät zurückbauen' }[a] || a)
+const actionName = a => ({ connect: t('verbinden'), disconnect: t('trennen'), move: t('umstecken'), install_device: t('Gerät einbauen'), remove_device: t('Gerät zurückbauen') }[a] || a)
 const statusClass = s => ({ open: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400', done: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   deviation: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' }[s])
 
@@ -110,7 +111,7 @@ function selectOpen() { selected.value = new Set(data.value.items.filter(it => i
 async function act(kind) {
   let body = kind === 'execute' ? { action: 'execute', item_status: 'done' } : kind === 'reopen' ? { action: 'reopen' } : null
   if (kind === 'deviation') {
-    const n = prompt('Abweichung – was war anders?'); if (!n || !n.trim()) return
+    const n = prompt(t('Abweichung – was war anders?')); if (!n || !n.trim()) return
     body = { action: 'execute', item_status: 'deviation', deviation_note: n.trim() }
   }
   const byOrder = {}

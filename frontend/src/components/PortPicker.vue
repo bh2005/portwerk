@@ -5,7 +5,7 @@
       <input v-model="q" :class="inp" :placeholder="$t('Gerät suchen (Hostname, mind. 2 Zeichen)')" @input="search" />
       <div v-if="results.length" class="max-h-36 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-700">
         <button v-for="d in results" :key="d.id" type="button" @click="pickDevice(d.id)" class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/40">
-          {{ d.hostname }} <span class="text-xs text-slate-400">· {{ typeLabel(d.type) }} · {{ d.location_path || 'ohne Location' }}</span></button>
+          {{ d.hostname }} <span class="text-xs text-slate-400">· {{ typeLabel(d.type) }} · {{ d.location_path || $t('ohne Location') }}</span></button>
       </div>
     </div>
     <template v-else>

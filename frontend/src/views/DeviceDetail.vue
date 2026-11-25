@@ -122,7 +122,7 @@
     <WorkplaceWizard v-if="workplaceFor" :preset="workplaceFor" @close="workplaceFor = null; load()" />
 
     <ModalDialog v-if="vlanDlg" wide :title="`VLAN / Portprofil – ${d.hostname}:${vlanDlg.port.name}`" :error="formError" @close="vlanDlg = null">
-      <p class="text-sm mb-3"><span class="text-slate-500">{{ $t('Aktuell:') }}</span> <b>{{ vlanDlg.port.config ? vlanDlg.port.config.text : 'nicht dokumentiert' }}</b></p>
+      <p class="text-sm mb-3"><span class="text-slate-500">{{ $t('Aktuell:') }}</span> <b>{{ vlanDlg.port.config ? vlanDlg.port.config.text : $t('nicht dokumentiert') }}</b></p>
       <template v-if="canWrite">
         <PortConfigFields :cfg="vlanDlg.cfg" :profiles="vlanDlg.profiles" :vlans="vlanDlg.vlans" />
         <p class="text-xs text-slate-400 mt-2">{{ $t('Direkt ändern ist für Administratoren gedacht; im Ablauf über den Auftrag „Port umkonfigurieren“.') }}</p>
@@ -133,7 +133,7 @@
           {{ fmtTime(h.changed_at) }} · {{ h.workorder ? h.workorder.number : h.changed_by }}: <span class="line-through text-slate-400">{{ h.before }}</span> → {{ h.after }}</div>
       </div>
       <template #footer>
-        <button :class="btnGhost" @click="vlanDlg = null">{{ canWrite ? 'Abbrechen' : 'Schließen' }}</button>
+        <button :class="btnGhost" @click="vlanDlg = null">{{ canWrite ? $t('Abbrechen') : $t('Schließen') }}</button>
         <button v-if="canWrite" :class="btnPrimary" @click="saveVlan">{{ $t('Speichern') }}</button>
       </template>
     </ModalDialog>
@@ -161,7 +161,7 @@
       </template>
     </ModalDialog>
 
-    <ModalDialog v-if="portForm" :title="portForm.id ? 'Port bearbeiten' : 'Neuer Port'" :error="formError" @close="portForm = null">
+    <ModalDialog v-if="portForm" :title="portForm.id ? $t('Port bearbeiten') : $t('Neuer Port')" :error="formError" @close="portForm = null">
       <div class="grid grid-cols-2 gap-3">
         <div><label :class="lbl">{{ $t('Name') }}</label><input v-model="portForm.name" :class="inp" /></div>
         <div><label :class="lbl">{{ $t('Medium') }}</label><select v-model="portForm.medium" :class="inp"><option v-for="m in PORT_MEDIA" :key="m">{{ m }}</option></select></div>

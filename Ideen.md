@@ -5,9 +5,8 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 ## Offen
 
 - **Englisch – weitere Etappen**
-  Etappe 1 (Grundgerüst, Sprachwahl, Rahmen, Übersicht, Profil) und Etappe 2 (Bestand: Standorte, Geräte, Racks, Strecken) sind umgesetzt.
-  Offen: Etappe 3 Patchaufträge (Liste, Detail, mobile Ansicht, Patchliste, Etiketten, Reservierungen, Kabel-/Arbeitsplatz-Assistenten,
-  Autorouting), Etappe 4 Analyse (Soll/Ist, Kapazität, Zeitreise, Aufräumen, VLANs, WAN, Katalog), Etappe 5 Verwaltung und Import, die übrigen Server-Meldungen
+  Etappe 1 (Grundgerüst, Sprachwahl, Rahmen, Übersicht, Profil), Etappe 2 (Bestand) und Etappe 3 (Patchaufträge) sind umgesetzt.
+  Offen: Etappe 4 Analyse (Soll/Ist, Kapazität, Zeitreise, Aufräumen, VLANs, WAN, Katalog), Etappe 5 Verwaltung und Import, die übrigen Server-Meldungen
   (`frontend/src/locales/en.api.js`) und vom Server gelieferte Beschriftungen (Auftragsstatus, Kapazitätskategorien), danach Handbuch/Hilfe,
   Mails (in der Sprache des Empfängers), Arbeitsanweisung als PDF und Etiketten.
 
@@ -67,4 +66,5 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Light Mode in Graustufen | #32 |
 | Untertitel „Portwerk – so isses.“ | #33 |
 | Englisch, Etappe 1: Grundgerüst (`i18n.js`, `locales/`), Sprachwahl im Profil und auf der Anmeldeseite, Rahmen und Übersicht | #34 |
-| Englisch, Etappe 2: Bestand (Standorte, Geräte, Racks, Strecken, Geräte-Assistent) | (dieser PR) |
+| Englisch, Etappe 2: Bestand (Standorte, Geräte, Racks, Strecken, Geräte-Assistent) | #35 |
+| Englisch, Etappe 3: Patchaufträge (Liste, Detail, mobile Ansicht, Patchliste, Etiketten, Reservierungen, Kabel-Assistenten) | (dieser PR) |

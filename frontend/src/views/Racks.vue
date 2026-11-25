@@ -53,7 +53,7 @@
         <div class="flex border-2 border-slate-400 dark:border-slate-500 rounded bg-slate-100 dark:bg-slate-900 min-w-[300px]">
           <!-- Seitenkanal links -->
           <div class="relative w-9 shrink-0 border-r border-slate-300 dark:border-slate-600 bg-slate-200/60 dark:bg-slate-800/60"
-            :style="{ height: total * UNIT + 'px' }" :class="canPlace ? 'cursor-pointer hover:bg-ks-50 dark:hover:bg-ks-900/20' : ''" :title="canPlace ? 'Seitenkanal links – Hochkant-Gerät platzieren' : ''"
+            :style="{ height: total * UNIT + 'px' }" :class="canPlace ? 'cursor-pointer hover:bg-ks-50 dark:hover:bg-ks-900/20' : ''" :title="canPlace ? $t('Seitenkanal links – Hochkant-Gerät platzieren') : ''"
             @click.self="askVertical('left')">
             <button v-for="d in channel('left')" :key="d.id" type="button" @click.stop="select(d)" :title="`${d.hostname} (hochkant)`"
               class="absolute inset-x-0.5 rounded text-[10px] font-medium text-white overflow-hidden flex items-center justify-center"
@@ -78,7 +78,7 @@
 
           <!-- Seitenkanal rechts -->
           <div class="relative w-9 shrink-0 border-l border-slate-300 dark:border-slate-600 bg-slate-200/60 dark:bg-slate-800/60"
-            :style="{ height: total * UNIT + 'px' }" :class="canPlace ? 'cursor-pointer hover:bg-ks-50 dark:hover:bg-ks-900/20' : ''" :title="canPlace ? 'Seitenkanal rechts – Hochkant-Gerät platzieren' : ''"
+            :style="{ height: total * UNIT + 'px' }" :class="canPlace ? 'cursor-pointer hover:bg-ks-50 dark:hover:bg-ks-900/20' : ''" :title="canPlace ? $t('Seitenkanal rechts – Hochkant-Gerät platzieren') : ''"
             @click.self="askVertical('right')">
             <button v-for="d in channel('right')" :key="d.id" type="button" @click.stop="select(d)" :title="`${d.hostname} (hochkant)`"
               class="absolute inset-x-0.5 rounded text-[10px] font-medium text-white overflow-hidden flex items-center justify-center"
@@ -94,7 +94,7 @@
           <div class="flex items-start justify-between gap-3 flex-wrap">
             <div>
               <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ selected.hostname }}</h2>
-              <p class="text-xs text-slate-400">{{ typeLabel(selected.type) }} · {{ [selected.vendor, selected.model].filter(Boolean).join(' ') || 'kein Modell' }} · {{ mountText(selected) }}
+              <p class="text-xs text-slate-400">{{ typeLabel(selected.type) }} · {{ [selected.vendor, selected.model].filter(Boolean).join(' ') || $t('kein Modell') }} · {{ mountText(selected) }}
                 <template v-if="selected.mgmt_ip"> · {{ selected.mgmt_ip }}</template></p>
             </div>
             <div class="flex gap-3 items-center">
@@ -153,7 +153,7 @@
 
     <!-- Frage: freien Platz belegen -->
     <ModalDialog v-if="place" :title="place.slot ? `${$t('Seitenkanal')} ${place.slot === 'left' ? $t('links') : $t('rechts')} (${view === 'front' ? $t('vorne') : $t('hinten')})` : `${$t('HE {n} ist frei', { n: place.u })} (${view === 'front' ? $t('Vorderseite') : $t('Rückseite')})`" @close="place = null">
-      <p class="text-sm text-slate-600 dark:text-slate-300">{{ place.slot ? 'Soll hier ein Hochkant-Gerät (z. B. PDU) platziert werden?' : 'Soll hier ein neues Gerät platziert werden?' }}</p>
+      <p class="text-sm text-slate-600 dark:text-slate-300">{{ place.slot ? $t('Soll hier ein Hochkant-Gerät (z. B. PDU) platziert werden?') : $t('Soll hier ein neues Gerät platziert werden?') }}</p>
       <template #footer>
         <button :class="btnGhost" @click="place = null">{{ $t('Nein') }}</button>
         <template v-if="place.slot">
@@ -171,7 +171,7 @@
 
     <AutoRouteWizard :open="autoRoute" start-new :preset-location-id="rackId" @close="autoRoute = false" @done="load" />
     <DeviceWizard v-if="wizard" :kind="wizard.kind" :location-id="rackId" :rack-position="wizard.u" :mount-side="view" :side-slot="wizard.slot || ''"
-      :title="{ switch: 'Assistent: Gerät platzieren', patchpanel: 'Assistent: Patchfeld platzieren', placeholder: 'Assistent: Platzhalter einplanen', vertical: 'Assistent: Hochkant-Gerät (PDU …) platzieren' }[wizard.kind]"
+      :title="{ switch: $t('Assistent: Gerät platzieren'), patchpanel: $t('Assistent: Patchfeld platzieren'), placeholder: $t('Assistent: Platzhalter einplanen'), vertical: $t('Assistent: Hochkant-Gerät (PDU …) platzieren') }[wizard.kind]"
       @close="wizard = null" @done="wizardDone" />
   </div>
 </template>

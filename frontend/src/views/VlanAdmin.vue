@@ -24,7 +24,7 @@
             <tr class="border-t border-slate-100 dark:border-slate-700">
               <td :class="td" class="font-mono">{{ v.vid }}</td>
               <td :class="td">{{ v.name }}</td>
-              <td :class="td" class="text-slate-500">{{ v.site_code || 'alle Standorte' }}</td>
+              <td :class="td" class="text-slate-500">{{ v.site_code || $t('alle Standorte') }}</td>
               <td :class="td" class="text-slate-500 text-xs">{{ v.note }}</td>
               <td :class="td"><button v-if="v.ports" :class="btnLink" @click="toggleUsage(v)">{{ v.ports }} {{ usage[v.id] ? '▾' : '▸' }}</button><span v-else class="text-slate-400">0</span></td>
               <td v-if="canWrite" :class="td" class="text-right whitespace-nowrap">
@@ -43,7 +43,7 @@
         <div><label :class="lbl">Gilt für</label><select v-model="vf.site_id" :class="inp" class="!w-48">
           <option :value="null">alle Standorte</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }}</option></select></div>
         <div class="flex-1 min-w-[10rem]"><label :class="lbl">Notiz</label><input v-model="vf.note" :class="inp" /></div>
-        <button :class="btnPrimary">{{ vf.id ? 'Speichern' : 'Hinzufügen' }}</button>
+        <button :class="btnPrimary">{{ vf.id ? $t('Speichern') : $t('Hinzufügen') }}</button>
         <button v-if="vf.id" type="button" :class="btnGhost" @click="resetVlan">Abbrechen</button>
       </form>
     </section>
@@ -78,7 +78,7 @@
           <div><label :class="lbl">Erlaubte VLANs (leer = alle)</label><input v-model="pf.allowed_vids" :class="inp" placeholder="10,20,40-45" /></div>
           <div><label :class="lbl">Native-VLAN (optional)</label><input v-model.number="pf.native_vid" type="number" min="1" max="4094" :class="inp" /></div>
         </div>
-        <div class="flex gap-2"><button :class="btnPrimary">{{ pf.id ? 'Speichern' : 'Profil anlegen' }}</button>
+        <div class="flex gap-2"><button :class="btnPrimary">{{ pf.id ? $t('Speichern') : $t('Profil anlegen') }}</button>
           <button v-if="pf.id" type="button" :class="btnGhost" @click="resetProfile">Abbrechen</button></div>
         <p class="text-xs text-slate-400">Ein geändertes Profil ändert keine Ports – umkonfiguriert wird über einen Auftrag.</p>
       </form>

@@ -165,6 +165,130 @@ export const enApi = [
   ['side: all, front oder back', 'side: all, front or back'],
   ['side_port_id gehört nicht zu diesem Kabel', 'side_port_id does not belong to this cable'],
   ['„%s“ kommt unter %s doppelt vor', '“{1}” occurs twice under {2}'],
+  // Patchaufträge, Reservierungen, Versand, OpenPlan, WAN, VLANs (Etappe 3)
+  ['%s hat keinen Zugriff auf diesen Standort – bitte zuerst Rechte vergeben', '{1} has no access to this site – please grant permissions first'],
+  ['%s ist bereits abgeschlossen', '{1} is already completed'],
+  ['%s: Port existiert nicht', '{1}: port does not exist'],
+  ['%s: Zahl 1–4094 erwartet', '{1}: number 1–4094 expected'],
+  ['Access-Port: Access-VLAN angeben', 'Access port: specify the access VLAN'],
+  ['Aktion \'%s\' nicht möglich bei Status \'%s\' (möglich: %s)', 'Action \'{1}\' not possible in status \'{2}\' (possible: {3})'],
+  ['Benutzer %s nicht gefunden', 'User {1} not found'],
+  ['Bitte eine Abweichungsnotiz angeben', 'Please enter a deviation note'],
+  ['CA-Zertifikat muss im PEM-Format vorliegen', 'CA certificate must be in PEM format'],
+  ['Das API-Token beginnt mit „op_“ (OpenPlan → Verwaltung → API-Zugänge)', 'The API token starts with “op_” (OpenPlan → Administration → API tokens)'],
+  ['Das Gerät liegt außerhalb deines Bereichs', 'The device is outside your area'],
+  ['Das ist ein Sammelvorgang – bitte einen Teilvorgang wählen', 'This is a summary task – please choose a sub-task'],
+  ['Der Auftrag ist bereits mit OpenPlan verknüpft', 'The order is already linked to OpenPlan'],
+  ['Der Auftrag ist nicht mit OpenPlan verknüpft', 'The order is not linked to OpenPlan'],
+  ['Der Port gehört nicht zum gewählten Standort (%s)', 'The port does not belong to the selected site ({1})'],
+  ['Der Port liegt außerhalb deines Bereichs', 'The port is outside your area'],
+  ['Die Konfiguration muss für einen Port dieser Position gelten', 'The configuration must apply to a port of this item'],
+  ['Die OpenPlan-Anbindung ist nicht eingerichtet (Verwaltung → OpenPlan)', 'The OpenPlan integration is not set up (Administration → OpenPlan)'],
+  ['Die Verbindung ist bereits %s und kann nicht in Betrieb genommen werden', 'The connection is already {1} and cannot be activated'],
+  ['Die Verbindung ist bereits gekündigt', 'The connection has already been terminated'],
+  ['Die WAN-Verbindung liegt außerhalb deines Bereichs', 'The WAN connection is outside your area'],
+  ['Diese Aufgabe ist schon mit %s verknüpft', 'This task is already linked to {1}'],
+  ['Eigene Adresse muss mit http:// oder https:// beginnen', 'Own address must start with http:// or https://'],
+  ['Ein Port liegt außerhalb deines Bereichs', 'A port is outside your area'],
+  ['Eine Ziel-Konfiguration gibt es nur bei herstellen, umstecken und Port umkonfigurieren', 'A target configuration only exists for connect, re-plug and reconfigure port'],
+  ['Eine gekündigte Verbindung kann nicht geändert werden', 'A terminated connection cannot be changed'],
+  ['Fehlende Rolle (erforderlich: planer oder freigeber)', 'Missing role (required: planner or approver)'],
+  ['Fehlende Rolle (erforderlich: planer)', 'Missing role (required: planner)'],
+  ['Für Einbau/Rückbau eines Geräts muss ein vorhandenes Gerät gewählt werden', 'Installing/removing a device requires an existing device'],
+  ['Für WAN-Positionen muss eine vorhandene WAN-Verbindung gewählt werden', 'WAN items require an existing WAN connection'],
+  ['Für einen Patchauftrag ist eine Location in deinem Bereich nötig', 'A patch order requires a location in your area'],
+  ['Für welchen Port gilt die Konfiguration? Bitte Port wählen (kein eindeutiges Switch-Ende)', 'Which port does the configuration apply to? Please choose a port (no unique switch end)'],
+  ['Gegenstelle: Standort existiert nicht', 'Remote end: site does not exist'],
+  ['Geprüft werden Aufträge in Ausführung oder ausgeführte Aufträge', 'Only orders in progress or carried out are checked'],
+  ['Höchstens %s Aufträge auf einmal', 'At most {1} orders at once'],
+  ['Keine Änderungen angegeben', 'No changes specified'],
+  ['Mindestens eine Position gehört nicht zu diesem Auftrag', 'At least one item does not belong to this order'],
+  ['Mindestens einen Patchauftrag angeben', 'Specify at least one patch order'],
+  ['Modus: access, trunk oder leer', 'Mode: access, trunk or empty'],
+  ['Nicht änderbar: %s', 'Cannot be changed: {1}'],
+  ['Nur Entwürfe oder abgelehnte Aufträge können gelöscht werden', 'Only drafts or rejected orders can be deleted'],
+  ['Nur Entwürfe und zurückgewiesene Aufträge können bearbeitet werden', 'Only drafts and orders sent back can be edited'],
+  ['Nur Planer am Standort oder wer reserviert hat', 'Only planners at the site or whoever made the reservation'],
+  ['Nur bei Status \'In Ausführung\' möglich', 'Only possible in status \'In progress\''],
+  ['Nur geplante oder gekündigte Verbindungen können gelöscht werden – laufende bitte per Auftrag kündigen', 'Only planned or terminated connections can be deleted – please terminate running ones via an order'],
+  ['OpenPlan hat den Vorgang angelegt, aber nicht zurückgemeldet – bitte in OpenPlan prüfen', 'OpenPlan created the task but did not report back – please check in OpenPlan'],
+  ['OpenPlan hat keine gültige JSON-Antwort geliefert', 'OpenPlan did not return a valid JSON response'],
+  ['OpenPlan nicht erreichbar: %s', 'OpenPlan not reachable: {1}'],
+  ['OpenPlan-Adresse für Links muss mit http:// oder https:// beginnen', 'The OpenPlan address for links must start with http:// or https://'],
+  ['OpenPlan-Adresse muss mit http:// oder https:// beginnen', 'The OpenPlan address must start with http:// or https://'],
+  ['OpenPlan-Adresse und API-Token angeben', 'Specify the OpenPlan address and API token'],
+  ['OpenPlan-Benutzer nicht gefunden: %s', 'OpenPlan user not found: {1}'],
+  ['Patchauftrag nicht gefunden', 'Patch order not found'],
+  ['Port umkonfigurieren: Ziel-Konfiguration (VLAN oder Profil) angeben', 'Reconfigure port: specify the target configuration (VLAN or profile)'],
+  ['Port umkonfigurieren: genau einen Port (Port A) angeben', 'Reconfigure port: specify exactly one port (port A)'],
+  ['Portprofil nicht gefunden', 'Port profile not found'],
+  ['Position nicht gefunden', 'Item not found'],
+  ['Positionen können nur bei Status \'In Ausführung\' abgehakt oder zurückgesetzt werden', 'Items can only be ticked off or reset in status \'In progress\''],
+  ['Positionen können nur bei Status \'In Ausführung\' abgehakt werden', 'Items can only be ticked off in status \'In progress\''],
+  ['Positionen können nur in Entwürfen oder zurückgewiesenen Aufträgen bearbeitet werden', 'Items can only be edited in drafts or orders sent back'],
+  ['Positionen können nur in Entwürfen oder zurückgewiesenen Aufträgen gelöscht werden', 'Items can only be deleted in drafts or orders sent back'],
+  ['Profil „%s“ gibt es schon', 'Profile “{1}” already exists'],
+  ['Profil: Modus access oder trunk', 'Profile: mode access or trunk'],
+  ['Reservieren dürfen Planer am Standort des Ports', 'Planners at the site of the port may reserve'],
+  ['Reservierung nicht gefunden', 'Reservation not found'],
+  ['Signatur ungültig', 'Invalid signature'],
+  ['Standard-Projekt: numerische Projekt-ID', 'Default project: numeric project ID'],
+  ['Standort A existiert nicht', 'Site A does not exist'],
+  ['Unbekannte Projektart', 'Unknown project type'],
+  ['Ungültige Aktion: %s', 'Invalid action: {1}'],
+  ['Ungültige Priorität: %s', 'Invalid priority: {1}'],
+  ['Ungültige Technik: %s', 'Invalid technology: {1}'],
+  ['Ungültiger Status: %s', 'Invalid status: {1}'],
+  ['VLAN %s gibt es für diesen Bereich schon', 'VLAN {1} already exists for this area'],
+  ['VLAN nicht gefunden', 'VLAN not found'],
+  ['VLAN-Liste: „%s“ ist keine Zahl bzw. kein Bereich', 'VLAN list: “{1}” is not a number or range'],
+  ['VLAN-Liste: „%s“ liegt nicht im Bereich 1–4094', 'VLAN list: “{1}” is not within 1–4094'],
+  ['VLANs für alle Standorte pflegen nur Administratoren', 'Only administrators maintain VLANs for all sites'],
+  ['Vertragsende liegt vor dem Vertragsbeginn', 'Contract end is before contract start'],
+  ['Vor dem Start muss der Rückbau-Auftrag %s bestätigt sein (aktuell: %s)', 'Before starting, the removal order {1} must be confirmed (currently: {2})'],
+  ['Vorgang im OpenPlan-Projekt nicht gefunden', 'Task not found in the OpenPlan project'],
+  ['WAN-Verbindung nicht gefunden', 'WAN connection not found'],
+  ['Zuerst OpenPlan-Adresse und API-Token speichern', 'Save the OpenPlan address and API token first'],
+  ['action: execute, reopen oder delete', 'action: execute, reopen or delete'],
+  ['group: location, order oder none', 'group: location, order or none'],
+  ['ids: Komma-getrennte Auftrags-IDs', 'ids: comma-separated order IDs'],
+  ['item_status muss \'done\' oder \'deviation\' sein', 'item_status must be \'done\' or \'deviation\''],
+  ['„Reserviert bis“ liegt in der Vergangenheit', '“Reserved until” is in the past'],
+  ['„Reserviert bis“: Datum als JJJJ-MM-TT', '“Reserved until”: date as YYYY-MM-DD'],
+  ['%s ist mit %s verbunden (Kabel %s)', '{1} is connected to {2} (cable {3})'],
+  ['%s ist mit %s verbunden', '{1} is connected to {2}'],
+  ['Alten Patch zurückbauen? Dafür wird automatisch ein Rückbau-Patchauftrag angelegt.', 'Remove the old patch? A removal patch order will be created automatically.'],
+  ['Alten Patch zurückbauen? Die alten Patches werden sofort entfernt.', 'Remove the old patch? The old patches will be removed immediately.'],
+  ['Alten Patch zurückbauen? Der alte Patch wird sofort entfernt.', 'Remove the old patch? The old patch will be removed immediately.'],
+  ['%s ist reserviert für „%s“ (%s, bis %s)', '{1} is reserved for “{2}” ({3}, until {4})'],
+  ['%s ist reserviert für „%s“ (%s)', '{1} is reserved for “{2}” ({3})'],
+  ['%s ist bereits in %s (%s) verplant', '{1} is already planned in {2} ({3})'],
+  ['Trotzdem verwenden? Reservierungen werden dabei freigegeben.', 'Use anyway? Reservations will be released.'],
+  // LLDP-Prüfung, Strecken, Arbeitsplatz, Geräte aus OpenPlan (Texte in Antworten)
+  ['%s ↔ %s: keine LLDP-Daten an beiden Enden', '{1} ↔ {2}: no LLDP data at either end'],
+  ['%s: keine LLDP-Daten an beiden Enden', '{1}: no LLDP data at either end'],
+  ['%s: LLDP-Daten älter als die Ausführung', '{1}: LLDP data older than the execution'],
+  ['%s: keine LLDP-Daten', '{1}: no LLDP data'],
+  ['%s: Verbindung ist getrennt', '{1}: connection is disconnected'],
+  ['noch verbunden: %s', 'still connected: {1}'],
+  ['Port fehlt', 'Port missing'],
+  ['keine durchgängige dokumentierte Strecke zum Prüfen', 'no end-to-end documented path to check'],
+  ['Position nicht als erledigt abgehakt', 'Item not ticked off as done'],
+  ['nicht per LLDP prüfbar', 'cannot be checked via LLDP'],
+  ['keine LLDP-Daten von %s', 'no LLDP data from {1}'],
+  ['%s sieht %s, aber an %s', '{1} sees {2}, but on {3}'],
+  ['%s sieht stattdessen %s', '{1} sees {2} instead'],
+  ['%s sieht %s', '{1} sees {2}'],
+  ['%s meldet keinen Nachbarn', '{1} reports no neighbour'],
+  ['kein Kabel', 'no cable'],
+  ['Kette endet nach %s', 'chain ends after {1}'],
+  ['Kette endet am Patchfeld %s', 'chain ends at patch panel {1}'],
+  ['Schleife in der Verkabelung', 'loop in the cabling'],
+  ['Die Dose ist bereits bis zum Switch verbunden', 'The outlet is already connected to the switch'],
+  ['Die Strecke ist bereits durchgängig', 'The path is already end-to-end'],
+  ['Die Strecke ab der Dose ist nicht bis zu einem Patchfeld dokumentiert', 'The path from the outlet is not documented up to a patch panel'],
+  ['nicht übernehmbar (Stand geändert?)', 'cannot be imported (state changed?)'],
+  ['Ort fehlt (muss am Standort liegen)', 'location missing (must be at the site)'],
   // zuletzt: allgemeine Muster (spezifischere stehen oben)
   ['%s nicht gefunden', '{1} not found'],
 ]
@@ -177,13 +301,22 @@ for (const [de, en] of enApi) {
   else exact.set(de, en)
 }
 
-/** Server-Meldung ins Englische übersetzen (unbekannte Texte bleiben unverändert). */
-export function translateApi(msg) {
+function one(msg) {
   const e = exact.get(msg)
   if (e) return e
   for (const { re, en } of patterns) {
     const m = re.exec(msg)
     if (m) return en.replace(/\{(\d+)\}/g, (_, i) => m[Number(i)] ?? '')
   }
-  return msg
+  return null
+}
+
+/** Server-Meldung ins Englische übersetzen (unbekannte Texte bleiben unverändert).
+ *  Zusammengesetzte Meldungen („A ist mit B verbunden; C … . Alten Patch zurückbauen? …“) werden Teilsatz für Teilsatz übersetzt. */
+export function translateApi(msg) {
+  const whole = one(msg)
+  if (whole !== null) return whole
+  const parts = msg.split(/(; |\. (?=[A-ZÄÖÜ„]))/)
+  if (parts.length < 2) return msg
+  return parts.map(p => (p === '; ' || p === '. ') ? p : (one(p) ?? p)).join('')
 }

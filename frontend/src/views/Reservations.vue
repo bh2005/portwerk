@@ -1,17 +1,16 @@
 <template>
   <div class="space-y-4">
     <div class="flex items-center justify-between gap-3 flex-wrap">
-      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Port-Reservierungen</h1>
+      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Port-Reservierungen') }}</h1>
       <div class="flex gap-2 items-center flex-wrap">
-        <input v-model="q" :class="inp" class="!w-56 !py-1.5" placeholder="Zweck, Gerät, Person …" @input="debouncedLoad" />
+        <input v-model="q" :class="inp" class="!w-56 !py-1.5" :placeholder="$t('Zweck, Gerät, Person …')" @input="debouncedLoad" />
         <select v-model="filter" :class="inp" class="!w-40 !py-1.5" @change="load">
-          <option value="">alle</option><option value="valid">gültig</option><option value="expired">abgelaufen</option>
+          <option value="">{{ $t('alle') }}</option><option value="valid">{{ $t('gültig') }}</option><option value="expired">{{ $t('abgelaufen') }}</option>
         </select>
       </div>
     </div>
     <p class="text-sm text-slate-500 dark:text-slate-400">
-      Reservierte Ports gelten in den Assistenten nicht als frei. Wer sie verbinden oder in einem Auftrag verplanen will, bekommt eine Rückfrage.
-      Reservieren: auf der Geräteseite Ports ankreuzen → „Reservieren“. Abgelaufene Reservierungen blockieren nichts mehr.
+      {{ $t('Reservierte Ports gelten in den Assistenten nicht als frei. Wer sie verbinden oder in einem Auftrag verplanen will, bekommt eine Rückfrage. Reservieren: auf der Geräteseite Ports ankreuzen → „Reservieren“. Abgelaufene Reservierungen blockieren nichts mehr.') }}
     </p>
     <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
     <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
@@ -20,7 +19,7 @@
       <div class="px-4 py-2 flex items-center gap-3 flex-wrap border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/40">
         <input v-if="canReserve" type="checkbox" :checked="g.rows.every(r => picked.has(r.id))" @change="pickGroup(g, $event.target.checked)" />
         <span class="font-medium text-slate-800 dark:text-slate-100">{{ g.purpose }}</span>
-        <span class="text-xs text-slate-400">{{ g.rows.length }} Port(s)</span>
+        <span class="text-xs text-slate-400">{{ $t('{n} Port(s)', { n: g.rows.length }) }}</span>
       </div>
       <table class="w-full text-sm">
         <tbody>
@@ -30,29 +29,30 @@
             <td :class="td" class="text-xs text-slate-500">{{ r.location }}</td>
             <td :class="td" class="text-xs">{{ r.reserved_by }}</td>
             <td :class="td" class="text-xs whitespace-nowrap">
-              <span v-if="r.expired" class="text-red-500 dark:text-red-400">abgelaufen {{ fmtDate(r.until) }}</span>
-              <span v-else-if="r.until">bis {{ fmtDate(r.until) }}</span><span v-else class="text-slate-400">unbefristet</span>
+              <span v-if="r.expired" class="text-red-500 dark:text-red-400">{{ $t('abgelaufen {d}', { d: fmtDate(r.until) }) }}</span>
+              <span v-else-if="r.until">{{ $t('bis {d}', { d: fmtDate(r.until) }) }}</span><span v-else class="text-slate-400">{{ $t('unbefristet') }}</span>
             </td>
             <td :class="td" class="text-xs">
               <router-link v-if="r.workorder" :to="`/workorders/${r.workorder.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ r.workorder.number }}</router-link>
-              <span v-if="r.busy" class="ml-2 text-amber-600 dark:text-amber-400" title="An diesem Port steckt bereits ein Kabel">belegt</span>
+              <span v-if="r.busy" class="ml-2 text-amber-600 dark:text-amber-400" :title="$t('An diesem Port steckt bereits ein Kabel')">{{ $t('belegt') }}</span>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <p v-if="!loading && !rows.length" class="text-sm text-slate-400">Keine Reservierungen.</p>
+    <p v-if="!loading && !rows.length" class="text-sm text-slate-400">{{ $t('Keine Reservierungen.') }}</p>
 
     <div v-if="canReserve && picked.size" class="sticky bottom-2 flex items-center gap-3 p-3 rounded-xl shadow bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-      <span class="text-sm text-slate-600 dark:text-slate-300">{{ picked.size }} gewählt</span>
-      <button :class="btnPrimary" @click="releasePicked">Freigeben</button>
-      <button :class="btnGhost" @click="editPicked">Zweck / Frist ändern</button>
-      <button :class="btnLink" @click="picked = new Set()">Auswahl aufheben</button>
+      <span class="text-sm text-slate-600 dark:text-slate-300">{{ $t('{n} gewählt', { n: picked.size }) }}</span>
+      <button :class="btnPrimary" @click="releasePicked">{{ $t('Freigeben') }}</button>
+      <button :class="btnGhost" @click="editPicked">{{ $t('Zweck / Frist ändern') }}</button>
+      <button :class="btnLink" @click="picked = new Set()">{{ $t('Auswahl aufheben') }}</button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { computed, onMounted, ref } from 'vue'
 import { api, errText, hasRole } from '../api.js'
 import { inp, card, td, btnPrimary, btnGhost, btnLink } from '../ui.js'
@@ -88,16 +88,16 @@ async function releasePicked() {
 }
 async function editPicked() {
   const first = rows.value.find(r => picked.value.has(r.id))
-  const purpose = prompt('Wofür (Projekt, Zweck):', first?.purpose || '')
+  const purpose = prompt(t('Wofür (Projekt, Zweck):'), first?.purpose || '')
   if (!purpose || !purpose.trim()) return
-  const until = prompt('Reserviert bis (JJJJ-MM-TT, leer = unbefristet):', first?.until || '')
+  const until = prompt(t('Reserviert bis (JJJJ-MM-TT, leer = unbefristet):'), first?.until || '')
   if (until === null) return
   try {
     for (const id of picked.value) {
       const r = rows.value.find(x => x.id === id)
       await api.updateReservation(id, { purpose: purpose.trim(), until: until.trim() || null, workorder_id: r?.workorder?.id || null })
     }
-    msg.value = 'Geändert.'; await load()
+    msg.value = t('Geändert.'); await load()
   } catch (e) { err.value = errText(e) }
 }
 

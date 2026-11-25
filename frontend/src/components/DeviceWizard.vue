@@ -13,9 +13,9 @@
     <!-- 1: Modell -->
     <div v-if="stepKey === 'model'" class="space-y-3">
       <p class="text-sm text-slate-500">{{ placeholder
-        ? 'Platzhalter belegen Rackplatz ohne Ports, z. B. Kabelführung, Blindblende oder Fachboden. Die Vorlagen stehen im Katalog.'
-        : (isPanel ? 'Wähle eine Patchfeld-Vorlage (Cat6A oder LWL, 8/12/24 Ports). Jeder Port hat Vorder- und Rückseite, bereits miteinander verknüpft.'
-          : 'Wähle ein Modell aus dem Katalog – die Ports werden daraus erzeugt. Fehlt das Modell, lege es unter „Katalog“ an oder nutze eigene Ports.') }}</p>
+        ? $t('Platzhalter belegen Rackplatz ohne Ports, z. B. Kabelführung, Blindblende oder Fachboden. Die Vorlagen stehen im Katalog.')
+        : (isPanel ? $t('Wähle eine Patchfeld-Vorlage (Cat6A oder LWL, 8/12/24 Ports). Jeder Port hat Vorder- und Rückseite, bereits miteinander verknüpft.')
+          : $t('Wähle ein Modell aus dem Katalog – die Ports werden daraus erzeugt. Fehlt das Modell, lege es unter „Katalog“ an oder nutze eigene Ports.')) }}</p>
       <input v-model="q" :class="inp" :placeholder="$t('Suchen (Hersteller, Modell, Artikelnr.) …')" @input="loadModels" />
       <div class="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-700">
         <button v-for="m in models" :key="m.id" type="button" @click="pickModel(m)"
@@ -71,11 +71,11 @@
       </div>
       <p v-if="form.orientation === 'vertical' && form.location_id && loc?.kind !== 'rack'" class="text-xs text-red-500 dark:text-red-400">{{ $t('Hochkant-Geräte brauchen ein Rack.') }}</p>
       <div v-if="isRack">
-        <label :class="lbl">{{ form.orientation === 'vertical' ? 'Beginnt bei HE (Länge höchstens bis zur Rackhöhe)' : 'Position im Rack (unterste HE)' }}</label>
+        <label :class="lbl">{{ form.orientation === 'vertical' ? $t('Beginnt bei HE (Länge höchstens bis zur Rackhöhe)') : $t('Position im Rack (unterste HE)') }}</label>
         <div class="flex gap-3 items-center flex-wrap">
           <select v-model="form.rack_position" :class="inp" class="!w-48" @change="conflict = null"><option :value="null">{{ $t('ohne Position') }}</option>
             <option v-for="p in startChoices" :key="p" :value="p">{{ $t('HE') }} {{ p }}<template v-if="heightU > 1"> – {{ p + heightU - 1 }}</template><template v-if="!slots.free_starts.includes(p)">{{ ' ' + $t('(belegt)') }}</template></option></select>
-          <span class="text-xs text-slate-400">{{ slots.free_starts?.length ? `${slots.free_starts.length} freie Positionen für ${heightU} HE` : 'Keine freie Position für diese Höhe' }}</span>
+          <span class="text-xs text-slate-400">{{ slots.free_starts?.length ? `${slots.free_starts.length} freie Positionen für ${heightU} HE` : $t('Keine freie Position für diese Höhe') }}</span>
         </div>
         <p class="text-[11px] text-slate-400 mt-1">{{ $t('Ist die gewählte HE belegt, fragt der Assistent später, ob das alte Gerät zurückgebaut werden soll.') }}</p>
         <div class="mt-2 text-xs text-slate-500" v-if="slots.devices?.length">{{ $t('Belegt:') }}
@@ -138,7 +138,7 @@
         <label class="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="radio" value="workorder" v-model="form.mode" @change="modeChanged" class="mt-1" />
           <span><b>{{ $t('Per Patchauftrag') }}</b> – {{ (withUplink || panelLinks.links.length) ? $t('das Gerät wird als „geplant“ angelegt; Einbau und Kabel werden Positionen im Auftrag (Freigabe → Ausführung → Bestätigung).') : $t('das Gerät wird als „geplant“ angelegt; Einbau wird eine Position im Auftrag (Freigabe → Ausführung → Bestätigung).') }}</span></label>
       </div>
-      <p v-else class="text-sm text-slate-500">{{ $t('Umsetzung:') + ' ' }}<b>{{ canOrder && !canDirect ? 'per Patchauftrag (du darfst Stammdaten nicht direkt ändern)' : 'sofort' }}</b></p>
+      <p v-else class="text-sm text-slate-500">{{ $t('Umsetzung:') + ' ' }}<b>{{ canOrder && !canDirect ? $t('per Patchauftrag (du darfst Stammdaten nicht direkt ändern)') : 'sofort' }}</b></p>
       <div v-if="form.mode === 'workorder'" class="grid grid-cols-2 gap-3">
         <div><label :class="lbl">{{ $t('Patchauftrag') }}</label>
           <select v-model="form.workorder_id" :class="inp" @change="check"><option :value="null">{{ $t('Neuen Auftrag anlegen') }}</option>
@@ -151,7 +151,7 @@
         <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ conflict.code === 'slot_busy' ? $t('Die Höheneinheiten sind belegt') : conflict.code === 'port_reserved' ? $t('Zielport reserviert bzw. schon verplant') : (conflict.conflicts.length > 1 ? $t('{n} Zielports sind belegt', { n: conflict.conflicts.length }) : $t('Der Zielport ist belegt')) }}</p>
         <p class="text-sm text-amber-900 dark:text-amber-200">{{ conflict.message }}</p>
         <div class="flex gap-2">
-          <button :class="btnPrimary" @click="resolveConflict(true)">{{ conflict.code === 'port_reserved' ? 'Ja, trotzdem verwenden' : 'Ja, zurückbauen' }}</button>
+          <button :class="btnPrimary" @click="resolveConflict(true)">{{ conflict.code === 'port_reserved' ? $t('Ja, trotzdem verwenden') : $t('Ja, zurückbauen') }}</button>
           <button :class="btnGhost" @click="resolveConflict(false)">{{ $t('Nein, andere Wahl treffen') }}</button>
         </div>
       </div>
@@ -177,7 +177,7 @@
       <button :class="btnGhost" @click="$emit('close')">{{ $t('Abbrechen') }}</button>
       <button v-if="step > 0" :class="btnGhost" :disabled="busy" @click="back">{{ $t('Zurück') }}</button>
       <button v-if="step < STEPS.length - 1" :class="btnPrimary" :disabled="!canNext" @click="next">{{ $t('Weiter') }}</button>
-      <button v-else :class="btnPrimary" :disabled="busy || !preview || !!conflict" @click="create">{{ busy ? '…' : 'Anlegen' }}</button>
+      <button v-else :class="btnPrimary" :disabled="busy || !preview || !!conflict" @click="create">{{ busy ? '…' : $t('Anlegen') }}</button>
     </template>
   </ModalDialog>
 </template>

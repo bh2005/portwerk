@@ -55,7 +55,7 @@
             <router-link v-if="n.devices" :to="{ path: '/devices', query: { location_id: n.id } }" class="text-xs text-ks-600 dark:text-ks-400 hover:underline">{{ $t('{n} Geräte', { n: n.devices }) }}</router-link>
             <span v-if="canWrite" class="ml-auto flex gap-3">
               <button :class="btnLink" @click="openLoc(n)">{{ $t('Bearbeiten') }}</button>
-              <button v-if="MOVABLE_KINDS.includes(n.kind)" :class="btnLink" :title="n.kind === 'vehicle' ? 'Mobile Maschine an einen anderen Standort verlegen (samt Geräten)' : 'An einen anderen Standort/Ort verlegen (samt Geräten)'" @click="openMove(n)">{{ $t('Verlegen') }}</button>
+              <button v-if="MOVABLE_KINDS.includes(n.kind)" :class="btnLink" :title="n.kind === 'vehicle' ? $t('Mobile Maschine an einen anderen Standort verlegen (samt Geräten)') : $t('An einen anderen Standort/Ort verlegen (samt Geräten)')" @click="openMove(n)">{{ $t('Verlegen') }}</button>
               <button v-if="!CONTAINER_KINDS.includes(n.kind)" :class="btnLink" @click="openLoc(null, n)">{{ $t('+ darunter') }}</button>
               <button :class="btnDanger" @click="removeLoc(n)">{{ $t('Löschen') }}</button>
             </span>
@@ -66,7 +66,7 @@
 
     <SiteWizard v-if="wizard" :site-id="wizard.siteId" :site-label="wizard.siteLabel || ''" @close="wizard = null" @done="wizardDone" />
 
-    <ModalDialog v-if="siteForm" :title="siteForm.id ? 'Standort bearbeiten' : 'Neuer Standort'" :error="formError" @close="siteForm = null">
+    <ModalDialog v-if="siteForm" :title="siteForm.id ? $t('Standort bearbeiten') : $t('Neuer Standort')" :error="formError" @close="siteForm = null">
       <div><label :class="lbl">{{ $t('Code') }}</label><input v-model="siteForm.code" :class="inp" :placeholder="$t('z. B. SITE-A')" /></div>
       <div><label :class="lbl">{{ $t('Name') }}</label><input v-model="siteForm.name" :class="inp" /></div>
       <div><label :class="lbl">{{ $t('Adresse') }}</label><input v-model="siteForm.address" :class="inp" /></div>
@@ -90,7 +90,7 @@
       </template>
     </ModalDialog>
 
-    <ModalDialog v-if="locForm" :title="locForm.id ? 'Location bearbeiten' : 'Neue Location'" :error="formError" @close="locForm = null">
+    <ModalDialog v-if="locForm" :title="locForm.id ? $t('Location bearbeiten') : $t('Neue Location')" :error="formError" @close="locForm = null">
       <div><label :class="lbl">{{ $t('Art') }}</label>
         <select v-model="locForm.kind" :class="inp"><option v-for="[k, l] in LOCATION_KINDS" :key="k" :value="k">{{ $t(l) }}</option></select></div>
       <div><label :class="lbl">{{ $t('Name') }}</label><input v-model="locForm.name" :class="inp" /></div>
@@ -98,7 +98,7 @@
         <select v-model="locForm.parent_id" :class="inp"><option :value="null">{{ $t('(oberste Ebene)') }}</option>
           <option v-for="n in parentChoices" :key="n.id" :value="n.id">{{ '– '.repeat(n.depth) }}{{ n.name }}</option></select></div>
       <div v-if="CONTAINER_KINDS.includes(locForm.kind)"><label :class="lbl">{{ $t('Höheneinheiten (HE)') }}{{ locForm.kind === 'cabinet' ? ' – ' + $t('optional') : '' }}</label><input v-model.number="locForm.rack_units" type="number" min="1" max="100" :class="inp" :placeholder="locForm.kind === 'cabinet' ? $t('leer = keine HE-Teilung (Hutschiene/Montageplatte)') : ''" /></div>
-      <div v-if="['machine', 'vehicle', 'cabinet', 'wallrack', 'rack'].includes(locForm.kind)"><label :class="lbl">{{ locForm.kind === 'vehicle' ? 'Kennzeichen / Fahrzeugnummer' : locForm.kind === 'machine' ? 'Anlagen-/Maschinennummer' : 'Bezeichnung / Nummer' }}</label><input v-model="locForm.ident" :class="inp" /></div>
+      <div v-if="['machine', 'vehicle', 'cabinet', 'wallrack', 'rack'].includes(locForm.kind)"><label :class="lbl">{{ locForm.kind === 'vehicle' ? $t('Kennzeichen / Fahrzeugnummer') : locForm.kind === 'machine' ? $t('Anlagen-/Maschinennummer') : $t('Bezeichnung / Nummer') }}</label><input v-model="locForm.ident" :class="inp" /></div>
       <div><label :class="lbl">{{ $t('Notiz') }}</label><input v-model="locForm.note" :class="inp" /></div>
       <template #footer>
         <button @click="locForm = null" :class="btnGhost">{{ $t('Abbrechen') }}</button>

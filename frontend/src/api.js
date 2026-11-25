@@ -63,7 +63,7 @@ export function errText(e, fallback = 'Fehler') {
 /** Rückfrage-Antwort des Servers („Port belegt“, „HE belegt“): liefert {code, message, conflicts} oder null. */
 export function conflictOf(e) {
   const d = e?.response?.data?.detail
-  return e?.response?.status === 409 && d && typeof d === 'object' && ['port_busy', 'slot_busy', 'port_reserved'].includes(d.code) ? d : null
+  return e?.response?.status === 409 && d && typeof d === 'object' && ['port_busy', 'slot_busy', 'port_reserved'].includes(d.code) ? { ...d, message: tApi(d.message) } : null
 }
 
 const get  = (url, params) => http.get(url, { params }).then(r => r.data)

@@ -2,12 +2,13 @@
   <div v-if="open" class="fixed inset-0 z-50 bg-black flex flex-col">
     <video ref="video" class="flex-1 w-full object-cover" playsinline muted></video>
     <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 mx-auto w-64 h-64 border-4 border-white/80 rounded-2xl pointer-events-none"></div>
-    <p class="absolute top-4 inset-x-0 text-center text-white text-sm px-4">{{ error || 'Kabeletikett in den Rahmen halten …' }}</p>
-    <button class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white text-slate-900 font-semibold text-lg px-8 py-3 rounded-full" @click="close">Abbrechen</button>
+    <p class="absolute top-4 inset-x-0 text-center text-white text-sm px-4">{{ error || $t('Kabeletikett in den Rahmen halten …') }}</p>
+    <button class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white text-slate-900 font-semibold text-lg px-8 py-3 rounded-full" @click="close">{{ $t('Abbrechen') }}</button>
   </div>
 </template>
 
 <script setup>
+import { t } from '../../i18n.js'
 /** QR-Scanner über die Kamera (BarcodeDetector – Chrome/Edge auf Android). Nur in sicherem Kontext (HTTPS oder localhost).
  *  Wo es das nicht gibt (z. B. iPhone), scannt die Kamera-App den Code und öffnet die Adresse direkt. */
 import { nextTick, onBeforeUnmount, ref } from 'vue'
@@ -33,7 +34,7 @@ async function start() {
         if (codes.length) { const v = codes[0].rawValue; close(); emit('result', v) }
       } catch { /* nächster Versuch */ }
     }, 250)
-  } catch (e) { error.value = 'Kamera nicht verfügbar: ' + (e?.message || e) }
+  } catch (e) { error.value = t('Kamera nicht verfügbar:') + ' ' + (e?.message || e) }
 }
 function close() {
   clearInterval(timer); timer = null

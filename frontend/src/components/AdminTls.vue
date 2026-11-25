@@ -11,14 +11,14 @@
         <tr><th class="text-left font-normal text-slate-400 w-36 py-0.5">Gültig bis</th>
           <td class="py-0.5">{{ when(cert.not_after) }} <span class="ml-1 px-2 py-0.5 rounded-full text-[11px] text-white" :style="{ background: levelColor }">noch {{ cert.days_left }} Tage</span></td></tr>
         <tr><th class="text-left font-normal text-slate-400 w-36 py-0.5">HTTPS-Listener</th>
-          <td class="py-0.5">{{ st?.serving ? 'aktiv (lädt erneuerte Zertifikate automatisch)' : 'nicht aktiv – Umgebungsvariable TLS_PORT im Container setzen' }}</td></tr>
+          <td class="py-0.5">{{ st?.serving ? $t('aktiv (lädt erneuerte Zertifikate automatisch)') : $t('nicht aktiv – Umgebungsvariable TLS_PORT im Container setzen') }}</td></tr>
       </table>
       <p v-else class="text-sm text-slate-400">Noch kein Zertifikat ausgestellt.</p>
-      <p v-if="st?.running" class="text-sm mt-2">⏳ {{ st.message || 'Anforderung läuft …' }}</p>
+      <p v-if="st?.running" class="text-sm mt-2">⏳ {{ st.message || $t('Anforderung läuft …') }}</p>
       <p v-else-if="st?.state?.ts" class="text-sm mt-2" :class="st.state.ok ? 'text-green-600' : 'text-red-500'">
         Letzter Lauf ({{ when(st.state.ts) }}, {{ st.state.trigger }}): {{ st.state.message }}</p>
       <div class="flex gap-2 mt-3 flex-wrap">
-        <button :class="btnPrimary" :disabled="busy || st?.running" @click="issue">{{ cert ? 'Jetzt erneuern' : 'Zertifikat anfordern' }}</button>
+        <button :class="btnPrimary" :disabled="busy || st?.running" @click="issue">{{ cert ? $t('Jetzt erneuern') : $t('Zertifikat anfordern') }}</button>
         <button v-if="cert" :class="btnGhost" @click="download">Zertifikatskette herunterladen</button>
       </div>
     </section>

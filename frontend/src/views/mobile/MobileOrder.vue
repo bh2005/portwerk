@@ -1,14 +1,14 @@
 <template>
   <div class="min-h-screen bg-slate-100 dark:bg-slate-900 pb-28">
-    <MobileBar :title="wo ? wo.number : 'Auftrag'" :subtitle="wo?.title" back="/m">
-      <router-link v-if="wo" :to="`/workorders/${wo.id}`" class="text-xs underline text-white/80">Vollansicht</router-link>
+    <MobileBar :title="wo ? wo.number : $t('Auftrag')" :subtitle="wo?.title" back="/m">
+      <router-link v-if="wo" :to="`/workorders/${wo.id}`" class="text-xs underline text-white/80">{{ $t('Vollansicht') }}</router-link>
     </MobileBar>
 
     <div v-if="wo" class="p-3 space-y-3">
       <!-- Status und Fortschritt -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm">
         <div class="flex items-center gap-2 text-sm">
-          <span class="px-2 py-0.5 rounded-full font-medium" :class="STATUS_CLS[wo.status] || 'bg-slate-100 text-slate-600'">{{ wo.status_label }}</span>
+          <span class="px-2 py-0.5 rounded-full font-medium" :class="STATUS_CLS[wo.status] || 'bg-slate-100 text-slate-600'">{{ $t(wo.status_label) }}</span>
           <span v-if="wo.location" class="text-slate-500 truncate">{{ wo.location.name }}</span>
         </div>
         <div class="mt-3 flex items-center gap-3">
@@ -16,7 +16,7 @@
           <span class="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{{ done }}/{{ items.length }}</span>
         </div>
         <p v-if="wo.depends_on && wo.depends_on.blocking" class="mt-3 text-sm text-amber-700 bg-amber-50 rounded-lg p-2 dark:text-amber-400">
-          Erst nach Bestätigung von {{ wo.depends_on.number }} (Rückbau) starten – aktuell: {{ wo.depends_on.status_label }}.</p>
+          {{ $t('Erst nach Bestätigung von {n} (Rückbau) starten – aktuell: {s}.', { n: wo.depends_on.number, s: $t(wo.depends_on.status_label) }) }}</p>
         <p v-if="wo.description" class="mt-3 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">{{ wo.description }}</p>
       </div>
 
@@ -39,47 +39,48 @@
           <div class="p-4 space-y-3">
             <div class="flex items-start gap-2">
               <span class="text-slate-400 font-semibold tabular-nums">{{ x.n }}</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-100">{{ x.action_label }}</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-100">{{ $t(x.action_label) }}</span>
               <span v-if="x.cable_label" class="ml-auto font-mono font-bold text-lg px-2 rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100">{{ x.cable_label }}</span>
             </div>
             <End label="von" :name="x.a" :where="x.a_location" :unit="x.a_unit" />
-            <End v-if="x.b" :label="x.action === 'disconnect' ? 'steckt an' : 'nach'" :name="x.b" :where="x.b_location !== x.a_location ? x.b_location : ''" :unit="x.b_unit" />
-            <p v-if="x.old_b" class="text-sm text-slate-500">bisher: <span class="font-mono">{{ x.old_b }}</span></p>
+            <End v-if="x.b" :label="x.action === 'disconnect' ? $t('steckt an') : 'nach'" :name="x.b" :where="x.b_location !== x.a_location ? x.b_location : ''" :unit="x.b_unit" />
+            <p v-if="x.old_b" class="text-sm text-slate-500">{{ $t('bisher:') + ' ' }}<span class="font-mono">{{ x.old_b }}</span></p>
             <p v-if="details(x)" class="text-sm text-slate-600 dark:text-slate-300">{{ details(x) }}</p>
-            <p v-if="x.cfg_text" class="text-sm font-medium text-indigo-700 dark:text-indigo-300">VLAN: {{ x.cfg_text }}</p>
+            <p v-if="x.cfg_text" class="text-sm font-medium text-indigo-700 dark:text-indigo-300">{{ $t('VLAN:') }} {{ x.cfg_text }}</p>
             <p v-if="x.note" class="text-sm text-slate-600 dark:text-slate-300 italic">{{ x.note }}</p>
 
             <div v-if="x.item_status !== 'open'" class="text-sm" :class="x.item_status === 'done' ? 'text-green-700' : 'text-amber-700'">
-              {{ x.item_status === 'done' ? '✓ erledigt' : '⚠ Abweichung' }} · {{ x.executed_by }}
+              {{ x.item_status === 'done' ? $t('✓ erledigt') : $t('⚠ Abweichung') }} · {{ x.executed_by }}
               <span v-if="x.deviation_note" class="block">„{{ x.deviation_note }}“</span>
             </div>
           </div>
           <div v-if="running" class="flex border-t border-slate-100 dark:border-slate-700">
             <template v-if="x.item_status === 'open'">
-              <button class="flex-1 py-4 text-lg font-semibold text-white bg-green-600 active:bg-green-700 disabled:opacity-50" :disabled="busy === x.id" @click="exec(x, 'done')">✓ Erledigt</button>
-              <button class="flex-1 py-4 text-lg font-semibold text-amber-800 bg-amber-100 active:bg-amber-200 disabled:opacity-50" :disabled="busy === x.id" @click="deviation(x)">⚠ Abweichung</button>
+              <button class="flex-1 py-4 text-lg font-semibold text-white bg-green-600 active:bg-green-700 disabled:opacity-50" :disabled="busy === x.id" @click="exec(x, 'done')">{{ $t('✓ Erledigt') }}</button>
+              <button class="flex-1 py-4 text-lg font-semibold text-amber-800 bg-amber-100 active:bg-amber-200 disabled:opacity-50" :disabled="busy === x.id" @click="deviation(x)">{{ $t('⚠ Abweichung') }}</button>
             </template>
-            <button v-else class="flex-1 py-3 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-700" :disabled="busy === x.id" @click="reopen(x)">Zurücksetzen</button>
+            <button v-else class="flex-1 py-3 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-700" :disabled="busy === x.id" @click="reopen(x)">{{ $t('Zurücksetzen') }}</button>
           </div>
         </div>
       </template>
-      <p v-if="!shown.length" class="text-center text-slate-500 py-8">{{ filter === 'open' && items.length ? 'Alles erledigt 🎉' : 'Keine Positionen.' }}</p>
+      <p v-if="!shown.length" class="text-center text-slate-500 py-8">{{ filter === 'open' && items.length ? $t('Alles erledigt 🎉') : $t('Keine Positionen.') }}</p>
     </div>
     <p v-else-if="err" class="m-3 text-sm text-red-700 bg-red-50 rounded-xl p-3 dark:text-red-400">{{ err }}</p>
 
     <!-- Aktionsleiste unten -->
     <div v-if="wo" class="fixed bottom-0 inset-x-0 p-3 flex gap-2 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-700">
-      <button v-if="scanner?.supported" class="flex-1 bg-white dark:bg-slate-800 text-ks-700 dark:text-ks-300 font-semibold py-4 rounded-2xl shadow" @click="scanner.start()">Scannen</button>
-      <button v-if="canStart" class="flex-[2] bg-ks-600 text-white text-lg font-semibold py-4 rounded-2xl shadow-lg disabled:opacity-50" :disabled="!!busy" @click="transition('start')">Auftrag starten</button>
+      <button v-if="scanner?.supported" class="flex-1 bg-white dark:bg-slate-800 text-ks-700 dark:text-ks-300 font-semibold py-4 rounded-2xl shadow" @click="scanner.start()">{{ $t('Scannen') }}</button>
+      <button v-if="canStart" class="flex-[2] bg-ks-600 text-white text-lg font-semibold py-4 rounded-2xl shadow-lg disabled:opacity-50" :disabled="!!busy" @click="transition('start')">{{ $t('Auftrag starten') }}</button>
       <button v-else-if="running" class="flex-[2] text-lg font-semibold py-4 rounded-2xl shadow-lg disabled:opacity-50"
         :class="open ? 'bg-slate-300 text-slate-600 dark:bg-slate-700 dark:text-slate-400' : 'bg-green-600 text-white'" :disabled="!!busy || open > 0" @click="transition('finish')">
-        {{ open ? `Noch ${open} offen` : 'Fertig melden' }}</button>
+        {{ open ? `Noch ${open} offen` : $t('Fertig melden') }}</button>
     </div>
     <QrScanner ref="scanner" @result="onScan" />
   </div>
 </template>
 
 <script setup>
+import { t } from '../../i18n.js'
 import { computed, h, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, errText, hasRole } from '../../api.js'
@@ -111,7 +112,7 @@ const count = k => k === 'all' ? items.value.length : k === 'open' ? open.value 
 const shown = computed(() => items.value.filter(x => filter.value === 'all' || (filter.value === 'open') === (x.item_status === 'open')))
 const groups = computed(() => {
   const m = new Map()
-  for (const x of shown.value) { const k = x.group || 'ohne Ort'; if (!m.has(k)) m.set(k, []); m.get(k).push(x) }
+  for (const x of shown.value) { const k = x.group || t('ohne Ort'); if (!m.has(k)) m.set(k, []); m.get(k).push(x) }
   return [...m].map(([name, its]) => ({ name, items: its }))
 })
 const details = x => [x.cable_type, x.length_m ? `${x.length_m} m` : '', x.color].filter(Boolean).join(' · ')
@@ -136,7 +137,7 @@ async function exec(x, status, note = '') {
   } catch (e) { err.value = errText(e) } finally { busy.value = null }
 }
 function deviation(x) {
-  const note = prompt('Abweichung – was war anders?')
+  const note = prompt(t('Abweichung – was war anders?'))
   if (note && note.trim()) exec(x, 'deviation', note.trim())
 }
 async function reopen(x) {
@@ -148,7 +149,7 @@ async function transition(action) {
   busy.value = action; err.value = ''; info.value = ''
   try {
     wo.value = await api.workorderTransition(wo.value.id, action)
-    info.value = action === 'start' ? 'Auftrag gestartet.' : 'Fertig gemeldet – der Auftrag wartet jetzt auf die Bestätigung.'
+    info.value = action === 'start' ? t('Auftrag gestartet.') : t('Fertig gemeldet – der Auftrag wartet jetzt auf die Bestätigung.')
   } catch (e) { err.value = errText(e) } finally { busy.value = null }
 }
 
@@ -164,7 +165,7 @@ function onScan(text) {
   if (label) return focusLabel(label)
   const path = pathFromScan(text)
   if (path) router.push(path)
-  else err.value = `Unbekannter Code: ${text}`
+  else err.value = t('Unbekannter Code: {c}', { c: text })
 }
 
 onMounted(load)

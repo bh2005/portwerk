@@ -29,7 +29,7 @@
                 <span v-if="u.notify && Object.values(u.notify).includes(false)" class="ml-1 text-amber-600 dark:text-amber-400" :title="optOutText(u.notify)">✉ abbestellt</span>
                 <span v-if="u.absent" class="ml-1 text-sky-700 dark:text-sky-300">abwesend bis {{ u.absent.until.split('-').reverse().join('.') }}{{ u.absent.deputy ? ` · Vertretung ${u.absent.deputy.username}` : '' }}</span></div></td>
               <td :class="td"><div v-if="u.roles.length">{{ u.roles.map(roleLabel).join(', ') }} <span class="text-[10px] text-slate-400">(global)</span></div>
-                <div class="flex flex-wrap gap-1 mt-0.5"><span v-for="s in u.scopes" :key="s.id" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" :title="s.source === 'ldap' ? 'aus AD-Gruppe' : 'manuell vergeben'">{{ scopeText(s) }}<span v-if="s.source === 'ldap'"> · AD</span></span></div>
+                <div class="flex flex-wrap gap-1 mt-0.5"><span v-for="s in u.scopes" :key="s.id" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" :title="s.source === 'ldap' ? $t('aus AD-Gruppe') : $t('manuell vergeben')">{{ scopeText(s) }}<span v-if="s.source === 'ldap'"> · AD</span></span></div>
                 <div v-if="!u.roles.length && !u.scopes.length" class="text-xs text-slate-400">–</div></td>
               <td :class="td" class="text-slate-500">{{ fmtTime(u.last_login) }}</td>
               <td :class="td">{{ u.active ? 'aktiv' : 'gesperrt' }}</td>
@@ -87,12 +87,12 @@
         <button type="submit" :class="btnPrimary">Suchen</button>
         <button type="button" :class="btnGhost" @click="resetAudit">Zurücksetzen</button>
       </form>
-      <p class="text-xs text-slate-400">{{ audit.length }} Einträge{{ auditFiltered ? ' (gefiltert)' : '' }}{{ auditMore ? ' – weitere vorhanden' : '' }}</p>
+      <p class="text-xs text-slate-400">{{ audit.length }} Einträge{{ auditFiltered ? ' (gefiltert)' : '' }}{{ auditMore ? ' ' + $t('– weitere vorhanden') : '' }}</p>
       <div :class="card" class="overflow-x-auto">
         <table class="w-full text-xs">
           <thead><tr class="bg-slate-50 dark:bg-slate-700/40"><th :class="th">Zeit</th><th :class="th">Benutzer</th><th :class="th">Aktion</th><th :class="th">Objekt</th><th :class="th">Detail</th></tr></thead>
           <tbody>
-            <tr v-if="!audit.length"><td colspan="5" class="px-3 py-6 text-center text-slate-400">Keine Einträge{{ auditFiltered ? ' für diese Suche' : '' }}.</td></tr>
+            <tr v-if="!audit.length"><td colspan="5" class="px-3 py-6 text-center text-slate-400">Keine Einträge{{ auditFiltered ? ' ' + $t('für diese Suche') : '' }}.</td></tr>
             <tr v-for="a in audit" :key="a.id" class="border-t border-slate-100 dark:border-slate-700">
               <td :class="td" class="whitespace-nowrap">{{ fmtTime(a.ts) }}</td><td :class="td">{{ a.actor }}</td><td :class="td" class="font-mono">{{ a.action }}</td>
               <td :class="td">{{ a.entity }} {{ a.entity_id }}</td><td :class="td" class="text-slate-500 dark:text-slate-400">{{ a.detail }}</td>
@@ -103,7 +103,7 @@
       <div v-if="auditMore" class="text-center"><button type="button" :class="btnGhost" @click="loadAudit(true)">Mehr laden</button></div>
     </div>
 
-    <ModalDialog v-if="userForm" :title="userForm.id ? `Benutzer ${userForm.username}` : 'Neuer Benutzer'" :error="formError" @close="userForm = null">
+    <ModalDialog v-if="userForm" :title="userForm.id ? `Benutzer ${userForm.username}` : $t('Neuer Benutzer')" :error="formError" @close="userForm = null">
       <div v-if="!userForm.id"><label :class="lbl">Benutzername</label><input v-model="userForm.username" :class="inp" /></div>
       <div v-if="!userForm.id"><label :class="lbl">Passwort</label><input v-model="userForm.password" type="password" autocomplete="new-password" :class="inp" /></div>
       <div class="grid grid-cols-2 gap-3">

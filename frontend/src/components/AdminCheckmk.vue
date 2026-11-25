@@ -29,7 +29,7 @@
         <p class="text-xs text-slate-400 mt-1">Ohne <code>/check_mk/api</code>. Die Anmeldedaten gehen mit jeder Anfrage mit – nach Möglichkeit https verwenden.</p></div>
       <div class="grid grid-cols-2 gap-3">
         <div><label :class="lbl">Automation-User</label><input v-model="a.user" :class="inp" autocomplete="off" /></div>
-        <div><label :class="lbl">Secret</label><input v-model="a.secret" type="password" :class="inp" autocomplete="new-password" :placeholder="a.secret_set ? '(gesetzt – leer lassen = unverändert)' : ''" /></div>
+        <div><label :class="lbl">Secret</label><input v-model="a.secret" type="password" :class="inp" autocomplete="new-password" :placeholder="a.secret_set ? $t('(gesetzt – leer lassen = unverändert)') : ''" /></div>
       </div>
       <div><label :class="lbl">Standardordner für neue Hosts</label><input v-model="a.default_folder" :class="inp" placeholder="/" />
         <p class="text-xs text-slate-400 mt-1">Pfad wie <code>/eu/de_germany</code>; im Dialog beim Anlegen änderbar.</p></div>

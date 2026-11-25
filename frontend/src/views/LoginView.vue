@@ -11,7 +11,7 @@
       <div><label :class="lbl">{{ $t('Benutzername') }}</label><input v-model="username" autocomplete="username" autofocus :class="inp" /></div>
       <div><label :class="lbl">{{ $t('Passwort') }}</label><input v-model="password" type="password" autocomplete="current-password" :class="inp" /></div>
       <button :disabled="busy || !username || !password" :class="btnPrimary" class="w-full">{{ busy ? $t('Anmelden…') : $t('Anmelden') }}</button>
-      <div class="text-center"><button type="button" class="text-xs text-slate-400 hover:text-ks-600 dark:hover:text-ks-300" @click="setLang(lang === 'en' ? 'de' : 'en')">{{ lang === 'en' ? 'Deutsch' : 'English' }}</button></div>
+      <div class="text-center"><button type="button" class="text-xs text-slate-400 hover:text-ks-600 dark:hover:text-ks-300" @click="setLang(lang === 'en' ? 'de' : 'en')">{{ lang === 'en' ? $t('Deutsch') : $t('English') }}</button></div>
     </form>
   </div>
 </template>

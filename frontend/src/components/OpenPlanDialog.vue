@@ -5,35 +5,35 @@
         class="px-3 py-1.5" :class="mode === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'">{{ l }}</button>
     </div>
 
-    <div><label :class="lbl">OpenPlan-Projekt</label>
-      <select v-model="projectId" :class="inp" @change="loadTasks"><option :value="null" disabled>wählen …</option>
+    <div><label :class="lbl">{{ $t('OpenPlan-Projekt') }}</label>
+      <select v-model="projectId" :class="inp" @change="loadTasks"><option :value="null" disabled>{{ $t('wählen …') }}</option>
         <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }} (ID {{ p.id }})</option></select></div>
 
     <template v-if="projectId">
       <template v-if="mode === 'create'">
-        <div><label :class="lbl">Unter Abschnitt</label>
-          <select v-model="parentId" :class="inp"><option :value="null">(oberste Ebene)</option>
+        <div><label :class="lbl">{{ $t('Unter Abschnitt') }}</label>
+          <select v-model="parentId" :class="inp"><option :value="null">{{ $t('(oberste Ebene)') }}</option>
             <option v-for="t in sections" :key="t.id" :value="t.id">{{ t.suggested ? '★ ' : '' }}{{ t.wbs }} {{ t.name }}</option></select>
-          <p class="text-[11px] text-slate-400 mt-1">★ = Abschnitt „Patchaufträge (aus Portwerk)“ der Projektvorlage.</p></div>
-        <div><label :class="lbl">Name der Aufgabe</label><input v-model="name" :class="inp" :placeholder="`${wo.number} ${wo.title}`" /></div>
-        <p class="text-xs text-slate-400">Dauer und frühester Beginn kommen aus dem Zeitraum des Auftrags. In OpenPlan erscheint die Referenz <code>portwerk: {{ wo.number }}</code> mit Link zurück.</p>
+          <p class="text-[11px] text-slate-400 mt-1">{{ $t('★ = Abschnitt „Patchaufträge (aus Portwerk)“ der Projektvorlage.') }}</p></div>
+        <div><label :class="lbl">{{ $t('Name der Aufgabe') }}</label><input v-model="name" :class="inp" :placeholder="`${wo.number} ${wo.title}`" /></div>
+        <p class="text-xs text-slate-400">{{ $t('Dauer und frühester Beginn kommen aus dem Zeitraum des Auftrags. In OpenPlan erscheint die Referenz') + ' ' }}<code>portwerk: {{ wo.number }}</code>{{ ' ' + $t('mit Link zurück.') }}</p>
       </template>
       <template v-else>
-        <input v-model="q" :class="inp" placeholder="Aufgabe suchen …" @input="loadTasksSoon" />
+        <input v-model="q" :class="inp" :placeholder="$t('Aufgabe suchen …')" @input="loadTasksSoon" />
         <div class="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-700">
           <label v-for="t in leaves" :key="t.id" class="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/40">
             <input type="radio" :value="t.id" v-model="taskId" /> <span class="text-xs text-slate-400 w-10">{{ t.wbs }}</span>
             <span class="text-slate-800 dark:text-slate-100 flex-1 truncate">{{ t.name }}</span>
             <span class="text-[11px] text-slate-400">{{ t.status }}<template v-if="t.percent"> · {{ t.percent }}%</template></span>
-            <span v-if="t.refs.portwerk" class="text-[11px] text-amber-600 dark:text-amber-400">schon {{ t.refs.portwerk }}</span></label>
-          <p v-if="!leaves.length" class="px-3 py-3 text-sm text-slate-400">Keine Aufgaben gefunden.</p>
+            <span v-if="t.refs.portwerk" class="text-[11px] text-amber-600 dark:text-amber-400">{{ $t('schon') }} {{ t.refs.portwerk }}</span></label>
+          <p v-if="!leaves.length" class="px-3 py-3 text-sm text-slate-400">{{ $t('Keine Aufgaben gefunden.') }}</p>
         </div>
       </template>
     </template>
 
     <template #footer>
-      <button :class="btnGhost" @click="$emit('close')">Abbrechen</button>
-      <button :class="btnPrimary" :disabled="busy || !projectId || (mode === 'link' && !taskId)" @click="submit">{{ busy ? '…' : (mode === 'create' ? 'Aufgabe anlegen' : 'Verknüpfen') }}</button>
+      <button :class="btnGhost" @click="$emit('close')">{{ $t('Abbrechen') }}</button>
+      <button :class="btnPrimary" :disabled="busy || !projectId || (mode === 'link' && !taskId)" @click="submit">{{ busy ? '…' : (mode === 'create' ? $t('Aufgabe anlegen') : $t('Verknüpfen')) }}</button>
     </template>
   </ModalDialog>
 </template>

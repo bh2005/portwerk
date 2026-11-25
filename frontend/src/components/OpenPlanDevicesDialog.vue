@@ -7,7 +7,7 @@
         <li v-for="d in result.created" :key="d.id"><router-link :to="`/devices/${d.id}`" class="text-ks-600 dark:text-ks-400 hover:underline font-mono" @click="$emit('close')">{{ d.hostname }}</router-link>
           <span class="text-slate-500">{{ d.ports ? ` · ${d.ports} Ports aus dem Katalog` : '' }}{{ d.rack_position ? ` · HE ${d.rack_position}` : '' }}</span></li>
       </ul>
-      <p v-for="s in result.skipped" :key="'s' + s.task_id" class="text-amber-700 dark:text-amber-300">{{ s.hostname }}: {{ s.why }}</p>
+      <p v-for="s in result.skipped" :key="'s' + s.task_id" class="text-amber-700 dark:text-amber-300">{{ s.hostname }}: {{ $tApi(s.why) }}</p>
       <p v-for="w in result.warnings" :key="w" class="text-amber-700 dark:text-amber-300">{{ w }}</p>
     </div>
 
@@ -37,7 +37,7 @@
                 <select v-if="i.state === 'new'" v-model="types[i.task_id]" :class="inp" class="!py-1 !text-xs !w-36">
                   <option v-for="[k, l] in DEVICE_TYPES" :key="k" :value="k">{{ $t(l) }}</option></select>
                 <span v-else>{{ typeLabel(i.type) }}</span>
-                <div class="text-xs" :class="i.model_id ? 'text-green-700 dark:text-green-400' : 'text-slate-400'" :title="i.model_id ? 'Katalogmodell gefunden – Ports werden angelegt' : 'nicht im Katalog'">{{ i.model_label || i.modell || '–' }}</div></td>
+                <div class="text-xs" :class="i.model_id ? 'text-green-700 dark:text-green-400' : 'text-slate-400'" :title="i.model_id ? $t('Katalogmodell gefunden – Ports werden angelegt') : $t('nicht im Katalog')">{{ i.model_label || i.modell || '–' }}</div></td>
               <td :class="td" class="text-xs">{{ i.site || i.loc || i.standort || '–' }}</td>
               <td :class="td">
                 <template v-if="i.state === 'new'">
@@ -61,7 +61,7 @@
     </div>
 
     <template #footer>
-      <button :class="btnGhost" @click="$emit('close')">{{ result ? 'Schließen' : 'Abbrechen' }}</button>
+      <button :class="btnGhost" @click="$emit('close')">{{ result ? $t('Schließen') : $t('Abbrechen') }}</button>
       <button v-if="!result" :class="btnPrimary" :disabled="busy || !pickCount" @click="apply">{{ $t('{n} übernehmen', { n: pickCount }) }}</button>
     </template>
   </ModalDialog>

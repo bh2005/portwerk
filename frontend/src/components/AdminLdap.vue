@@ -26,7 +26,7 @@
         <div><label :class="lbl">Benutzerfilter</label><input v-model="f.user_filter" :class="inp" /><p :class="hint">{username} wird durch den Anmeldenamen ersetzt.</p></div>
         <div><label :class="lbl">Service-Account (Bind-DN, optional)</label><input v-model="f.bind_dn" :class="inp" autocomplete="off" placeholder="CN=svc-opp,OU=Service,DC=example,DC=test" /></div>
         <div><label :class="lbl">Service-Account-Passwort</label>
-          <input v-model="f.bind_password" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.bind_password_set ? '●●●●●● gespeichert – leer lassen zum Beibehalten' : ''" />
+          <input v-model="f.bind_password" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.bind_password_set ? $t('●●●●●● gespeichert – leer lassen zum Beibehalten') : ''" />
           <label v-if="meta.bind_password_set" class="flex items-center gap-2 text-xs text-slate-500 mt-1"><input type="checkbox" v-model="f.clear_bind_password" /> gespeichertes Passwort entfernen</label></div>
       </div>
     </fieldset>
@@ -79,7 +79,7 @@
       </div>
       <ul v-if="result" class="text-sm space-y-0.5 mt-2">
         <li v-for="(s, i) in result.steps" :key="i" :class="s.ok ? 'text-green-600' : 'text-red-500'"><b>{{ s.ok ? '✓' : '✗' }} {{ s.step }}</b><span v-if="s.detail" class="text-slate-500 dark:text-slate-400 break-all"> – {{ s.detail }}</span></li>
-        <li :class="result.ok ? 'text-green-600' : 'text-red-500'" class="font-semibold">{{ result.ok ? 'Test erfolgreich' : 'Test fehlgeschlagen' }}</li>
+        <li :class="result.ok ? 'text-green-600' : 'text-red-500'" class="font-semibold">{{ result.ok ? $t('Test erfolgreich') : $t('Test fehlgeschlagen') }}</li>
       </ul>
     </fieldset>
   </form>

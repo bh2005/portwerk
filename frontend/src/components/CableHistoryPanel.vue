@@ -11,7 +11,7 @@
     </div>
     <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <p v-else-if="loading" class="text-sm text-slate-400">{{ $t('Lade …') }}</p>
-    <p v-else-if="!rows.length" class="text-sm text-slate-400">{{ at ? 'Zu diesem Zeitpunkt war nichts verbunden.' : 'Noch keine Verbindungen.' }}</p>
+    <p v-else-if="!rows.length" class="text-sm text-slate-400">{{ at ? $t('Zu diesem Zeitpunkt war nichts verbunden.') : $t('Noch keine Verbindungen.') }}</p>
     <ul v-else class="space-y-2">
       <li v-for="h in rows" :key="h.id" class="rounded-lg border px-3 py-2 text-sm"
           :class="h.active ? 'border-green-300 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'">

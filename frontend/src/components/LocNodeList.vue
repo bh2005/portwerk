@@ -5,7 +5,7 @@
         <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 w-16 text-center shrink-0">{{ LABEL[n.kind] }}</span>
         <input v-model="n.name" :class="inp" class="!py-1 flex-1 min-w-0" :placeholder="`Name ${LABEL[n.kind]}`" />
         <template v-if="CONTAINER.includes(n.kind)">
-          <input v-model.number="n.rack_units" type="number" min="1" max="100" :class="inp" class="!py-1 !w-16" :title="n.kind === 'cabinet' ? 'Höheneinheiten (leer = keine HE-Teilung)' : 'Höheneinheiten'" />
+          <input v-model.number="n.rack_units" type="number" min="1" max="100" :class="inp" class="!py-1 !w-16" :title="n.kind === 'cabinet' ? $t('Höheneinheiten (leer = keine HE-Teilung)') : $t('Höheneinheiten')" />
           <span class="text-xs text-slate-400">{{ $t('HE') }}</span>
         </template>
         <button :class="btnDanger" @click="nodes.splice(i, 1)" :title="$t('Entfernen (mit Unterstruktur)')">✕</button>

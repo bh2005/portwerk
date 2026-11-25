@@ -1,39 +1,39 @@
 <template>
-  <SidePanel :open="open" title="Autorouting" @close="$emit('close')">
+  <SidePanel :open="open" :title="$t('Autorouting')" @close="$emit('close')">
     <template #title>
-      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Autorouting</h2>
-      <p class="text-xs text-slate-500 dark:text-slate-400">Patchungen von der Quelle zum Ziel automatisch planen</p>
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('Autorouting') }}</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400">{{ $t('Patchungen von der Quelle zum Ziel automatisch planen') }}</p>
     </template>
 
     <template v-if="done">
       <div class="rounded-lg border border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4 space-y-2">
-        <p class="text-sm font-medium text-green-700 dark:text-green-400">Patchauftrag angelegt</p>
+        <p class="text-sm font-medium text-green-700 dark:text-green-400">{{ $t('Patchauftrag angelegt') }}</p>
         <p class="text-sm text-slate-700 dark:text-slate-200">{{ done.workorder.number }} – {{ done.workorder.title }}</p>
-        <p class="text-xs text-slate-500 dark:text-slate-400">{{ done.route.summary }}<template v-if="done.device_id"> · Gerät als „geplant“ angelegt</template>. Die Ports sind verplant.</p>
-        <router-link :to="`/workorders/${done.workorder.id}`" :class="btnPrimary" class="inline-block" @click="$emit('close')">Auftrag öffnen</router-link>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ done.route.summary }}<template v-if="done.device_id">{{ ' ' + $t('· Gerät als „geplant“ angelegt') }}</template>{{ $t('. Die Ports sind verplant.') }}</p>
+        <router-link :to="`/workorders/${done.workorder.id}`" :class="btnPrimary" class="inline-block" @click="$emit('close')">{{ $t('Auftrag öffnen') }}</router-link>
       </div>
     </template>
 
     <template v-else>
       <!-- 1. Quelle -->
       <section class="space-y-2">
-        <h3 :class="lbl" class="!mb-0">1 · Quelle</h3>
+        <h3 :class="lbl" class="!mb-0">{{ $t('1 · Quelle') }}</h3>
         <div class="flex gap-4 text-sm">
-          <label class="flex items-center gap-1.5"><input v-model="mode" type="radio" value="port" @change="reset" /> vorhandener Port</label>
-          <label class="flex items-center gap-1.5"><input v-model="mode" type="radio" value="new" @change="reset" /> neues Gerät (als „geplant“ anlegen)</label>
+          <label class="flex items-center gap-1.5"><input v-model="mode" type="radio" value="port" @change="reset" />{{ ' ' + $t('vorhandener Port') }}</label>
+          <label class="flex items-center gap-1.5"><input v-model="mode" type="radio" value="new" @change="reset" />{{ ' ' + $t('neues Gerät (als „geplant“ anlegen)') }}</label>
         </div>
-        <PortPicker v-if="mode === 'port'" :key="'src' + srcKey" v-model="srcPort" label="Gerät und Port" :preset-device-id="presetDeviceId" :preset-port-id="presetPortId" @select="p => { srcSel = p; reset() }" />
+        <PortPicker v-if="mode === 'port'" :key="'src' + srcKey" v-model="srcPort" :label="$t('Gerät und Port')" :preset-device-id="presetDeviceId" :preset-port-id="presetPortId" @select="p => { srcSel = p; reset() }" />
         <div v-else class="grid grid-cols-2 gap-3">
-          <div class="col-span-2"><label :class="lbl">Hostname</label><input v-model="nd.hostname" :class="inp" placeholder="z. B. srv-db-07" @input="reset" /></div>
-          <div class="col-span-2"><label :class="lbl">Rack / Schrank</label>
-            <select v-model="nd.location_id" :class="inp" @change="reset"><option :value="null" disabled>Rack wählen …</option>
+          <div class="col-span-2"><label :class="lbl">{{ $t('Hostname') }}</label><input v-model="nd.hostname" :class="inp" :placeholder="$t('z. B. srv-db-07')" @input="reset" /></div>
+          <div class="col-span-2"><label :class="lbl">{{ $t('Rack / Schrank') }}</label>
+            <select v-model="nd.location_id" :class="inp" @change="reset"><option :value="null" disabled>{{ $t('Rack wählen …') }}</option>
               <option v-for="l in racks" :key="l.id" :value="l.id">{{ l.path }}</option></select></div>
-          <div><label :class="lbl">Typ</label><select v-model="nd.type" :class="inp" @change="reset"><option v-for="t in DEVICE_TYPES" :key="t[0]" :value="t[0]">{{ $t(t[1]) }}</option></select></div>
-          <div><label :class="lbl">Höhe (HE) / Position</label>
-            <div class="flex gap-2"><input v-model.number="nd.height_u" type="number" min="1" :class="inp" /><input v-model.number="nd.rack_position" type="number" min="1" :class="inp" placeholder="Pos." /></div></div>
-          <div><label :class="lbl">Netzwerk-Ports</label>
+          <div><label :class="lbl">{{ $t('Typ') }}</label><select v-model="nd.type" :class="inp" @change="reset"><option v-for="t in DEVICE_TYPES" :key="t[0]" :value="t[0]">{{ $t(t[1]) }}</option></select></div>
+          <div><label :class="lbl">{{ $t('Höhe (HE) / Position') }}</label>
+            <div class="flex gap-2"><input v-model.number="nd.height_u" type="number" min="1" :class="inp" /><input v-model.number="nd.rack_position" type="number" min="1" :class="inp" :placeholder="$t('Pos.')" /></div></div>
+          <div><label :class="lbl">{{ $t('Netzwerk-Ports') }}</label>
             <div class="flex gap-2"><input v-model="nd.nic_prefix" :class="inp" /><input v-model.number="nd.nic_count" type="number" min="1" max="64" :class="inp" /></div></div>
-          <div><label :class="lbl">Medium / Port für die Route</label>
+          <div><label :class="lbl">{{ $t('Medium / Port für die Route') }}</label>
             <div class="flex gap-2"><select v-model="nd.medium" :class="inp" @change="reset"><option v-for="m in ['RJ45', 'SFP', 'SFP+', 'LWL']" :key="m" :value="m">{{ m }}</option></select>
               <select v-model="nd.port_no" :class="inp" @change="reset"><option v-for="n in portNos" :key="n" :value="n">{{ nd.nic_prefix }}{{ n }}</option></select></div></div>
         </div>
@@ -41,40 +41,40 @@
 
       <!-- 2. Ziel -->
       <section class="space-y-2">
-        <h3 :class="lbl" class="!mb-0">2 · Ziel</h3>
-        <PortPicker :key="'tgt' + tgtKey" v-model="tgtPort" label="Gerät und Port (z. B. Switchport)" @select="p => { tgtSel = p; reset() }" />
-        <p v-if="tgtSel && ['patchpanel', 'outlet'].includes(tgtSel.device?.type)" class="text-xs text-red-500">Das Ziel muss ein aktives Gerät sein (nicht Patchfeld oder Dose).</p>
+        <h3 :class="lbl" class="!mb-0">{{ $t('2 · Ziel') }}</h3>
+        <PortPicker :key="'tgt' + tgtKey" v-model="tgtPort" :label="$t('Gerät und Port (z. B. Switchport)')" @select="p => { tgtSel = p; reset() }" />
+        <p v-if="tgtSel && ['patchpanel', 'outlet'].includes(tgtSel.device?.type)" class="text-xs text-red-500">{{ $t('Das Ziel muss ein aktives Gerät sein (nicht Patchfeld oder Dose).') }}</p>
       </section>
 
-      <button :class="btnPrimary" :disabled="!ready || !!busy" @click="search">{{ busy === 'search' ? 'Suche …' : 'Route suchen' }}</button>
+      <button :class="btnPrimary" :disabled="!ready || !!busy" @click="search">{{ busy === 'search' ? $t('Suche …') : $t('Route suchen') }}</button>
       <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
 
       <!-- 3. Vorschläge -->
       <section v-if="result" class="space-y-3">
-        <h3 :class="lbl" class="!mb-0">3 · Vorschlag</h3>
-        <p v-if="!result.routes.length" class="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">Keine Route gefunden. {{ result.why }}</p>
+        <h3 :class="lbl" class="!mb-0">{{ $t('3 · Vorschlag') }}</h3>
+        <p v-if="!result.routes.length" class="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">{{ $t('Keine Route gefunden.') }} {{ result.why }}</p>
         <label v-for="(r, i) in result.routes" :key="i" class="block rounded-lg border p-3 cursor-pointer"
                :class="pick === i ? 'border-ks-500 bg-ks-50/60 dark:bg-ks-900/20' : 'border-slate-200 dark:border-slate-700'">
           <div class="flex items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-100">
-            <input v-model="pick" type="radio" :value="i" /> {{ i === 0 ? 'Empfohlen' : 'Alternative ' + i }}
+            <input v-model="pick" type="radio" :value="i" /> {{ i === 0 ? $t('Empfohlen') : $t('Alternative') + ' ' + i }}
             <span class="ml-auto text-xs font-normal text-slate-500">{{ r.summary }}</span>
           </div>
           <ol class="mt-2 space-y-1 text-xs">
             <li class="font-mono text-slate-700 dark:text-slate-200">● {{ r.steps[0].from }}</li>
             <li v-for="(s, k) in r.steps" :key="k" class="flex items-start gap-2">
               <span class="shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium" :class="STEP[s.type].cls">{{ STEP[s.type].label }}</span>
-              <span class="font-mono text-slate-600 dark:text-slate-300">→ {{ s.to }}<span v-if="s.type === 'cord' && s.text.includes('Racks')" class="font-sans text-slate-400"> (zwischen Racks)</span></span>
+              <span class="font-mono text-slate-600 dark:text-slate-300">→ {{ s.to }}<span v-if="s.type === 'cord' && s.text.includes('Racks')" class="font-sans text-slate-400">{{ ' ' + $t('(zwischen Racks)') }}</span></span>
             </li>
           </ol>
         </label>
         <template v-if="result.routes.length">
-          <div><label :class="lbl">Titel des Patchauftrags</label><input v-model="title" :class="inp" :placeholder="defaultTitle" /></div>
+          <div><label :class="lbl">{{ $t('Titel des Patchauftrags') }}</label><input v-model="title" :class="inp" :placeholder="defaultTitle" /></div>
           <div class="grid grid-cols-2 gap-3 items-end">
-            <div><label :class="lbl">Kabelart der neuen Patchkabel</label>
-              <select v-model="cableType" :class="inp"><option value="">automatisch ({{ result.cable_type }})</option><option v-for="t in cableTypes" :key="t.name" :value="t.name">{{ t.name }}</option></select></div>
-            <button :class="btnPrimary" :disabled="!!busy" @click="create()">{{ busy === 'create' ? 'Lege an …' : 'Patchauftrag anlegen' }}</button>
+            <div><label :class="lbl">{{ $t('Kabelart der neuen Patchkabel') }}</label>
+              <select v-model="cableType" :class="inp"><option value="">{{ $t('automatisch') }} ({{ result.cable_type }})</option><option v-for="t in cableTypes" :key="t.name" :value="t.name">{{ t.name }}</option></select></div>
+            <button :class="btnPrimary" :disabled="!!busy" @click="create()">{{ busy === 'create' ? $t('Lege an …') : $t('Patchauftrag anlegen') }}</button>
           </div>
-          <p class="text-xs text-slate-400">Je neuem Patchkabel entsteht eine Position „herstellen“; bei einem neuen Gerät zusätzlich der Einbau. Das Gerät wird als <b>geplant</b> angelegt und gilt nach der Bestätigung des Auftrags als eingebaut.</p>
+          <p class="text-xs text-slate-400">{{ $t('Je neuem Patchkabel entsteht eine Position „herstellen“; bei einem neuen Gerät zusätzlich der Einbau. Das Gerät wird als') + ' ' }}<b>{{ $t('geplant') }}</b>{{ ' ' + $t('angelegt und gilt nach der Bestätigung des Auftrags als eingebaut.') }}</p>
         </template>
       </section>
     </template>
@@ -82,6 +82,7 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { computed, reactive, ref, watch } from 'vue'
 import SidePanel from './SidePanel.vue'
 import PortPicker from './PortPicker.vue'
@@ -95,9 +96,9 @@ const props = defineProps({ open: Boolean, presetPortId: { type: Number, default
                             presetLocationId: { type: Number, default: null }, startNew: Boolean })
 const emit = defineEmits(['close', 'done'])
 
-const STEP = { cord: { label: 'neu', cls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-  cable: { label: 'vorhanden', cls: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300' },
-  station: { label: 'Station', cls: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' } }
+const STEP = { cord: { label: t('neu'), cls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+  cable: { label: t('vorhanden'), cls: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300' },
+  station: { label: t('Station'), cls: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' } }
 const mode = ref('port'), srcPort = ref(''), srcSel = ref(null), tgtPort = ref(''), tgtSel = ref(null), srcKey = ref(0), tgtKey = ref(0)
 const nd = reactive({ hostname: '', type: 'server', location_id: null, height_u: 1, rack_position: null, nic_prefix: 'NIC', nic_count: 2, medium: 'RJ45', port_no: 1 })
 const racks = ref([]), result = ref(null), pick = ref(0), title = ref(''), cableType = ref(''), busy = ref(''), error = ref(''), done = ref(null)

@@ -66,7 +66,7 @@
           </tr>
         </tbody>
       </table>
-      <p v-if="!rows.length" class="p-4 text-sm text-slate-400">{{ onlyIssues ? 'Keine Engpässe.' : 'Keine Daten.' }}</p>
+      <p v-if="!rows.length" class="p-4 text-sm text-slate-400">{{ onlyIssues ? $t('Keine Engpässe.') : $t('Keine Daten.') }}</p>
     </div>
   </div>
 </template>

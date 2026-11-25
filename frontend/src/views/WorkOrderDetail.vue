@@ -1,23 +1,23 @@
 <template>
   <div class="max-w-5xl space-y-5" v-if="wo">
     <router-link v-if="['approved', 'in_progress', 'rework'].includes(wo.status)" :to="`/m/wo/${wo.id}`"
-      class="md:hidden block text-center bg-ks-600 text-white font-semibold py-3 rounded-xl print:hidden">Mobile Ansicht zum Abhaken</router-link>
+      class="md:hidden block text-center bg-ks-600 text-white font-semibold py-3 rounded-xl print:hidden">{{ $t('Mobile Ansicht zum Abhaken') }}</router-link>
     <!-- Kopfzeile -->
     <div class="flex items-start justify-between gap-4 flex-wrap">
       <div>
         <div class="flex items-center gap-3">
-          <button class="text-sm text-slate-400 hover:text-ks-600 dark:hover:text-ks-400" @click="$router.push('/workorders')">← Aufträge</button>
+          <button class="text-sm text-slate-400 hover:text-ks-600 dark:hover:text-ks-400" @click="$router.push('/workorders')">{{ $t('← Aufträge') }}</button>
           <span class="font-mono font-semibold text-ks-700 dark:text-ks-400 text-lg">{{ wo.number }}</span>
-          <span :class="statusClass(wo.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">{{ wo.status_label }}</span>
+          <span :class="statusClass(wo.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">{{ $t(wo.status_label) }}</span>
           <span :class="prioClass(wo.priority)" class="text-xs font-medium">{{ prioLabel(wo.priority) }}</span>
         </div>
         <h1 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mt-1">{{ wo.title }}</h1>
         <p v-if="wo.description" class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ wo.description }}</p>
       </div>
       <div class="flex gap-2 flex-wrap">
-        <button v-if="canSend" :class="btnGhost" @click="sendOpen = true">Senden …</button>
-        <button v-if="canAssign" :class="btnGhost" @click="openAssign">Zuweisen …</button>
-        <button v-if="canEdit" :class="btnGhost" @click="openEdit">Bearbeiten</button>
+        <button v-if="canSend" :class="btnGhost" @click="sendOpen = true">{{ $t('Senden …') }}</button>
+        <button v-if="canAssign" :class="btnGhost" @click="openAssign">{{ $t('Zuweisen …') }}</button>
+        <button v-if="canEdit" :class="btnGhost" @click="openEdit">{{ $t('Bearbeiten') }}</button>
         <template v-for="btn in actionButtons" :key="btn.action">
           <button :class="btn.danger ? btnDanger2 : btnPrimary" @click="doTransition(btn.action)" :disabled="transitioning">
             {{ btn.label }}
@@ -28,17 +28,17 @@
 
     <!-- Metadaten -->
     <div :class="card" class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-      <div><span :class="metaLbl">Zugewiesen an</span><span class="text-slate-700 dark:text-slate-200">{{ wo.assigned_to ? (wo.assigned_to.full_name || wo.assigned_to.username) : '–' }}</span>
-        <span v-if="wo.assigned_to?.absent" class="block text-xs text-sky-700 dark:text-sky-300">abwesend bis {{ wo.assigned_to.absent.until.split('-').reverse().join('.') }}{{ wo.assigned_to.absent.deputy ? ` · Vertretung ${wo.assigned_to.absent.deputy.full_name || wo.assigned_to.absent.deputy.username}` : '' }}</span></div>
-      <div><span :class="metaLbl">Erstellt von</span><span class="text-slate-700 dark:text-slate-200">{{ wo.created_by }}</span></div>
-      <div><span :class="metaLbl">Erstellt am</span><span class="text-slate-700 dark:text-slate-200">{{ fmtTime(wo.created_at) }}</span></div>
-      <div v-if="wo.planned_from"><span :class="metaLbl">Geplant von</span><span class="text-slate-700 dark:text-slate-200">{{ wo.planned_from }}</span></div>
-      <div v-if="wo.planned_to"><span :class="metaLbl">Geplant bis</span><span class="text-slate-700 dark:text-slate-200">{{ wo.planned_to }}</span></div>
-      <div v-if="wo.location"><span :class="metaLbl">Standort</span><span class="text-slate-700 dark:text-slate-200">{{ wo.location.name }}</span></div>
-      <div v-if="wo.note"><span :class="metaLbl">Notiz</span><span class="text-slate-700 dark:text-slate-200">{{ wo.note }}</span></div>
+      <div><span :class="metaLbl">{{ $t('Zugewiesen an') }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo.assigned_to ? (wo.assigned_to.full_name || wo.assigned_to.username) : '–' }}</span>
+        <span v-if="wo.assigned_to?.absent" class="block text-xs text-sky-700 dark:text-sky-300">{{ $t('abwesend bis {d}', { d: wo.assigned_to.absent.until.split('-').reverse().join('.') }) }}{{ wo.assigned_to.absent.deputy ? ' · ' + $t('Vertretung: {name}', { name: wo.assigned_to.absent.deputy.full_name || wo.assigned_to.absent.deputy.username }) : '' }}</span></div>
+      <div><span :class="metaLbl">{{ $t('Erstellt von') }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo.created_by }}</span></div>
+      <div><span :class="metaLbl">{{ $t('Erstellt am') }}</span><span class="text-slate-700 dark:text-slate-200">{{ fmtTime(wo.created_at) }}</span></div>
+      <div v-if="wo.planned_from"><span :class="metaLbl">{{ $t('Geplant von') }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo.planned_from }}</span></div>
+      <div v-if="wo.planned_to"><span :class="metaLbl">{{ $t('Geplant bis') }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo.planned_to }}</span></div>
+      <div v-if="wo.location"><span :class="metaLbl">{{ $t('Standort') }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo.location.name }}</span></div>
+      <div v-if="wo.note"><span :class="metaLbl">{{ $t('Notiz') }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo.note }}</span></div>
       <div v-for="[k, l] in ACTOR_FIELDS.filter(([k]) => wo[k])" :key="k"><span :class="metaLbl">{{ l }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo[k] }}</span></div>
       <div v-if="wo.four_eyes_override && wo.four_eyes_override.length" class="col-span-2 md:col-span-4">
-        <span :class="metaLbl">Vier-Augen-Prinzip übersteuert</span>
+        <span :class="metaLbl">{{ $t('Vier-Augen-Prinzip übersteuert') }}</span>
         <span v-for="o in wo.four_eyes_override" :key="o" class="block text-amber-700 dark:text-amber-400">{{ o }}</span>
       </div>
     </div>
@@ -47,19 +47,19 @@
     <div v-if="['in_progress', 'done'].includes(wo.status)" :class="card" class="p-4 print:hidden border-l-4" :style="{ borderLeftColor: LLDP_COLOR[wo.lldp_status] || '#cbd5e1' }">
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          LLDP-Prüfung: <span :style="{ color: LLDP_COLOR[wo.lldp_status] }">{{ LLDP_TEXT[wo.lldp_status] || 'noch nicht geprüft' }}</span>
-          <span v-if="wo.lldp_checked_at" class="ml-2 text-xs font-normal text-slate-400">geprüft {{ fmtTime(wo.lldp_checked_at) }}</span>
+          {{ $t('LLDP-Prüfung:') + ' ' }}<span :style="{ color: LLDP_COLOR[wo.lldp_status] }">{{ LLDP_TEXT[wo.lldp_status] || $t('noch nicht geprüft') }}</span>
+          <span v-if="wo.lldp_checked_at" class="ml-2 text-xs font-normal text-slate-400">{{ $t('geprüft {t}', { t: fmtTime(wo.lldp_checked_at) }) }}</span>
         </h2>
-        <button :class="btnLink" :disabled="verifying" @click="verifyNow">{{ verifying ? 'Prüfe …' : 'Jetzt prüfen' }}</button>
+        <button :class="btnLink" :disabled="verifying" @click="verifyNow">{{ verifying ? $t('Prüfe …') : $t('Jetzt prüfen') }}</button>
       </div>
       <p v-if="wo.status === 'done' && wo.lldp_status === 'ok'" class="mt-2 text-sm text-green-700 dark:text-green-400">
-        Alle prüfbaren Positionen stimmen mit den LLDP/CDP-Nachbarn überein – Vorschlag: <b>bestätigen</b>.</p>
-      <p v-else class="mt-1 text-xs text-slate-400">Die Prüfung läuft nach jedem Checkmk-Import automatisch. LLDP-Daten zählen erst, wenn sie nach dem Abhaken der Position gemeldet wurden.</p>
+        {{ $t('Alle prüfbaren Positionen stimmen mit den LLDP/CDP-Nachbarn überein – Vorschlag:') + ' ' }}<b>{{ $t('bestätigen') }}</b>.</p>
+      <p v-else class="mt-1 text-xs text-slate-400">{{ $t('Die Prüfung läuft nach jedem Checkmk-Import automatisch. LLDP-Daten zählen erst, wenn sie nach dem Abhaken der Position gemeldet wurden.') }}</p>
       <ul v-if="(wo.lldp_detail || []).some(d => d.status !== 'n/a')" class="mt-2 text-sm space-y-1">
         <li v-for="d in wo.lldp_detail.filter(x => x.status !== 'n/a')" :key="d.item_id" class="flex gap-2">
           <span class="w-5 text-center font-bold" :style="{ color: ITEM_COLOR[d.status] }">{{ ITEM_ICON[d.status] }}</span>
           <span class="text-slate-400 tabular-nums">#{{ itemNo(d.item_id) }}</span>
-          <span class="text-slate-700 dark:text-slate-200">{{ d.text || d.label }}</span>
+          <span class="text-slate-700 dark:text-slate-200">{{ $tApi(d.text) || d.label }}</span>
         </li>
       </ul>
     </div>
@@ -67,24 +67,24 @@
     <!-- OpenPlan -->
     <div v-if="ops.enabled && canAssign" :class="card" class="p-4 print:hidden">
       <div class="flex items-center justify-between gap-3 flex-wrap">
-        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">OpenPlan</h2>
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('OpenPlan') }}</h2>
         <div class="flex gap-3 items-center">
           <template v-if="wo.openplan.linked">
-            <button :class="btnLink" :disabled="opBusy" @click="syncOp">Jetzt abgleichen</button>
-            <button :class="btnDanger" :disabled="opBusy" @click="unlinkOp">Trennen</button>
+            <button :class="btnLink" :disabled="opBusy" @click="syncOp">{{ $t('Jetzt abgleichen') }}</button>
+            <button :class="btnDanger" :disabled="opBusy" @click="unlinkOp">{{ $t('Trennen') }}</button>
           </template>
-          <button v-else :class="btnGhost" @click="opDialog = true">Mit OpenPlan verbinden …</button>
+          <button v-else :class="btnGhost" @click="opDialog = true">{{ $t('Mit OpenPlan verbinden …') }}</button>
         </div>
       </div>
-      <p v-if="!wo.openplan.linked" class="text-sm text-slate-400 mt-1">Noch nicht verknüpft. Für den Auftrag kann eine Aufgabe im OpenPlan-Projektplan angelegt oder eine vorhandene verknüpft werden – Status und Fortschritt werden dann automatisch abgeglichen.</p>
+      <p v-if="!wo.openplan.linked" class="text-sm text-slate-400 mt-1">{{ $t('Noch nicht verknüpft. Für den Auftrag kann eine Aufgabe im OpenPlan-Projektplan angelegt oder eine vorhandene verknüpft werden – Status und Fortschritt werden dann automatisch abgeglichen.') }}</p>
       <div v-else class="mt-2 text-sm space-y-1">
         <div class="flex items-center gap-2 flex-wrap">
-          <a v-if="wo.openplan.link" :href="wo.openplan.link" target="_blank" rel="noopener" class="text-ks-600 dark:text-ks-400 hover:underline">Aufgabe in OpenPlan öffnen ↗</a>
+          <a v-if="wo.openplan.link" :href="wo.openplan.link" target="_blank" rel="noopener" class="text-ks-600 dark:text-ks-400 hover:underline">{{ $t('Aufgabe in OpenPlan öffnen ↗') }}</a>
           <span class="text-slate-400">·</span>
           <span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="opClass(wo.openplan.status)">{{ opLabel(wo.openplan.status) }}<template v-if="wo.openplan.percent != null"> · {{ Math.round(wo.openplan.percent) }} %</template></span>
-          <span v-if="wo.openplan.synced_at" class="text-xs text-slate-400">abgeglichen {{ fmtTime(wo.openplan.synced_at) }}</span>
+          <span v-if="wo.openplan.synced_at" class="text-xs text-slate-400">{{ $t('abgeglichen {t}', { t: fmtTime(wo.openplan.synced_at) }) }}</span>
         </div>
-        <p v-if="wo.openplan.error" class="text-xs text-red-500 dark:text-red-400">Letzter Abgleich fehlgeschlagen: {{ wo.openplan.error }}</p>
+        <p v-if="wo.openplan.error" class="text-xs text-red-500 dark:text-red-400">{{ $t('Letzter Abgleich fehlgeschlagen:') }} {{ wo.openplan.error }}</p>
       </div>
     </div>
     <OpenPlanDialog v-if="opDialog" :wo="wo" @close="opDialog = false" @done="r => { wo = r; opDialog = false; note = 'Mit OpenPlan verknüpft.' }" />
@@ -92,16 +92,16 @@
     <!-- Abhängigkeiten (Rückbau vor Einbau) -->
     <div v-if="wo.depends_on" class="rounded-lg border p-3 text-sm"
       :class="wo.depends_on.blocking ? 'border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-200' : 'border-green-300 bg-green-50 text-green-800 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300'">
-      <template v-if="wo.depends_on.blocking">⚠ Dieser Auftrag kann erst starten, wenn der Rückbau
+      <template v-if="wo.depends_on.blocking">{{ $t('⚠ Dieser Auftrag kann erst starten, wenn der Rückbau') }}
         <router-link :to="`/workorders/${wo.depends_on.id}`" class="font-mono font-semibold underline">{{ wo.depends_on.number }}</router-link>
-        bestätigt ist (aktuell: {{ wo.depends_on.status_label }}).</template>
-      <template v-else>✓ Voraussetzung
-        <router-link :to="`/workorders/${wo.depends_on.id}`" class="font-mono font-semibold underline">{{ wo.depends_on.number }}</router-link> ist bestätigt.</template>
+        {{ $t('bestätigt ist (aktuell: {s}).', { s: $t(wo.depends_on.status_label) }) }}</template>
+      <template v-else>{{ $t('✓ Voraussetzung') }}
+        <router-link :to="`/workorders/${wo.depends_on.id}`" class="font-mono font-semibold underline">{{ wo.depends_on.number }}</router-link>{{ ' ' + $t('ist bestätigt.') }}</template>
     </div>
     <div v-if="wo.required_by.length" class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm text-slate-600 dark:text-slate-300">
-      Dieser Rückbau ist Voraussetzung für
+      {{ $t('Dieser Rückbau ist Voraussetzung für') }}
       <router-link v-for="r in wo.required_by" :key="r.id" :to="`/workorders/${r.id}`" class="font-mono font-semibold text-ks-600 dark:text-ks-400 underline mr-2">{{ r.number }}</router-link>
-      – erst nach seiner Bestätigung können diese Aufträge starten.
+      {{ $t('– erst nach seiner Bestätigung können diese Aufträge starten.') }}
     </div>
 
     <!-- Fortschritt -->
@@ -124,38 +124,38 @@
     <!-- Positionen -->
     <div :class="card" class="overflow-hidden print:shadow-none">
       <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Positionen ({{ wo.items.length }})</h2>
-        <button v-if="canEditItems" :class="btnPrimary" class="text-xs px-3 py-1.5" @click="openAddItem">+ Position</button>
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('Positionen ({n})', { n: wo.items.length }) }}</h2>
+        <button v-if="canEditItems" :class="btnPrimary" class="text-xs px-3 py-1.5" @click="openAddItem">{{ $t('+ Position') }}</button>
       </div>
       <!-- Arbeitsliste: Fortschritt, Filter, Sammelaktionen, Export -->
       <div v-if="wo.items.length" class="px-4 py-2 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3 flex-wrap text-sm print:hidden">
-        <span class="text-slate-500 whitespace-nowrap">{{ wo.progress.done }} / {{ wo.progress.total }} erledigt<template v-if="wo.progress.deviation"> · {{ wo.progress.deviation }} Abweichung</template></span>
+        <span class="text-slate-500 whitespace-nowrap">{{ $t('{a} / {b} erledigt', { a: wo.progress.done, b: wo.progress.total }) }}<template v-if="wo.progress.deviation"> · {{ $t('{n} Abweichung', { n: wo.progress.deviation }) }}</template></span>
         <span class="w-32 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><span class="block h-full bg-green-500" :style="{ width: (100 * wo.progress.done / Math.max(1, wo.progress.total)) + '%' }"></span></span>
-        <select v-model="itemFilter" :class="inp" class="!w-32 !py-1 !text-xs"><option value="all">alle</option><option value="open">offen</option><option value="done">erledigt</option><option value="deviation">Abweichung</option></select>
+        <select v-model="itemFilter" :class="inp" class="!w-32 !py-1 !text-xs"><option value="all">{{ $t('alle') }}</option><option value="open">{{ $t('offen') }}</option><option value="done">{{ $t('erledigt') }}</option><option value="deviation">{{ $t('Abweichung') }}</option></select>
         <template v-if="selectable">
-          <span class="text-slate-400">|</span><span class="text-slate-500">{{ picked.size }} gewählt</span>
-          <button v-if="canBulkExec" :class="btnPrimary" class="!py-1 !px-3 !text-xs" :disabled="!picked.size || saving" @click="bulk('execute')">Auswahl abhaken</button>
-          <button v-if="canBulkExec" :class="btnGhost" class="!py-1 !px-3 !text-xs" :disabled="!picked.size || saving" @click="bulk('deviation')">Abweichung …</button>
-          <button v-if="canBulkExec" :class="btnGhost" class="!py-1 !px-3 !text-xs" :disabled="!picked.size || saving" @click="bulk('reopen')">Zurücksetzen</button>
-          <button v-if="canBulkExec" :class="btnLink" @click="pickOpen">alle offenen wählen</button>
-          <button v-if="canEditItems" :class="btnDanger" :disabled="!picked.size || saving" @click="bulk('delete')">Auswahl löschen</button>
+          <span class="text-slate-400">|</span><span class="text-slate-500">{{ $t('{n} gewählt', { n: picked.size }) }}</span>
+          <button v-if="canBulkExec" :class="btnPrimary" class="!py-1 !px-3 !text-xs" :disabled="!picked.size || saving" @click="bulk('execute')">{{ $t('Auswahl abhaken') }}</button>
+          <button v-if="canBulkExec" :class="btnGhost" class="!py-1 !px-3 !text-xs" :disabled="!picked.size || saving" @click="bulk('deviation')">{{ $t('Abweichung …') }}</button>
+          <button v-if="canBulkExec" :class="btnGhost" class="!py-1 !px-3 !text-xs" :disabled="!picked.size || saving" @click="bulk('reopen')">{{ $t('Zurücksetzen') }}</button>
+          <button v-if="canBulkExec" :class="btnLink" @click="pickOpen">{{ $t('alle offenen wählen') }}</button>
+          <button v-if="canEditItems" :class="btnDanger" :disabled="!picked.size || saving" @click="bulk('delete')">{{ $t('Auswahl löschen') }}</button>
         </template>
         <span class="flex-1"></span>
-        <button :class="btnLink" @click="downloadPdf">Arbeitsanweisung (PDF)</button>
-        <button :class="btnLink" @click="exportList">Arbeitsliste (CSV)</button>
-        <router-link :to="{ path: '/patchlist', query: { ids: String(wo.id) } }" :class="btnLink">Patchliste / Druck</router-link>
-        <router-link v-if="wo.items.some(i => ['connect', 'move'].includes(i.action))" :to="{ path: '/labels', query: { workorder: String(wo.id) } }" :class="btnLink">Kabeletiketten</router-link>
+        <button :class="btnLink" @click="downloadPdf">{{ $t('Arbeitsanweisung (PDF)') }}</button>
+        <button :class="btnLink" @click="exportList">{{ $t('Arbeitsliste (CSV)') }}</button>
+        <router-link :to="{ path: '/patchlist', query: { ids: String(wo.id) } }" :class="btnLink">{{ $t('Patchliste / Druck') }}</router-link>
+        <router-link v-if="wo.items.some(i => ['connect', 'move'].includes(i.action))" :to="{ path: '/labels', query: { workorder: String(wo.id) } }" :class="btnLink">{{ $t('Kabeletiketten') }}</router-link>
       </div>
-      <p v-if="!wo.items.length" class="p-6 text-sm text-slate-400">Noch keine Positionen. Füge Verbindungen hinzu, die hergestellt oder getrennt werden sollen.</p>
+      <p v-if="!wo.items.length" class="p-6 text-sm text-slate-400">{{ $t('Noch keine Positionen. Füge Verbindungen hinzu, die hergestellt oder getrennt werden sollen.') }}</p>
       <table v-else class="w-full text-sm">
         <thead class="bg-slate-50 dark:bg-slate-700/50">
           <tr>
-            <th v-if="selectable" :class="th" class="w-8"><input type="checkbox" :checked="allPicked" title="alle sichtbaren wählen" @change="pickAll" /></th>
-            <th :class="th">Aktion</th>
-            <th :class="th">Port A</th>
-            <th :class="th">Port B</th>
-            <th :class="th">Kabel</th>
-            <th :class="th">Status</th>
+            <th v-if="selectable" :class="th" class="w-8"><input type="checkbox" :checked="allPicked" :title="$t('alle sichtbaren wählen')" @change="pickAll" /></th>
+            <th :class="th">{{ $t('Aktion') }}</th>
+            <th :class="th">{{ $t('Port A') }}</th>
+            <th :class="th">{{ $t('Port B') }}</th>
+            <th :class="th">{{ $t('Kabel') }}</th>
+            <th :class="th">{{ $t('Status') }}</th>
             <th :class="th"></th>
           </tr>
         </thead>
@@ -163,9 +163,9 @@
           <tr v-for="item in shownItems" :key="item.id" class="border-t border-slate-100 dark:border-slate-700">
             <td v-if="selectable" :class="td"><input type="checkbox" :checked="picked.has(item.id)" @change="pick(item.id)" /></td>
             <td :class="td"><span :class="actionClass(item.action)" class="text-xs font-medium">{{ actionLabel(item.action) }}</span>
-              <span v-if="item.cfg_text" class="block text-[11px] text-indigo-600 dark:text-indigo-400">VLAN: {{ item.cfg_text }}</span></td>
+              <span v-if="item.cfg_text" class="block text-[11px] text-indigo-600 dark:text-indigo-400">{{ $t('VLAN:') }} {{ item.cfg_text }}</span></td>
             <td :class="td" class="font-mono text-xs">
-              <router-link v-if="item.wan" :to="`/wan?id=${item.wan.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">WAN {{ item.wan.name }}</router-link>
+              <router-link v-if="item.wan" :to="`/wan?id=${item.wan.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ $t('WAN') }} {{ item.wan.name }}</router-link>
               <router-link v-else-if="item.device" :to="`/devices/${item.device.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ item.device.hostname }}</router-link>
               <span v-else-if="item.port_a" class="text-slate-700 dark:text-slate-200">{{ item.port_a.device_hostname }}:{{ item.port_a.name }}</span>
               <span v-else class="text-slate-400">–</span>
@@ -175,7 +175,7 @@
                 <span v-if="Object.keys(item.wan_patch || {}).length" class="block text-amber-600 dark:text-amber-400">→ {{ patchText(item.wan_patch) }}</span></template>
               <span v-else-if="item.port_b" class="text-slate-700 dark:text-slate-200">{{ item.port_b.device_hostname }}:{{ item.port_b.name }}</span>
               <span v-else class="text-slate-400">–</span>
-              <span v-if="item.old_port_b" class="text-slate-400 ml-1">(war: {{ item.old_port_b.device_hostname }}:{{ item.old_port_b.name }})</span>
+              <span v-if="item.old_port_b" class="text-slate-400 ml-1">({{ $t('war:') }} {{ item.old_port_b.device_hostname }}:{{ item.old_port_b.name }})</span>
             </td>
             <td :class="td" class="text-xs text-slate-500">
               <span v-if="item.cable_label" class="font-mono text-slate-700 dark:text-slate-200">{{ item.cable_label }}</span>
@@ -189,9 +189,9 @@
               <span v-if="item.deviation_note" class="ml-1 text-xs text-orange-500" :title="item.deviation_note">⚠</span>
             </td>
             <td :class="td" class="text-right whitespace-nowrap">
-              <button v-if="canEditItems" :class="btnDanger" @click="deleteItem(item)" class="mr-1">Löschen</button>
-              <button v-if="canExecuteItem(item)" :class="btnLink" @click="openExecItem(item)">Abhaken</button>
-              <button v-if="canReopenItem(item)" :class="btnLink" @click="reopenItem(item)">Zurücksetzen</button>
+              <button v-if="canEditItems" :class="btnDanger" @click="deleteItem(item)" class="mr-1">{{ $t('Löschen') }}</button>
+              <button v-if="canExecuteItem(item)" :class="btnLink" @click="openExecItem(item)">{{ $t('Abhaken') }}</button>
+              <button v-if="canReopenItem(item)" :class="btnLink" @click="reopenItem(item)">{{ $t('Zurücksetzen') }}</button>
             </td>
           </tr>
         </tbody>
@@ -204,15 +204,15 @@
     <SendDialog v-if="sendOpen" :title="`Auftrag ${wo.number} senden`" :workorder-id="wo.id" :submit="b => api.sendWorkorder(wo.id, b)" @close="sendOpen = false" />
 
     <ModalDialog v-if="assignForm" :title="`${wo.number} zuweisen`" :error="assignErr" @close="assignForm = null">
-      <div><label :class="lbl">Benutzer</label>
-        <select v-model="assignForm.user_id" :class="inp"><option :value="null">(niemand – Zuweisung aufheben)</option>
+      <div><label :class="lbl">{{ $t('Benutzer') }}</label>
+        <select v-model="assignForm.user_id" :class="inp"><option :value="null">{{ $t('(niemand – Zuweisung aufheben)') }}</option>
           <option v-for="u in assignUsers" :key="u.id" :value="u.id">{{ u.full_name || u.username }} ({{ u.username }}){{ u.has_email ? '' : ' – keine E-Mail' }}{{ u.absent ? ` – abwesend bis ${u.absent.until.split('-').reverse().join('.')}${u.absent.deputy ? ', Vertretung ' + u.absent.deputy.username : ''}` : '' }}</option></select>
-        <p class="text-[11px] text-slate-400 mt-1">Der Auftrag erscheint beim Benutzer unter „Meine Aufgaben“. Es werden nur Benutzer angeboten, die ihn sehen dürfen.</p></div>
-      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="assignForm.notify" /> per E-Mail benachrichtigen</label>
-      <div v-if="assignForm.notify"><label :class="lbl">Nachricht (optional)</label><textarea v-model="assignForm.message" rows="2" :class="inp"></textarea></div>
+        <p class="text-[11px] text-slate-400 mt-1">{{ $t('Der Auftrag erscheint beim Benutzer unter „Meine Aufgaben“. Es werden nur Benutzer angeboten, die ihn sehen dürfen.') }}</p></div>
+      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="assignForm.notify" />{{ ' ' + $t('per E-Mail benachrichtigen') }}</label>
+      <div v-if="assignForm.notify"><label :class="lbl">{{ $t('Nachricht (optional)') }}</label><textarea v-model="assignForm.message" rows="2" :class="inp"></textarea></div>
       <template #footer>
-        <button :class="btnGhost" @click="assignForm = null">Abbrechen</button>
-        <button :class="btnPrimary" :disabled="saving" @click="saveAssign">Speichern</button>
+        <button :class="btnGhost" @click="assignForm = null">{{ $t('Abbrechen') }}</button>
+        <button :class="btnPrimary" :disabled="saving" @click="saveAssign">{{ $t('Speichern') }}</button>
       </template>
     </ModalDialog>
 
@@ -220,24 +220,24 @@
     <Teleport to="body">
       <div v-if="editDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="editDialog=false">
         <div :class="card" class="w-full max-w-lg p-6 space-y-4">
-          <h2 class="font-semibold text-slate-800 dark:text-slate-100">Auftrag bearbeiten</h2>
-          <div><label :class="lbl">Titel *</label><input v-model="editForm.title" :class="inp" /></div>
-          <div><label :class="lbl">Beschreibung</label><textarea v-model="editForm.description" :class="inp" rows="3" /></div>
+          <h2 class="font-semibold text-slate-800 dark:text-slate-100">{{ $t('Auftrag bearbeiten') }}</h2>
+          <div><label :class="lbl">{{ $t('Titel *') }}</label><input v-model="editForm.title" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Beschreibung') }}</label><textarea v-model="editForm.description" :class="inp" rows="3" /></div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label :class="lbl">Priorität</label>
+              <label :class="lbl">{{ $t('Priorität') }}</label>
               <select v-model="editForm.priority" :class="inp">
                 <option v-for="[v, l] in PRIO_OPTIONS" :key="v" :value="v">{{ l }}</option>
               </select>
             </div>
-            <div><label :class="lbl">Von</label><input v-model="editForm.planned_from" type="date" :class="inp" /></div>
+            <div><label :class="lbl">{{ $t('Von') }}</label><input v-model="editForm.planned_from" type="date" :class="inp" /></div>
           </div>
-          <div><label :class="lbl">Bis</label><input v-model="editForm.planned_to" type="date" :class="inp" /></div>
-          <div><label :class="lbl">Notiz</label><textarea v-model="editForm.note" :class="inp" rows="2" /></div>
+          <div><label :class="lbl">{{ $t('Bis') }}</label><input v-model="editForm.planned_to" type="date" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Notiz') }}</label><textarea v-model="editForm.note" :class="inp" rows="2" /></div>
           <p v-if="dialogErr" class="text-sm text-red-500 dark:text-red-400">{{ dialogErr }}</p>
           <div class="flex justify-end gap-2">
-            <button :class="btnGhost" @click="editDialog=false">Abbrechen</button>
-            <button :class="btnPrimary" @click="saveEdit" :disabled="saving">{{ saving ? '…' : 'Speichern' }}</button>
+            <button :class="btnGhost" @click="editDialog=false">{{ $t('Abbrechen') }}</button>
+            <button :class="btnPrimary" @click="saveEdit" :disabled="saving">{{ saving ? '…' : $t('Speichern') }}</button>
           </div>
         </div>
       </div>
@@ -247,78 +247,78 @@
     <Teleport to="body">
       <div v-if="itemDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="itemDialog=false">
         <div :class="card" class="w-full max-w-xl p-6 space-y-4">
-          <h2 class="font-semibold text-slate-800 dark:text-slate-100">Position</h2>
+          <h2 class="font-semibold text-slate-800 dark:text-slate-100">{{ $t('Position') }}</h2>
           <div>
-            <label :class="lbl">Aktion</label>
+            <label :class="lbl">{{ $t('Aktion') }}</label>
             <select v-model="itemForm.action" :class="inp">
-              <option value="connect">Verbindung herstellen</option>
-              <option value="disconnect">Verbindung trennen</option>
-              <option value="move">Verbindung umstecken</option>
-              <option value="configure">Port umkonfigurieren (VLAN/Profil)</option>
-              <option value="install_device">Gerät einbauen (vorhandenes, geplantes Gerät)</option>
-              <option value="remove_device">Gerät zurückbauen</option>
-              <option value="wan_activate">WAN-Verbindung in Betrieb nehmen</option>
-              <option value="wan_terminate">WAN-Verbindung kündigen</option>
+              <option value="connect">{{ $t('Verbindung herstellen') }}</option>
+              <option value="disconnect">{{ $t('Verbindung trennen') }}</option>
+              <option value="move">{{ $t('Verbindung umstecken') }}</option>
+              <option value="configure">{{ $t('Port umkonfigurieren (VLAN/Profil)') }}</option>
+              <option value="install_device">{{ $t('Gerät einbauen (vorhandenes, geplantes Gerät)') }}</option>
+              <option value="remove_device">{{ $t('Gerät zurückbauen') }}</option>
+              <option value="wan_activate">{{ $t('WAN-Verbindung in Betrieb nehmen') }}</option>
+              <option value="wan_terminate">{{ $t('WAN-Verbindung kündigen') }}</option>
             </select>
           </div>
           <div v-if="isWanAction(itemForm.action)">
-            <label :class="lbl">WAN-Verbindung</label>
-            <select v-model="itemForm.wan_link_id" :class="inp"><option :value="null" disabled>wählen …</option>
-              <option v-for="l in wanChoices" :key="l.id" :value="l.id">{{ l.name }} · {{ l.site_a }} ↔ {{ l.site_b || '–' }} ({{ l.status_label }})</option></select>
-            <p class="text-xs text-slate-400 mt-1">Der Status der Verbindung ändert sich beim Bestätigen des Auftrags. Änderungen (z. B. Bandbreite) legst du im Menü „WAN“ über „Ändern per Auftrag“ an.</p>
+            <label :class="lbl">{{ $t('WAN-Verbindung') }}</label>
+            <select v-model="itemForm.wan_link_id" :class="inp"><option :value="null" disabled>{{ $t('wählen …') }}</option>
+              <option v-for="l in wanChoices" :key="l.id" :value="l.id">{{ l.name }} · {{ l.site_a }} ↔ {{ l.site_b || '–' }} ({{ $t(l.status_label) }})</option></select>
+            <p class="text-xs text-slate-400 mt-1">{{ $t('Der Status der Verbindung ändert sich beim Bestätigen des Auftrags. Änderungen (z. B. Bandbreite) legst du im Menü „WAN“ über „Ändern per Auftrag“ an.') }}</p>
           </div>
           <div v-else-if="isDeviceAction(itemForm.action)">
-            <label :class="lbl">Gerät</label>
-            <select v-model="itemForm.device_id" :class="inp"><option :value="null" disabled>wählen …</option>
-              <option v-for="d in deviceChoices" :key="d.id" :value="d.id">{{ d.hostname }} · {{ d.location_path || 'ohne Location' }} ({{ d.status }})</option></select>
-            <p class="text-xs text-slate-400 mt-1">Beim Zurückbauen werden alle Kabel des Geräts getrennt, es wird „außer Betrieb“ gesetzt und seine HE wird frei.</p>
+            <label :class="lbl">{{ $t('Gerät') }}</label>
+            <select v-model="itemForm.device_id" :class="inp"><option :value="null" disabled>{{ $t('wählen …') }}</option>
+              <option v-for="d in deviceChoices" :key="d.id" :value="d.id">{{ d.hostname }} · {{ d.location_path || $t('ohne Location') }} ({{ d.status }})</option></select>
+            <p class="text-xs text-slate-400 mt-1">{{ $t('Beim Zurückbauen werden alle Kabel des Geräts getrennt, es wird „außer Betrieb“ gesetzt und seine HE wird frei.') }}</p>
           </div>
           <div v-else class="grid grid-cols-2 gap-3">
             <div>
-              <label :class="lbl">Port A (Gerät:Port-ID)</label>
-              <input v-model.number="itemForm.port_a_id" type="number" :class="inp" placeholder="Port-ID" />
+              <label :class="lbl">{{ $t('Port A (Gerät:Port-ID)') }}</label>
+              <input v-model.number="itemForm.port_a_id" type="number" :class="inp" :placeholder="$t('Port-ID')" />
             </div>
             <div>
               <template v-if="itemForm.action !== 'configure'">
-              <label :class="lbl">{{ itemForm.action === 'move' ? 'Neuer Port B' : 'Port B' }}</label>
-              <input v-model.number="itemForm.port_b_id" type="number" :class="inp" placeholder="Port-ID" />
+              <label :class="lbl">{{ itemForm.action === 'move' ? $t('Neuer Port B') : $t('Port B') }}</label>
+              <input v-model.number="itemForm.port_b_id" type="number" :class="inp" :placeholder="$t('Port-ID')" />
               </template>
             </div>
           </div>
           <div v-if="itemForm.action === 'move'">
-            <label :class="lbl">Alter Port B (bisherige Verbindung)</label>
-            <input v-model.number="itemForm.old_port_b_id" type="number" :class="inp" placeholder="Port-ID" />
+            <label :class="lbl">{{ $t('Alter Port B (bisherige Verbindung)') }}</label>
+            <input v-model.number="itemForm.old_port_b_id" type="number" :class="inp" :placeholder="$t('Port-ID')" />
           </div>
           <div v-if="['connect', 'move', 'configure'].includes(itemForm.action)" class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2">
             <label v-if="itemForm.action !== 'configure'" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-              <input type="checkbox" v-model="itemForm.withCfg" /> Ziel-Konfiguration (VLAN/Profil) angeben</label>
-            <div v-else class="text-sm font-medium text-slate-700 dark:text-slate-200">Ziel-Konfiguration für Port A</div>
+              <input type="checkbox" v-model="itemForm.withCfg" />{{ ' ' + $t('Ziel-Konfiguration (VLAN/Profil) angeben') }}</label>
+            <div v-else class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ $t('Ziel-Konfiguration für Port A') }}</div>
             <template v-if="itemForm.withCfg || itemForm.action === 'configure'">
               <PortConfigFields :cfg="itemForm.cfgForm" :profiles="cfgProfiles" :vlans="cfgVlans" />
-              <div v-if="itemForm.action !== 'configure'"><label :class="lbl">gilt für</label>
-                <select v-model="itemForm.cfg_port_id" :class="inp"><option :value="null">automatisch (Switch-Ende)</option>
-                  <option v-if="itemForm.port_a_id" :value="itemForm.port_a_id">Port A</option><option v-if="itemForm.port_b_id" :value="itemForm.port_b_id">Port B</option></select></div>
+              <div v-if="itemForm.action !== 'configure'"><label :class="lbl">{{ $t('gilt für') }}</label>
+                <select v-model="itemForm.cfg_port_id" :class="inp"><option :value="null">{{ $t('automatisch (Switch-Ende)') }}</option>
+                  <option v-if="itemForm.port_a_id" :value="itemForm.port_a_id">{{ $t('Port A') }}</option><option v-if="itemForm.port_b_id" :value="itemForm.port_b_id">{{ $t('Port B') }}</option></select></div>
             </template>
           </div>
           <div v-if="itemForm.action !== 'configure'" class="grid grid-cols-2 gap-3">
-            <div><label :class="lbl">Kabelnummer</label><input v-model="itemForm.cable_label" :class="inp" /></div>
+            <div><label :class="lbl">{{ $t('Kabelnummer') }}</label><input v-model="itemForm.cable_label" :class="inp" /></div>
             <div>
-              <label :class="lbl">Kabeltyp</label>
+              <label :class="lbl">{{ $t('Kabeltyp') }}</label>
               <select v-model="itemForm.cable_type" :class="inp">
                 <option v-for="t in cableTypes" :key="t.name" :value="t.name">{{ t.name }}</option>
               </select>
             </div>
           </div>
           <div v-if="itemForm.action !== 'configure'" class="grid grid-cols-3 gap-3">
-            <div><label :class="lbl">Länge (m)</label><input v-model.number="itemForm.length_m" type="number" step="0.1" :class="inp" /></div>
+            <div><label :class="lbl">{{ $t('Länge (m)') }}</label><input v-model.number="itemForm.length_m" type="number" step="0.1" :class="inp" /></div>
             <div v-if="countLabel(itemForm.cable_type)"><label :class="lbl">{{ countLabel(itemForm.cable_type) }}</label><input v-model.number="itemForm.fiber_count" type="number" :class="inp" /></div>
-            <div><label :class="lbl">Farbe</label><input v-model="itemForm.color" :class="inp" /></div>
+            <div><label :class="lbl">{{ $t('Farbe') }}</label><input v-model="itemForm.color" :class="inp" /></div>
           </div>
-          <div><label :class="lbl">Notiz</label><input v-model="itemForm.note" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Notiz') }}</label><input v-model="itemForm.note" :class="inp" /></div>
           <p v-if="dialogErr" class="text-sm text-red-500 dark:text-red-400">{{ dialogErr }}</p>
           <div class="flex justify-end gap-2">
-            <button :class="btnGhost" @click="itemDialog=false">Abbrechen</button>
-            <button :class="btnPrimary" @click="saveItem" :disabled="saving">{{ saving ? '…' : 'Speichern' }}</button>
+            <button :class="btnGhost" @click="itemDialog=false">{{ $t('Abbrechen') }}</button>
+            <button :class="btnPrimary" @click="saveItem" :disabled="saving">{{ saving ? '…' : $t('Speichern') }}</button>
           </div>
         </div>
       </div>
@@ -328,7 +328,7 @@
     <Teleport to="body">
       <div v-if="execDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="execDialog=false">
         <div :class="card" class="w-full max-w-md p-6 space-y-4">
-          <h2 class="font-semibold text-slate-800 dark:text-slate-100">Position abhaken</h2>
+          <h2 class="font-semibold text-slate-800 dark:text-slate-100">{{ $t('Position abhaken') }}</h2>
           <p class="text-sm text-slate-600 dark:text-slate-300">
             <template v-if="execItem?.wan"><span class="font-mono">{{ execItem.wan.name }}</span> {{ actionLabel(execItem.action) }}</template>
             <template v-else-if="execItem?.device"><span class="font-mono">{{ execItem.device.hostname }}</span> {{ actionLabel(execItem.action) }}</template>
@@ -339,31 +339,32 @@
             </template>
           </p>
           <div>
-            <label :class="lbl">Ergebnis</label>
+            <label :class="lbl">{{ $t('Ergebnis') }}</label>
             <select v-model="execForm.item_status" :class="inp">
-              <option value="done">Erledigt</option>
-              <option value="deviation">Abweichung</option>
+              <option value="done">{{ $t('Erledigt') }}</option>
+              <option value="deviation">{{ $t('Abweichung') }}</option>
             </select>
           </div>
           <div v-if="execForm.item_status === 'deviation'">
-            <label :class="lbl">Abweichungsnotiz *</label>
-            <textarea v-model="execForm.deviation_note" :class="inp" rows="2" placeholder="Was war anders?" />
+            <label :class="lbl">{{ $t('Abweichungsnotiz *') }}</label>
+            <textarea v-model="execForm.deviation_note" :class="inp" rows="2" :placeholder="$t('Was war anders?')" />
           </div>
           <p v-if="dialogErr" class="text-sm text-red-500 dark:text-red-400">{{ dialogErr }}</p>
           <div class="flex justify-end gap-2">
-            <button :class="btnGhost" @click="execDialog=false">Abbrechen</button>
-            <button :class="btnPrimary" @click="saveExec" :disabled="saving">{{ saving ? '…' : 'Bestätigen' }}</button>
+            <button :class="btnGhost" @click="execDialog=false">{{ $t('Abbrechen') }}</button>
+            <button :class="btnPrimary" @click="saveExec" :disabled="saving">{{ saving ? '…' : $t('Bestätigen') }}</button>
           </div>
         </div>
       </div>
     </Teleport>
   </div>
 
-  <div v-else-if="loading" class="text-sm text-slate-400 p-8">Lade…</div>
+  <div v-else-if="loading" class="text-sm text-slate-400 p-8">{{ $t('Lade…') }}</div>
   <div v-else class="text-sm text-red-500 p-8 dark:text-red-400">{{ err }}</div>
 </template>
 
 <script setup>
+import { t, tApi } from '../i18n.js'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
@@ -394,23 +395,23 @@ function itemPayload() {
 }
 
 const STEPS = [
-  {s:'draft',l:'Entwurf'},{s:'submitted',l:'Eingereicht'},{s:'approved',l:'Freigegeben'},
-  {s:'in_progress',l:'In Ausführung'},{s:'done',l:'Ausgeführt'},{s:'confirmed',l:'Bestätigt'},
+  {s:'draft',l:t('Entwurf')},{s:'submitted',l:t('Eingereicht')},{s:'approved',l:t('Freigegeben')},
+  {s:'in_progress',l:t('In Ausführung')},{s:'done',l:t('Ausgeführt')},{s:'confirmed',l:t('Bestätigt')},
 ]
 const STEP_IDX = Object.fromEntries(STEPS.map((s, i) => [s.s, i]))
-const PRIO_OPTIONS = [['low','Niedrig'],['normal','Normal'],['high','Hoch'],['critical','Kritisch']]
+const PRIO_OPTIONS = [['low',t('Niedrig')],['normal',t('Normal')],['high',t('Hoch')],['critical',t('Kritisch')]]
 const metaLbl = 'block text-xs text-slate-400 uppercase tracking-wide mb-0.5'
 const btnDanger2 = 'bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-sm'
 
 const ACTION_BUTTONS = {
-  draft:       [{action:'submit',   label:'Einreichen',       roles:['planer']}],
-  submitted:   [{action:'approve',  label:'Freigeben',        roles:['freigeber']},
-                {action:'reject',   label:'Ablehnen',         danger:true, roles:['freigeber']}],
-  approved:    [{action:'start',    label:'Ausführung starten', roles:['techniker']}],
-  in_progress: [{action:'finish',   label:'Ausführung abschließen', roles:['techniker']}],
-  done:        [{action:'confirm',  label:'Bestätigen & anwenden', roles:['freigeber']},
-                {action:'rework',   label:'Nacharbeit', danger:true, roles:['freigeber']}],
-  rework:      [{action:'start',    label:'Ausführung starten', roles:['techniker']}],
+  draft:       [{action:'submit',   label:t('Einreichen'),       roles:['planer']}],
+  submitted:   [{action:'approve',  label:t('Freigeben'),        roles:['freigeber']},
+                {action:'reject',   label:t('Ablehnen'),         danger:true, roles:['freigeber']}],
+  approved:    [{action:'start',    label:t('Ausführung starten'), roles:['techniker']}],
+  in_progress: [{action:'finish',   label:t('Ausführung abschließen'), roles:['techniker']}],
+  done:        [{action:'confirm',  label:t('Bestätigen & anwenden'), roles:['freigeber']},
+                {action:'rework',   label:t('Nacharbeit'), danger:true, roles:['freigeber']}],
+  rework:      [{action:'start',    label:t('Ausführung starten'), roles:['techniker']}],
 }
 
 const actionButtons = computed(() => {
@@ -437,11 +438,11 @@ const statusClass = s => ({
 
 const prioClass = p => ({ low:'text-slate-400', normal:'text-slate-600 dark:text-slate-300',
   high:'text-amber-600 dark:text-amber-400', critical:'text-red-600 dark:text-red-400 font-semibold' }[p] || '')
-const prioLabel = p => ({ low:'Niedrig', normal:'Normal', high:'Hoch', critical:'Kritisch' }[p] || p)
-const actionLabel = a => ({ connect:'→ herstellen', disconnect:'✕ trennen', move:'↔ umstecken', install_device:'＋ Gerät einbauen', remove_device:'✕ Gerät zurückbauen',
-  wan_activate:'🌐 WAN in Betrieb nehmen', wan_change:'🌐 WAN ändern', wan_terminate:'🌐 WAN kündigen', configure:'⚙ umkonfigurieren' }[a] || a)
-const WAN_LABELS = { name: 'Name', technology: 'Technik', provider: 'Provider', circuit_id: 'Leitungs-ID', bandwidth_down: 'Down Mbit/s', bandwidth_up: 'Up Mbit/s',
-  contract_number: 'Vertrag', contract_start: 'Vertragsbeginn', contract_end: 'Vertragsende', notice_days: 'Kündigungsfrist (Tage)', monthly_cost: 'Kosten/Monat',
+const prioLabel = p => ({ low:t('Niedrig'), normal:t('Normal'), high:t('Hoch'), critical:t('Kritisch') }[p] || p)
+const actionLabel = a => ({ connect:t('→ herstellen'), disconnect:t('✕ trennen'), move:t('↔ umstecken'), install_device:t('＋ Gerät einbauen'), remove_device:t('✕ Gerät zurückbauen'),
+  wan_activate:t('🌐 WAN in Betrieb nehmen'), wan_change:t('🌐 WAN ändern'), wan_terminate:t('🌐 WAN kündigen'), configure:t('⚙ umkonfigurieren') }[a] || a)
+const WAN_LABELS = { name: t('Name'), technology: t('Technik'), provider: t('Provider'), circuit_id: t('Leitungs-ID'), bandwidth_down: t('Down Mbit/s'), bandwidth_up: t('Up Mbit/s'),
+  contract_number: t('Vertrag'), contract_start: t('Vertragsbeginn'), contract_end: t('Vertragsende'), notice_days: t('Kündigungsfrist (Tage)'), monthly_cost: t('Kosten/Monat'),
   contact: 'Kontakt', note: 'Notiz', remote_label: 'Gegenstelle', site_b_id: 'Standort B', port_a_id: 'Port A', port_b_id: 'Port B' }
 const patchText = p => Object.entries(p).map(([k, v]) => `${WAN_LABELS[k] || k}: ${v ?? '–'}`).join(', ')
 const actionClass = a => ({ connect:'text-green-700 dark:text-green-400', disconnect:'text-red-600 dark:text-red-400',
@@ -452,19 +453,19 @@ const wanChoices = ref([])
 const isDeviceAction = a => a === 'install_device' || a === 'remove_device'
 const deviceChoices = ref([])
 const ops = ref({ enabled: false }), opDialog = ref(false), opBusy = ref(false)
-const OP_LABELS = { open: 'offen', in_progress: 'in Arbeit', blocked: 'blockiert', done: 'erledigt' }
-const opLabel = s => OP_LABELS[s] || s || 'noch nicht abgeglichen'
+const OP_LABELS = { open: t('offen'), in_progress: t('in Arbeit'), blocked: t('blockiert'), done: t('erledigt') }
+const opLabel = s => OP_LABELS[s] || s || t('noch nicht abgeglichen')
 const opClass = s => ({ open: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300', in_progress: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   blocked: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300', done: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' }[s] || 'bg-slate-100 text-slate-500')
 async function syncOp() {
   opBusy.value = true; err.value = ''
-  try { const r = await api.openplanSync(wo.value.id); wo.value = r; note.value = r.sync?.synced ? 'Mit OpenPlan abgeglichen.' : '' ; if (r.sync && !r.sync.synced) err.value = r.sync.error || 'Abgleich fehlgeschlagen' }
+  try { const r = await api.openplanSync(wo.value.id); wo.value = r; note.value = r.sync?.synced ? t('Mit OpenPlan abgeglichen.') : '' ; if (r.sync && !r.sync.synced) err.value = r.sync.error || t('Abgleich fehlgeschlagen') }
   catch (e) { err.value = errText(e) } finally { opBusy.value = false }
 }
 async function unlinkOp() {
-  if (!confirm('Verknüpfung mit OpenPlan aufheben? Die Aufgabe in OpenPlan bleibt bestehen.')) return
+  if (!confirm(t('Verknüpfung mit OpenPlan aufheben? Die Aufgabe in OpenPlan bleibt bestehen.'))) return
   opBusy.value = true
-  try { wo.value = await api.openplanUnlink(wo.value.id); note.value = 'Verknüpfung aufgehoben.' } catch (e) { err.value = errText(e) } finally { opBusy.value = false }
+  try { wo.value = await api.openplanUnlink(wo.value.id); note.value = t('Verknüpfung aufgehoben.') } catch (e) { err.value = errText(e) } finally { opBusy.value = false }
 }
 const sendOpen = ref(false), assignForm = ref(null), assignUsers = ref([]), assignErr = ref(''), note = ref('')
 const canSend = hasRole('planer', 'freigeber', 'techniker')
@@ -479,7 +480,7 @@ async function saveAssign() {
   try {
     const r = await api.assignWorkorder(wo.value.id, assignForm.value)
     wo.value = r; assignForm.value = null
-    note.value = r.notified ? 'Zugewiesen und per E-Mail benachrichtigt.' : (r.notify_note || (r.assigned_to ? 'Zugewiesen.' : 'Zuweisung aufgehoben.'))
+    note.value = r.notified ? t('Zugewiesen und per E-Mail benachrichtigt.') : (r.notify_note || (r.assigned_to ? t('Zugewiesen.') : t('Zuweisung aufgehoben.')))
   } catch (e) { assignErr.value = errText(e) } finally { saving.value = false }
 }
 const itemFilter = ref('all'), picked = ref(new Set())
@@ -493,10 +494,10 @@ function pickOpen() { picked.value = new Set((wo.value.items || []).filter(i => 
 async function bulk(kind) {
   if (!picked.value.size) return
   let body = { ids: [...picked.value] }
-  if (kind === 'delete') { if (!confirm(`${picked.value.size} Position(en) löschen?`)) return; body.action = 'delete' }
+  if (kind === 'delete') { if (!confirm(t('{n} Position(en) löschen?', { n: picked.value.size }))) return; body.action = 'delete' }
   else if (kind === 'reopen') body.action = 'reopen'
   else if (kind === 'deviation') {
-    const n = prompt('Abweichung – was war anders?'); if (!n || !n.trim()) return
+    const n = prompt(t('Abweichung – was war anders?')); if (!n || !n.trim()) return
     Object.assign(body, { action: 'execute', item_status: 'deviation', deviation_note: n.trim() })
   } else Object.assign(body, { action: 'execute', item_status: 'done' })
   saving.value = true
@@ -514,7 +515,7 @@ async function exportList() {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${wo.value.number}-arbeitsliste.csv`; a.click(); URL.revokeObjectURL(a.href)
   } catch (e) { err.value = errText(e) }
 }
-const itemStatusLabel = s => ({ open:'offen', done:'erledigt', deviation:'Abweichung' }[s] || s)
+const itemStatusLabel = s => ({ open:t('offen'), done:t('erledigt'), deviation:t('Abweichung') }[s] || s)
 const itemStatusClass = s => ({ open:'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400',
   done:'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   deviation:'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' }[s] || '')
@@ -527,7 +528,7 @@ async function load() {
   finally { loading.value = false }
 }
 
-const LLDP_TEXT = { ok: 'stimmt ✓', problem: 'Abweichung', pending: 'wartet auf frische LLDP-Daten', none: 'nicht per LLDP prüfbar' }
+const LLDP_TEXT = { ok: t('stimmt ✓'), problem: t('Abweichung'), pending: t('wartet auf frische LLDP-Daten'), none: t('nicht per LLDP prüfbar') }
 const LLDP_COLOR = { ok: '#16a34a', problem: '#dc2626', pending: '#d97706', none: '#94a3b8' }
 const ITEM_ICON = { ok: '✓', problem: '⚠', stale: '…', unknown: '–' }
 const ITEM_COLOR = { ok: '#16a34a', problem: '#dc2626', stale: '#d97706', unknown: '#94a3b8' }
@@ -540,7 +541,7 @@ async function verifyNow() {
     wo.value = { ...wo.value, lldp_status: r.status, lldp_checked_at: r.checked_at, lldp_detail: r.items }
   } catch (e) { err.value = errText(e) } finally { verifying.value = false }
 }
-const ACTOR_FIELDS = [['submitted_by', 'Eingereicht von'], ['approved_by', 'Freigegeben von'], ['finished_by', 'Ausgeführt von'], ['confirmed_by', 'Bestätigt von']]
+const ACTOR_FIELDS = [['submitted_by', t('Eingereicht von')], ['approved_by', t('Freigegeben von')], ['finished_by', t('Ausgeführt von')], ['confirmed_by', t('Bestätigt von')]]
 
 async function doTransition(action, overrideReason) {
   transitioning.value = true
@@ -550,10 +551,10 @@ async function doTransition(action, overrideReason) {
   } catch (e) {
     const d = e?.response?.data?.detail
     if (e?.response?.status === 409 && d?.code === 'four_eyes' && d.can_override && !overrideReason) {
-      const reason = prompt(`${d.message}\n\nBegründung für die Ausnahme (wird im Audit-Log und am Auftrag vermerkt):`)
+      const reason = prompt(`${tApi(d.message)}\n\n${t('Begründung für die Ausnahme (wird im Audit-Log und am Auftrag vermerkt):')}`)
       transitioning.value = false
       if (reason && reason.trim()) return doTransition(action, reason.trim())
-      err.value = d.message
+      err.value = tApi(d.message)
       return
     }
     err.value = errText(e)
@@ -568,7 +569,7 @@ function openEdit() {
 }
 
 async function saveEdit() {
-  if (!editForm.value.title.trim()) { dialogErr.value = 'Titel ist erforderlich'; return }
+  if (!editForm.value.title.trim()) { dialogErr.value = t('Titel ist erforderlich'); return }
   saving.value = true
   try {
     wo.value = await api.updateWorkorder(wo.value.id, editForm.value)
@@ -619,7 +620,7 @@ async function saveItem() {
 }
 
 async function deleteItem(item) {
-  if (!confirm(`Position löschen?`)) return
+  if (!confirm(t('Position löschen?'))) return
   try {
     await api.deleteWorkitem(wo.value.id, item.id)
     wo.value.items = wo.value.items.filter(i => i.id !== item.id)
@@ -635,7 +636,7 @@ function openExecItem(item) {
 
 async function saveExec() {
   if (execForm.value.item_status === 'deviation' && !execForm.value.deviation_note.trim()) {
-    dialogErr.value = 'Bitte Abweichungsnotiz eingeben'; return
+    dialogErr.value = t('Bitte Abweichungsnotiz eingeben'); return
   }
   saving.value = true
   try {

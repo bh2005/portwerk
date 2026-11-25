@@ -24,9 +24,9 @@
         <tbody>
           <tr v-for="l in links" :key="l.id" class="border-t border-slate-100 dark:border-slate-700" :class="sel?.id === l.id ? 'bg-ks-50 dark:bg-ks-900/20' : ''">
             <td :class="td" class="font-medium text-slate-800 dark:text-slate-100">{{ l.name }}</td>
-            <td :class="td"><span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="statusClass(l.status)">{{ l.status_label }}</span></td>
+            <td :class="td"><span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="statusClass(l.status)">{{ $t(l.status_label) }}</span></td>
             <td :class="td" class="text-xs text-slate-600 dark:text-slate-300">{{ l.site_a }}<span class="text-slate-400"> ↔ </span>{{ l.site_b || '–' }}</td>
-            <td :class="td" class="text-xs">{{ l.technology_label }}</td>
+            <td :class="td" class="text-xs">{{ $t(l.technology_label) }}</td>
             <td :class="td" class="text-xs">{{ l.provider || '–' }}<span v-if="l.circuit_id" class="block font-mono text-slate-400">{{ l.circuit_id }}</span></td>
             <td :class="td" class="text-xs">{{ bw(l) }}</td>
             <td :class="td" class="text-xs"><template v-if="l.contract_end">{{ l.contract_end }}<span v-if="l.status !== 'terminated' && l.days_left != null && l.days_left <= 90" class="block" :class="l.days_left < 0 ? 'text-red-600' : 'text-amber-600'">{{ l.days_left < 0 ? 'abgelaufen' : `in ${l.days_left} Tagen` }}</span></template><span v-else class="text-slate-400">–</span></td>
@@ -42,7 +42,7 @@
       <template #title>
         <template v-if="sel">
           <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100 break-words">{{ sel.name }}</h2>
-          <p class="text-xs text-slate-400 mt-0.5"><span class="px-2 py-0.5 rounded-full text-xs font-medium mr-2" :class="statusClass(sel.status)">{{ sel.status_label }}</span>{{ sel.site_a }} ↔ {{ sel.site_b || '–' }} · {{ sel.technology_label }}</p>
+          <p class="text-xs text-slate-400 mt-0.5"><span class="px-2 py-0.5 rounded-full text-xs font-medium mr-2" :class="statusClass(sel.status)">{{ $t(sel.status_label) }}</span>{{ sel.site_a }} ↔ {{ sel.site_b || '–' }} · {{ $t(sel.technology_label) }}</p>
         </template>
       </template>
       <template v-if="sel">
@@ -94,7 +94,7 @@
       <div><label :class="lbl">Notiz</label><input v-model="form.note" :class="inp" /></div>
       <template #footer>
         <button :class="btnGhost" @click="form = null">Abbrechen</button>
-        <button :class="btnPrimary" :disabled="busy || !form.name || !form.site_a_id" @click="submit">{{ asOrder ? 'Änderungsauftrag anlegen' : 'Speichern' }}</button>
+        <button :class="btnPrimary" :disabled="busy || !form.name || !form.site_a_id" @click="submit">{{ asOrder ? $t('Änderungsauftrag anlegen') : $t('Speichern') }}</button>
       </template>
     </ModalDialog>
   </div>

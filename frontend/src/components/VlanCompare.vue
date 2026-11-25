@@ -29,14 +29,14 @@
         <tbody>
           <tr v-for="r in shown" :key="r.port_id" class="border-t border-slate-100 dark:border-slate-700 align-top">
             <td v-if="canWrite" :class="td"><input v-if="r.adoptable" type="checkbox" :checked="picked.has(r.port_id)" @change="pick(r.port_id)" /></td>
-            <td :class="td"><span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" :class="chipClass(r.status)">{{ r.status_label }}</span></td>
+            <td :class="td"><span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" :class="chipClass(r.status)">{{ $t(r.status_label) }}</span></td>
             <td :class="td" class="font-mono text-xs"><router-link :to="`/devices/${r.device_id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ r.device }}</router-link>:{{ r.port }}</td>
             <td :class="td" class="text-xs">{{ r.soll }}</td>
             <td :class="td" class="text-xs font-mono">{{ r.ist }}</td>
             <td :class="td" class="text-xs text-slate-500">{{ r.why }}</td>
           </tr>
           <tr v-if="!shown.length"><td :colspan="canWrite ? 6 : 5" class="px-3 py-6 text-center text-slate-400">
-            {{ res && !res.devices ? 'Noch keine VLAN-Daten – sie kommen mit dem Checkmk-Import, sofern Checkmk VLANs im Inventar führt (Cisco).' : 'Keine Einträge für diese Auswahl.' }}</td></tr>
+            {{ res && !res.devices ? $t('Noch keine VLAN-Daten – sie kommen mit dem Checkmk-Import, sofern Checkmk VLANs im Inventar führt (Cisco).') : $t('Keine Einträge für diese Auswahl.') }}</td></tr>
         </tbody>
       </table>
     </div>
