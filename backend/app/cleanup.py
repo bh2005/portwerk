@@ -1,7 +1,8 @@
 """Aufräumbericht: Stellen im Bestand, die nachgepflegt oder bereinigt werden sollten.
 
 * ``provisional``   vorläufige Kabel (aus dem Soll/Ist-Abgleich übernommen) – Dosen/Patchfelder noch nachtragen; „alt“ ab ``days`` Tagen
-* ``not_seen``      dokumentierte Verbindungen, die LLDP/CDP nicht sieht, obwohl das Gegenüber Nachbarn meldet (tote Patchung?)
+* ``not_seen``      dokumentierte Verbindungen, die LLDP/CDP nicht sieht, obwohl das Gegenüber Nachbarn meldet (tote Patchung?) –
+                    mit „fehlt seit“ (seit dem ersten Import ohne die Verbindung); „alt“ ab ``days`` Tagen, älteste zuerst
 * ``expired``       abgelaufene Port-Reservierungen (blockieren nichts mehr, stehen aber noch in der Liste)
 * ``stale_orders``  offene Patchaufträge, die seit ``days`` Tagen nicht mehr geändert wurden
 * ``planned``       Geräte im Status „geplant“, die in keinem offenen Auftrag vorkommen
@@ -56,11 +57,19 @@ def provisional(me: Principal, site_id: Optional[int], days: int, now: float) ->
     return out
 
 
-def not_seen(me: Principal, site_id: Optional[int]) -> list[dict]:
+def not_seen(me: Principal, site_id: Optional[int], days: int = 30, now: Optional[float] = None) -> list[dict]:
+    now = now or time.time()
     res = compare.compare(me, site_id)
-    return [{"device_id": r["device_id"], "device": r["device"], "port_id": r["port_id"], "port": r["port"],
-             "soll": r["soll"]["label"] if r["soll"] else "", "via": r["soll"]["via"] if r["soll"] else [], "seen_at": r["seen_at"]}
-            for r in res["rows"] if r["status"] == "not_seen"]
+    out = []
+    for r in res["rows"]:
+        if r["status"] != "not_seen":
+            continue
+        age = _age(r.get("missing_since"), now)
+        out.append({"device_id": r["device_id"], "device": r["device"], "port_id": r["port_id"], "port": r["port"],
+                    "soll": r["soll"]["label"] if r["soll"] else "", "via": r["soll"]["via"] if r["soll"] else [], "seen_at": r["seen_at"],
+                    "missing_since": r.get("missing_since"), "last_ok": r.get("last_ok"), "age_days": age, "old": age is not None and age >= days})
+    out.sort(key=lambda x: (x["missing_since"] is None, x["missing_since"] or 0, x["device"].lower(), x["port"]))
+    return out
 
 
 def expired(me: Principal, site_id: Optional[int]) -> list[dict]:
@@ -104,7 +113,7 @@ def planned(me: Principal, site_id: Optional[int]) -> list[dict]:
 
 def report(me: Principal, site_id: Optional[int] = None, days: int = 30) -> dict:
     now = time.time()
-    data = {"provisional": provisional(me, site_id, days, now), "not_seen": not_seen(me, site_id), "expired": expired(me, site_id),
+    data = {"provisional": provisional(me, site_id, days, now), "not_seen": not_seen(me, site_id, days, now), "expired": expired(me, site_id),
             "stale_orders": stale_orders(me, site_id, days, now), "planned": planned(me, site_id)}
     return {"days": days, "sections": SECTIONS, "counts": {k: len(v) for k, v in data.items()}, **data}
 
@@ -125,8 +134,11 @@ def mail_lines(rep: dict) -> list[str]:
         lines.append(f"Davon vorläufige Kabel älter als {rep['days']} Tage: {old}.")
     for x in rep["provisional"][:10]:
         lines.append(f"  – vorläufig: {x['a']['text']} ↔ {x['b']['text']}" + (f" (seit {x['age_days']} Tagen)" if x["age_days"] is not None else ""))
+    old_ns = sum(1 for x in rep["not_seen"] if x["old"])
+    if old_ns:
+        lines.append(f"Davon Verbindungen, die LLDP seit mehr als {rep['days']} Tagen nicht sieht: {old_ns}.")
     for x in rep["not_seen"][:10]:
-        lines.append(f"  – nicht gesehen: {x['device']}:{x['port']} → {x['soll']}")
+        lines.append(f"  – nicht gesehen: {x['device']}:{x['port']} → {x['soll']}" + (f" (seit {x['age_days']} Tagen)" if x["age_days"] is not None else ""))
     lines.append("Details und Aktionen in Portwerk unter „Aufräumen“.")
     return lines
 

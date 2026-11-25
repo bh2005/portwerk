@@ -3,6 +3,10 @@
 * Ist: ``observations`` – je Gerät die zuletzt gemeldeten Nachbarn (kommen aus dem Checkmk-Import, siehe ``store``).
 * Soll: Kabel zum Gegenüber; über Patchfelder/Dosen (``THROUGH_TYPES``) wird bis zum ersten aktiven Gerät weiterverfolgt.
 Ergebnis je lokalem Port: ok · anderer Port · anderes Gerät · nicht gesehen · nicht dokumentiert · keine Daten · Port unbekannt.
+
+„Nicht gesehen seit …“: ``track`` schreibt nach jedem Import (``store``) je Port fort, wann die dokumentierte Verbindung zuletzt bestätigt
+wurde (``last_ok``) und seit wann sie fehlt (``missing_since``, Tabelle ``link_seen``). Ändert sich das dokumentierte Gegenüber, beginnt die
+Zählung neu. Ports mit „keine Daten“ bleiben unverändert (es gibt nichts Neues zu wissen).
 """
 from __future__ import annotations
 
@@ -63,6 +67,8 @@ def store(neighbors_by_host: dict[str, list[dict]]) -> dict:
             stats["neighbors"] += 1
         db.execute("UPDATE devices SET neighbors_at = ? WHERE id = ?", (now, d["id"]))
         stats["devices"] += 1
+    if stats["devices"]:
+        track(now)
     return stats
 
 
@@ -214,6 +220,12 @@ def compare(me: Principal, site_id: Optional[int] = None) -> dict:
         for o in unmapped:
             rows.append({**base, "port_id": None, "port": o["local_port"], "status": "unmapped", "status_label": STATUS_LABELS["unmapped"], "soll": None, "ist": _merge([w.resolve(o)]), "adopt": None})
 
+    seen = {r["port_id"]: r for r in db.rows("SELECT * FROM link_seen")}
+    for r in rows:
+        ls = seen.get(r["port_id"]) if r["status"] in ("ok", "not_seen") else None
+        same = ls and r["soll"] and ls["peer_port_id"] == r["soll"]["port_id"]
+        r["last_ok"] = ls["last_ok"] if same else None
+        r["missing_since"] = ls["missing_since"] if same and r["status"] == "not_seen" else None
     rows.sort(key=lambda r: (-SEVERITY[r["status"]], r["device"].lower(), r["port"]))
     summary = {k: 0 for k in STATUS_LABELS}
     for r in rows:
@@ -236,3 +248,44 @@ def adopt(port_id: int) -> tuple[int, int]:
     if not target:
         raise ValueError("Keine eindeutige, freie Gegenstelle im Bestand – bitte von Hand dokumentieren")
     return port_id, target
+
+
+SYSTEM = Principal(kind="user", name="system", roles={"admin"})
+
+
+def track(now: Optional[float] = None) -> dict:
+    """``link_seen`` fortschreiben: bestätigte Verbindungen (beide Enden) → ``last_ok``; nicht gesehene → ``missing_since`` (bleibt, solange
+    das Gegenüber dasselbe ist); Ports mit anderem Ergebnis (Abweichung, nicht mehr dokumentiert …) fallen heraus."""
+    now = now or time.time()
+    res = compare(SYSTEM)
+    ok: dict[int, int] = {}
+    missing: dict[int, int] = {}
+    keep: set[int] = set()
+    for r in res["rows"]:
+        if not r["port_id"]:
+            continue
+        end = r["soll"]["port_id"] if r["soll"] else None
+        if r["status"] == "ok" and end:
+            ok[r["port_id"]], ok[end] = end, r["port_id"]                  # Abgleich meldet „stimmt“ nur einmal je Strecke
+        elif r["status"] == "not_seen" and end:
+            missing[r["port_id"]] = end
+        elif r["status"] == "unknown":
+            keep.add(r["port_id"])
+    old = {r["port_id"]: r for r in db.rows("SELECT * FROM link_seen")}
+    with db.transaction() as c:
+        for pid, peer in ok.items():
+            c.execute("""INSERT INTO link_seen(port_id, peer_port_id, last_ok, missing_since) VALUES (?,?,?,NULL)
+                         ON CONFLICT(port_id) DO UPDATE SET peer_port_id = excluded.peer_port_id, last_ok = excluded.last_ok, missing_since = NULL""",
+                      (pid, peer, now))
+        for pid, peer in missing.items():
+            o = old.get(pid)
+            same = o and o["peer_port_id"] == peer
+            since = (o["missing_since"] or now) if same else now
+            c.execute("""INSERT INTO link_seen(port_id, peer_port_id, last_ok, missing_since) VALUES (?,?,?,?)
+                         ON CONFLICT(port_id) DO UPDATE SET peer_port_id = excluded.peer_port_id, last_ok = excluded.last_ok,
+                                                            missing_since = excluded.missing_since""",
+                      (pid, peer, o["last_ok"] if same else None, since))
+        gone = [pid for pid in old if pid not in ok and pid not in missing and pid not in keep]
+        for pid in gone:
+            c.execute("DELETE FROM link_seen WHERE port_id = ?", (pid,))
+    return {"ok": len(ok), "missing": len(missing), "removed": len(gone)}

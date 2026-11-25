@@ -54,4 +54,5 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Checkmk: ausstehende Änderungen anzeigen und aus Portwerk aktivieren (nur ohne fremde Änderungen) | #26 |
 | Aufräumen: vorläufige Kabel, von LLDP nicht gesehene Verbindungen, abgelaufene Reservierungen, liegengebliebene Aufträge, geplante Geräte ohne Auftrag; wöchentlicher Bericht an die Admins | #27 |
 | Abwesenheiten aus OpenPlan übernehmen, Standard-Vertretung (OpenPlan: `GET /api/absences`, Token-Freigabe „Abwesenheiten“) | #28 |
-| Geräte aus OpenPlan übernehmen (Geräte-Rollouts → geplante Geräte, Rückverweis in OpenPlan) | (dieser PR) |
+| Geräte aus OpenPlan übernehmen (Geräte-Rollouts → geplante Geräte, Rückverweis in OpenPlan) | #29 |
+| „Nicht gesehen seit …“: LLDP-Verlauf je Verbindung (zuletzt gesehen, fehlt seit) in Soll/Ist und Aufräumbericht | (dieser PR) |

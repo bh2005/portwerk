@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.13.0 – 2026-11-25
+- „Nicht gesehen seit …“: Bei jedem Import der LLDP/CDP-Nachbarn merkt sich Portwerk je dokumentierter Verbindung, wann sie zuletzt bestätigt wurde und seit wann sie fehlt. Der Soll/Ist-Abgleich zeigt bei „nicht gesehen“ das Datum, der Aufräumbericht „fehlt seit X Tagen“ und „zuletzt gesehen“ (älteste zuerst, ab der gewählten Schwelle hervorgehoben). Die Wochenmail nennt, wie viele Verbindungen länger fehlen. Ändert sich das dokumentierte Gegenüber, beginnt die Zählung neu. Die Aufzeichnung beginnt mit dem ersten Import nach dem Update.
+
 ## 0.12.0 – 2026-11-24
 - Geräte aus OpenPlan: Geräte → „Aus OpenPlan …“ listet die Geräte-Vorgänge eines OpenPlan-Projekts (Geräte-Rollout) und ordnet Standort, Ort (Rack/HE, sonst Raum), Typ und Katalogmodell zu. Ausgewählte Geräte werden als „geplant“ angelegt (mit Ports aus dem Katalogmodell, auf der HE, wenn frei); vorhandene Geräte gleichen Namens werden verknüpft. OpenPlan bekommt am Vorgang den Verweis „portwerk“ mit Link auf das Gerät. Erlaubt für Planer am Standort und Bereichs-Administratoren.
 
