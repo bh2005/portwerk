@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.14.2 – 2026-11-25
+- Untertitel „Portwerk – so isses.“: in der Seitenleiste, auf der Anmeldeseite (darunter weiter „Patchplanung“) und im Browser-Tab. Der hessische Spruch passt zum Soll/Ist-Abgleich: Portwerk zeigt, wie es wirklich *is*.
+
 ## 0.14.1 – 2026-11-25
 - Light Mode in Graustufen: Statt reinem Weiß sind Karten, Tabellen und Dialoge hellgrau, der Seitenhintergrund und die Eingabefelder etwas dunkler – augenfreundlicher. Der Dark Mode und der Druck (Etiketten, Arbeitsanweisung) bleiben unverändert.
 
