@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.14.0 – 2026-11-25
+- Änderungen anderer bemerken: Portwerk merkt sich bei jeder erfolgreichen Änderung (Anlegen, Ändern, Löschen, Import, API-Zugang), wer sie gemacht hat. Die Oberfläche fragt alle 20 Sekunden (nur bei sichtbarem Tab) ab, ob **andere** seit dem Laden etwas geändert haben. Dann erscheint oben der Hinweis „… hat Daten geändert“ mit „Neu laden“ und „Ausblenden“ – nichts wird still überschrieben, offene Formulare bleiben unberührt. Die Übersicht lädt bei fremden Änderungen von selbst nach. Eigene Änderungen lösen keinen Hinweis aus; Änderungen durch einen API-Zugang (z. B. der Checkmk-Import) zählen als fremd. Neu: GET /api/live.
+
 ## 0.13.0 – 2026-11-25
 - „Nicht gesehen seit …“: Bei jedem Import der LLDP/CDP-Nachbarn merkt sich Portwerk je dokumentierter Verbindung, wann sie zuletzt bestätigt wurde und seit wann sie fehlt. Der Soll/Ist-Abgleich zeigt bei „nicht gesehen“ das Datum, der Aufräumbericht „fehlt seit X Tagen“ und „zuletzt gesehen“ (älteste zuerst, ab der gewählten Schwelle hervorgehoben). Die Wochenmail nennt, wie viele Verbindungen länger fehlen. Ändert sich das dokumentierte Gegenüber, beginnt die Zählung neu. Die Aufzeichnung beginnt mit dem ersten Import nach dem Update.
 

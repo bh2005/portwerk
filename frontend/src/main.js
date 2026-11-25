@@ -34,7 +34,7 @@ const router = createRouter({
   routes: [
     { path: '/',            redirect: () => startPage() },
     { path: '/login',       component: LoginView, meta: { public: true } },
-    { path: '/dashboard',   component: Dashboard },
+    { path: '/dashboard',   component: Dashboard, meta: { live: true } },     // reine Übersicht: lädt bei fremden Änderungen von selbst nach
     { path: '/sites',       component: Sites },
     { path: '/devices',     component: Devices },
     { path: '/devices/:id', component: DeviceDetail },

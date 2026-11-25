@@ -16,10 +16,10 @@ import time
 from dataclasses import dataclass, field
 from typing import Optional
 
-from fastapi import Depends, HTTPException, Security
+from fastapi import Depends, HTTPException, Request, Security
 from fastapi.security import APIKeyHeader
 
-from . import audit, db
+from . import audit, db, livechange
 from .config import settings
 from .security import hash_password, new_session_token, token_hash, verify_password
 
@@ -296,10 +296,17 @@ def _principal_from_api_token(raw: str) -> Principal:
 
 
 def current_principal(
+    request: Request,
     session: Optional[str] = Security(session_header),
     api_key: Optional[str] = Security(apikey_header),
     bearer: Optional[str] = Security(bearer_header),
 ) -> Principal:
+    p = _resolve_principal(session, api_key, bearer)
+    request.state.actor = (livechange.actor_key("user", p.user_id), p.name) if p.kind == "user" else (livechange.actor_key("token", p.name), p.name)   # für die Änderungs-Revision
+    return p
+
+
+def _resolve_principal(session: Optional[str], api_key: Optional[str], bearer: Optional[str]) -> Principal:
     if session:
         return _principal_from_session(session)
     raw = api_key
