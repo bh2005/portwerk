@@ -4,7 +4,8 @@
       <div class="text-center">
         <img src="/logo.svg" alt="" class="w-14 h-14 mx-auto mb-2" />
         <div class="text-lg font-bold text-ks-700 dark:text-ks-300">Portwerk</div>
-        <div class="text-xs text-slate-400">Patchplanung</div>
+        <div class="text-sm italic text-slate-500 dark:text-slate-400">– so isses.</div>
+        <div class="text-[11px] uppercase tracking-widest text-slate-400 mt-1">Patchplanung</div>
       </div>
       <p v-if="error" class="text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg px-3 py-2">{{ error }}</p>
       <div><label :class="lbl">Benutzername</label><input v-model="username" autocomplete="username" autofocus :class="inp" /></div>

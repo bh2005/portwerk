@@ -15,7 +15,7 @@
       <img src="/logo.svg" alt="" class="w-7 h-7 flex-shrink-0" />
       <div v-show="!collapsed" class="leading-tight min-w-0 overflow-hidden">
         <div class="text-white font-bold text-sm tracking-wide whitespace-nowrap">Portwerk</div>
-        <div class="text-white/40 text-[9px] tracking-widest uppercase whitespace-nowrap">Patchplanung</div>
+        <div class="text-white/50 text-[10px] italic tracking-wide whitespace-nowrap" title="Patchplanung – Soll und Ist der Verkabelung">– so isses.</div>
       </div>
     </div>
 
