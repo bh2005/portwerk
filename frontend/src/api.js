@@ -75,6 +75,7 @@ export const api = {
   login:          (username, password) => post('/auth/login', { username, password }),
   logout:         () => post('/auth/logout'),
   me:             () => get('/auth/me'),
+  live:           () => get('/api/live'),
   setMyNotifications: b => put('/auth/me/notifications', b),
   setMyPreferences: b => put('/auth/me/preferences', b),
   mySessions:       () => get('/auth/me/sessions'),

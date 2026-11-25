@@ -12,7 +12,8 @@
     <div v-else class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 print:block print:h-auto print:overflow-visible print:bg-white">
       <AppSidebar class="print:hidden" @open-profile="showProfile = true" @toggle-help="showHelp = !showHelp" @open-search="showSearch = true" />
       <main class="flex-1 overflow-y-auto px-6 py-5 print:overflow-visible print:p-0">
-        <router-view />
+        <LiveBanner v-if="liveInfo" :info="liveInfo" @reload="reloadView" @dismiss="dismissLive" />
+        <router-view :key="viewKey" />
       </main>
     </div>
     <ProfileModal v-if="showProfile" @close="showProfile = false" />
@@ -30,6 +31,7 @@ import AppSidebar from './components/AppSidebar.vue'
 import ProfileModal from './components/ProfileModal.vue'
 import HelpPanel from './components/HelpPanel.vue'
 import QuickSearch from './components/QuickSearch.vue'
+import LiveBanner from './components/LiveBanner.vue'
 
 const route = useRoute(), router = useRouter()
 const isDark = ref(false)
@@ -62,7 +64,30 @@ function onKey(e) {
   if (e.key === '?' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) showHelp.value = !showHelp.value
 }
 
-onMounted(() => { applyTheme(); window.addEventListener('keydown', onKey) })
-onUnmounted(() => window.removeEventListener('keydown', onKey))
+// Änderungs-Revision: alle 20 s (nur bei sichtbarem Tab) fragen, ob ANDERE seit dem Laden etwas geändert haben.
+// Reine Übersichten (route.meta.live) laden dann von selbst nach, alle anderen Ansichten zeigen den Hinweis „Neu laden“ – nie stilles Überschreiben.
+const LIVE_MS = 20000
+const liveInfo = ref(null), viewKey = ref(0)
+let liveBase = null, liveLatest = null, liveTimer = null
+function liveActive() { return !document.hidden && !!getToken() && route.path !== '/login' && !route.meta.bare && !noRights.value }
+async function pollLive(rebase = false) {
+  if (!liveActive()) return
+  try {
+    const r = await api.live()
+    liveLatest = r.others
+    if (rebase || liveBase === null) { liveBase = r.others; liveInfo.value = null; return }
+    if (r.others > liveBase) {
+      if (route.meta.live) reloadView()
+      else liveInfo.value = { by: r.by, at: r.at }
+    }
+  } catch { /* Netzfehler/abgelaufene Sitzung: der Interceptor kümmert sich, hier nie stören */ }
+}
+function reloadView() { liveBase = liveLatest; liveInfo.value = null; viewKey.value++ }
+function dismissLive() { liveBase = liveLatest; liveInfo.value = null }
+watch(() => route.fullPath, () => pollLive(true))                  // neue Ansicht = frisch geladen: Stand neu festhalten
+const onVisible = () => { if (!document.hidden) pollLive() }
+
+onMounted(() => { applyTheme(); window.addEventListener('keydown', onKey); document.addEventListener('visibilitychange', onVisible); liveTimer = setInterval(() => pollLive(), LIVE_MS); pollLive(true) })
+onUnmounted(() => { window.removeEventListener('keydown', onKey); document.removeEventListener('visibilitychange', onVisible); clearInterval(liveTimer) })
 window.addEventListener('storage', applyTheme)
 </script>

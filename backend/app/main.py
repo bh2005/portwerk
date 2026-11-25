@@ -9,9 +9,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
-from . import acme_client, auth, backup, notifications, releases
+from . import acme_client, auth, backup, livechange, notifications, releases
 from .config import settings
-from .routers import accounts, backups, catalog, cleanup as cleanup_router, compare, documents, history, imports, labels, portreservations, routing as routing_router, stations, vlans, masterdata, notify, openplan, overview, patchlists, releases as releases_router, search, serverconfig, wan, wizards, workorders
+from .routers import live as live_router, accounts, backups, catalog, cleanup as cleanup_router, compare, documents, history, imports, labels, portreservations, routing as routing_router, stations, vlans, masterdata, notify, openplan, overview, patchlists, releases as releases_router, search, serverconfig, wan, wizards, workorders
 from .static import find_static_dir, register_static
 
 logger = logging.getLogger("opp")
@@ -56,7 +56,18 @@ async def https_redirect(request, call_next):
     return await call_next(request)
 
 
+@app.middleware("http")
+async def track_changes(request, call_next):
+    """Erfolgreiche schreibende API-Aufrufe erhöhen die Änderungs-Revision (wer, wann) – Grundlage für „Neu laden“ in der Oberfläche."""
+    response = await call_next(request)
+    actor = getattr(request.state, "actor", None)
+    if actor and livechange.counts(request.method, request.url.path, response.status_code):
+        livechange.bump(*actor)
+    return response
+
+
 app.include_router(accounts.router)
+app.include_router(live_router.router)
 app.include_router(masterdata.router)
 app.include_router(catalog.router)
 app.include_router(wizards.router)

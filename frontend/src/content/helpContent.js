@@ -11,7 +11,8 @@ export const sections = [
   { id: 'bedienung', title: 'Bedienung', html: `
 <ul><li><b>Hilfe:</b> F1 oder ? öffnet die Hilfe zur aktuellen Seite. Das Fragezeichen-Symbol neben Feldern zeigt einen Kurztipp.</li>
 <li><b>Dunkelmodus</b> und <b>Profil</b> (Passwort ändern) findest du unten in der Seitenleiste.</li>
-<li>Die Seitenleiste lässt sich über das Menü-Symbol einklappen.</li></ul>` },
+<li>Die Seitenleiste lässt sich über das Menü-Symbol einklappen.</li>
+<li><b>Änderungen anderer:</b> Ändert jemand anderes Daten (oder ein API-Zugang, z. B. der Checkmk-Import), erscheint oben der Hinweis „… hat Daten geändert“. <b>Neu laden</b> zeigt den aktuellen Stand, <b>Ausblenden</b> merkt sich ihn bis zur nächsten Änderung. Es wird nichts überschrieben und kein Formular verändert; nur die Übersicht lädt von selbst nach. Eigene Änderungen lösen keinen Hinweis aus.</li></ul>` },
 
   { id: 'standorte', title: 'Standorte und Racks', html: `
 <p>Die Struktur ist hierarchisch: <b>Standort → Gebäude → Etage → Raum → Rack</b>. Jede Ebene ist eine „Location“. Racks haben eine Höhe in Höheneinheiten (HE).</p>
