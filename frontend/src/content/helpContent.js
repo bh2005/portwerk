@@ -1,17 +1,18 @@
 // Handbuch: Abschnitte mit Überschrift und HTML-Inhalt (Seite /handbuch).
 export const sections = [
   { id: 'einstieg', title: 'Einstieg', html: `
-<p>Portwerk verwaltet den Bestand für die Verkabelung: Standorte, Räume und Racks, Geräte mit Ports sowie Patchfelder und Dosen. Der Schwerpunkt liegt auf der <b>Planung</b>: Änderungen an der Verkabelung laufen später als Auftrag (planen → freigeben → ausführen → bestätigen).</p>
-<p>In dieser Ausbaustufe stehen die Stammdaten und der Import zur Verfügung.</p>
+<p>Portwerk verwaltet den Bestand für die Verkabelung: Standorte, Räume und Racks, Geräte mit Ports sowie Patchfelder und Dosen. Der Schwerpunkt liegt auf der <b>Planung</b>: Änderungen an der Verkabelung laufen als Auftrag (planen → freigeben → ausführen → bestätigen), und der Soll/Ist-Abgleich prüft die Dokumentation gegen LLDP/CDP.</p>
 <h3>Typischer Start</h3>
 <ol><li>Unter <b>Standorte</b> Standorte, Gebäude, Räume und Racks anlegen – oder beim Import anlegen lassen.</li>
 <li>Unter <b>Import</b> Geräte und Ports aus CSV, JSON oder Checkmk einlesen.</li>
-<li>Unter <b>Racks</b> die Belegung prüfen, unter <b>Geräte</b> Details und Ports pflegen.</li></ol>` },
+<li>Unter <b>Racks</b> die Belegung prüfen, unter <b>Geräte</b> Details und Ports pflegen.</li>
+<li>Änderungen an der Verkabelung als <b>Patchauftrag</b> planen.</li></ol>` },
 
   { id: 'bedienung', title: 'Bedienung', html: `
 <ul><li><b>Hilfe:</b> F1 oder ? öffnet die Hilfe zur aktuellen Seite. Das Fragezeichen-Symbol neben Feldern zeigt einen Kurztipp.</li>
-<li><b>Dunkelmodus</b> und <b>Profil</b> (Passwort ändern) findest du unten in der Seitenleiste.</li>
+<li><b>Dunkelmodus</b> und <b>Profil</b> (Passwort, Sprache, Benachrichtigungen) findest du unten in der Seitenleiste.</li>
 <li>Die Seitenleiste lässt sich über das Menü-Symbol einklappen.</li>
+<li><b>Sprache:</b> Deutsch oder Englisch, je Benutzer unter „Mein Profil → Persönliche Einstellungen“; vor der Anmeldung über den Umschalter auf der Anmeldeseite.</li>
 <li><b>Änderungen anderer:</b> Ändert jemand anderes Daten (oder ein API-Zugang, z. B. der Checkmk-Import), erscheint oben der Hinweis „… hat Daten geändert“. <b>Neu laden</b> zeigt den aktuellen Stand, <b>Ausblenden</b> merkt sich ihn bis zur nächsten Änderung. Es wird nichts überschrieben und kein Formular verändert; nur die Übersicht lädt von selbst nach. Eigene Änderungen lösen keinen Hinweis aus.</li></ul>` },
 
   { id: 'standorte', title: 'Standorte und Racks', html: `
@@ -19,14 +20,14 @@ export const sections = [
 <p>Standorte und Locations lassen sich nur löschen, wenn sie leer sind. Beim Import reicht ein Pfad wie <code>SITE-A/Gebäude 1/Raum 2/Rack 3</code>; fehlende Ebenen werden angelegt. Wird nur ein Standortcode angegeben, landet das Gerät in der Location „Allgemein“.</p>` },
 
   { id: 'geraete', title: 'Geräte und Ports', html: `
-<p>Gerätetypen: Switch, Router, Firewall, Access Point, Server, Patchfeld, Dose, Endgerät, Sonstiges. Der Status ist <i>geplant</i>, <i>aktiv</i> oder <i>außer Betrieb</i>.</p>
+<p>Gerätetypen: Switch, Router, Firewall, Access Point, Server, Patchfeld, Dose, Endgerät, Sonstiges (dazu Industrie- und Rackzubehör-Typen). Der Status ist <i>geplant</i>, <i>aktiv</i> oder <i>außer Betrieb</i>.</p>
 <ul><li><b>HE-Position und Höhe</b> sind nur in einem Rack möglich. Überschneidungen und Überschreiten der Rackhöhe werden abgewiesen.</li>
 <li><b>Ports</b> lassen sich einzeln oder gesammelt anlegen (Präfix, Start, Anzahl).</li>
 <li><b>Patchfelder:</b> jeder Port kann mit einer Gegenseite verknüpft werden (Durchschleifung).</li>
 <li><b>Pfad:</b> „Pfad“ in der Portzeile (bzw. „Ganzen Pfad anzeigen“ nach dem Scannen eines Etiketts) zeigt die komplette Strecke als Grafik – Switch, Patchfelder (vorn ◂ / hinten ▸), Dose, Endgerät – mit Kabelnummer, Art, Länge und Kabelfarbe, Ort und HE, geplanten Änderungen und Reservierungen. Offene Enden (z. B. Patchfeld ohne hinterlegte Gegenseite) werden markiert; an durchgängigen Strecken zeigt der LLDP/CDP-Abgleich, ob die Enden sich wirklich sehen.</li>
 <li><b>Mobile Techniker-Ansicht</b> (<code>/m</code>, auf dem Handy auch über „Mobile Ansicht zum Abhaken“ im Auftrag oder den QR-Code der PDF-Arbeitsanweisung): freigegebene und laufende Aufträge, Positionen nach Ort mit Höheneinheit, große Knöpfe „Erledigt“/„Abweichung“, Starten und Fertigmelden. „Scannen“ (Android/Chrome, nur über HTTPS) springt zur Position mit der gescannten Kabelnummer; auf dem iPhone die Kamera-App nutzen – das Etikett öffnet die Kabelseite mit „Im Auftrag abhaken“.</li>
 <li><b>Port-Reservierungen:</b> auf der Geräteseite Ports ankreuzen → „Reservieren“ (Zweck, optional Frist). Reservierte Ports und Ports, die ein anderer offener Auftrag schon verbinden will („verplant“), gelten in den Assistenten nicht als frei; wer sie trotzdem verwendet, bekommt eine Rückfrage – die Reservierung wird dabei freigegeben (Audit-Log). Eine Reservierung für einen bestimmten Auftrag gilt dort nicht als Konflikt und endet mit dessen Bestätigung. Übersicht unter <b>Reservierungen</b>.</li>
-<li><b>Mein Profil</b> (Personensymbol unten in der Seitenleiste): E-Mail-Benachrichtigungen einzeln an/aus – Zuweisung, Statusänderung eigener Aufträge (freigegeben, abgelehnt, Nacharbeit, bestätigt), LLDP-Abweichung bei eigener Ausführung, Ablauf eigener Reservierungen (3 Tage vorher), zur Bestätigung vorgeschlagen (Freigeber). Außerdem Standard-Standort (belegt Filter vor), Startseite nach dem Login und „Alle anderen abmelden“ (z. B. nach Verlust eines Geräts). Unter <b>Abwesenheit und Vertretung</b> trägst du Zeiträume mit Vertretung ein: Dann gehen deine Benachrichtigungen an die Vertretung (sofern sie dafür berechtigt ist – bei Bestätigungsvorschlägen muss sie Freigeber am Standort sein), und sie sieht deine Aufträge unter „Meine Aufgaben“. Zuweisungen bleiben bei dir; Administratoren können Abwesenheiten auch für andere eintragen. Ist der Abgleich mit OpenPlan eingeschaltet, erscheinen dort eingetragene Abwesenheiten automatisch (Hinweis „aus OpenPlan“, nur dort änderbar); für sie gilt deine <b>Standard-Vertretung</b>. Alles gilt auf allen Geräten; den E-Mail-Versand insgesamt steuert die Verwaltung.</li>
+<li><b>Mein Profil</b> (Personensymbol unten in der Seitenleiste): E-Mail-Benachrichtigungen einzeln an/aus – Zuweisung, Statusänderung eigener Aufträge (freigegeben, abgelehnt, Nacharbeit, bestätigt), LLDP-Abweichung bei eigener Ausführung, Ablauf eigener Reservierungen (3 Tage vorher), zur Bestätigung vorgeschlagen (Freigeber). Außerdem Sprache, Standard-Standort (belegt Filter vor), Startseite nach dem Login und „Alle anderen abmelden“ (z. B. nach Verlust eines Geräts). Unter <b>Abwesenheit und Vertretung</b> trägst du Zeiträume mit Vertretung ein: Dann gehen deine Benachrichtigungen an die Vertretung (sofern sie dafür berechtigt ist – bei Bestätigungsvorschlägen muss sie Freigeber am Standort sein), und sie sieht deine Aufträge unter „Meine Aufgaben“. Zuweisungen bleiben bei dir; Administratoren können Abwesenheiten auch für andere eintragen. Ist der Abgleich mit OpenPlan eingeschaltet, erscheinen dort eingetragene Abwesenheiten automatisch (Hinweis „aus OpenPlan“, nur dort änderbar); für sie gilt deine <b>Standard-Vertretung</b>. Alles gilt auf allen Geräten; den E-Mail-Versand insgesamt steuert die Verwaltung.</li>
 <li><b>Geräte aus OpenPlan:</b> Geräte → „Aus OpenPlan …“ (wenn die OpenPlan-Anbindung aktiv ist). Projekt wählen: Portwerk listet die Geräte-Vorgänge des Rollouts und ordnet Standort (Location-Code oder Name), Ort (Rack aus „Rack / HE“, sonst Raum), Typ und Katalogmodell zu. Ausgewählte Geräte entstehen als <b>geplant</b> – mit Ports aus dem Katalogmodell und auf der HE, wenn sie frei ist; fehlt der Ort, wählst du ihn in der Liste. Ein vorhandenes Gerät gleichen Namens wird nur verknüpft. In OpenPlan erhält der Vorgang den Verweis „portwerk“ auf das Gerät; ein erneuter Abruf zeigt bereits Übernommenes an. Dürfen: Planer am Standort und Bereichs-Administratoren.</li>
 <li><b>Arbeitsplatz-Assistent:</b> auf der Geräteseite einer Dose „Arbeitsplatz“ (oder Patchaufträge → „+ Arbeitsplatz“). Portwerk verfolgt die Strecke bis zum Patchfeld-Port, an dem das Patchkabel fehlt, schlägt einen freien Switchport vor (zuerst im selben Rack, dann in der Nähe, dann am Standort; nicht reservierte, nicht verplante Ports), übernimmt Profil/VLAN und legt daraus einen Patchauftrag an – optional mit dem Anschluss des Endgeräts. Ist die Dose schon bis zum Switch verbunden, entsteht nur „Port umkonfigurieren“.</li>
 <li><b>VLAN / Portprofil:</b> nur Dokumentation – Portwerk konfiguriert keine Switches. Unter <b>VLANs &amp; Profile</b> den VLAN-Katalog (je Standort oder für alle) und Portprofile pflegen (z. B. „Büro-PC“: Access 10 + Voice 30, „Access Point“: Trunk). Am Port zeigt die Geräteseite die Konfiguration („VLAN“ in der Portzeile, mit Historie). Im Ablauf: Auftragsaktion <b>Port umkonfigurieren</b> oder bei „herstellen/umstecken“ eine Ziel-Konfiguration (gilt standardmäßig für das Switch-Ende); sie steht in Arbeitsanweisung, CSV und mobiler Ansicht und wird beim Bestätigen am Port dokumentiert.</li>
@@ -64,7 +65,7 @@ export const sections = [
 <h3>Vier-Augen-Prinzip</h3>
 <p>Wer einen Auftrag angelegt oder eingereicht hat, darf ihn nicht selbst <b>freigeben</b>; wer ihn ausgeführt hat, darf ihn nicht selbst <b>bestätigen</b>. Ablehnen und Nacharbeit bleiben erlaubt. Administratoren können im Notfall mit <b>Begründung</b> übersteuern – die Ausnahme steht im Audit-Log und am Auftrag.</p>
 <h3>Sicherung</h3>
-<p>Verwaltung → <b>Sicherung</b>: „Jetzt sichern“ legt ein ZIP mit Datenbank und Server-Zertifikat an; täglich automatisch mit einstellbarer Uhrzeit und Aufbewahrung. Wiederherstellen (vom Server oder aus einer Datei) ersetzt den gesamten Bestand – vorher wird der aktuelle Stand gesichert, danach melden sich alle neu an. Sicherungen enthalten Passwort-Hashes und Zugangsdaten: vertraulich aufbewahren.</p>
+<p>Verwaltung → <b>Sicherung</b>: „Jetzt sichern“ legt ein ZIP mit Datenbank und Server-Zertifikat an; täglich automatisch mit einstellbarer Uhrzeit und Aufbewahrung. Externe Ziele (NAS-Verzeichnis, S3, WebDAV, optional verschlüsselt) bekommen jede Sicherung zusätzlich. Wiederherstellen (vom Server, von einem Ziel oder aus einer Datei) ersetzt den gesamten Bestand – vorher wird der aktuelle Stand gesichert, danach melden sich alle neu an. Sicherungen enthalten Passwort-Hashes und Zugangsdaten: vertraulich aufbewahren.</p>
 <h3>API-Zugänge</h3>
 <p>Tokens für Skripte (Präfix <code>opp_</code>). Umfang <i>read</i> oder <i>write</i>, optional mit Ablauf. Der Klartext wird nur einmal angezeigt; Übergabe im Header <code>Authorization: Bearer …</code> bzw. <code>X-Auth-Token</code>.</p>
 <h3>Audit-Log</h3>
@@ -75,6 +76,7 @@ export const sections = [
 <ul><li><b>Neuer Standort</b> (Standorte): Standort, Struktur aus Gebäude → Etage → Raum → Rack, Prüfung. Alles wird in einem Schritt gespeichert.</li>
 <li><b>Gerät platzieren</b> (Geräte, Racks): Modell aus dem Katalog, Standort und HE-Position, Hostname und Daten, optional ein Kabel (z. B. Uplink), Umsetzung. Platzhalter (Kabelführung, Blindblende, Fachboden) laufen über denselben Assistenten, der Hostname ist dort optional.</li>
 <li><b>Massenverkabelung</b> (Geräte → „Assistent: Massenverkabelung“): viele Kabel auf einmal. <i>Patchfeld ↔ Patchfeld</i> verbindet alle Ports (z. B. Rückseite RZ ↔ Rückseite Etage 1); <i>Datendosen → Patchfeld/Switch</i> patcht alle Dosen einer Location der Reihe nach; <i>Aus Liste</i> liest eine Excel/CSV-Zuordnung (Gerät A; Port A; Gerät B; Port B; Kabelnummer). Die Zuordnung lässt sich vorab prüfen, versetzen und zeilenweise auslassen; Kabelnummern entstehen aus einem Muster. Ergebnis: <b>ein Patchauftrag mit Arbeitsliste</b> (oder alles sofort, atomar). Belegte Ports lösen eine einzige Rückfrage zum Rückbau aus.</li>
+<li><b>Autorouting</b> (Racks, Port im Gerätedetail): Von einem Quellport zu einem Zielport schlägt Portwerk die fehlenden Patchungen vor – über vorhandene Kabel, Patchfelder und Dosen – und kann dabei ein neues Gerät als „geplant“ anlegen.</li>
 <li><b>Schnellsuche:</b> <b>Strg+K</b> oder <b>/</b> (oder das Feld in der Seitenleiste) öffnet die Suche über Geräte (Hostname, IP, Seriennummer, Modell), Standorte, Orte, WAN-Verbindungen, Patchaufträge und Kabelnummern. Bei Geräten stehen Standort, Raum/Rack und Höheneinheit direkt im Treffer; Enter öffnet die Rack-Ansicht mit markiertem Gerät.</li>
 <li><b>OpenPlan-Anbindung:</b> Patchaufträge werden zu Aufgaben im OpenPlan-Projektplan (Verwaltung → OpenPlan). Status und Fortschritt gleichen sich automatisch ab; mehrere Aufträge lassen sich auf einmal übertragen oder in ein neues Projekt aus der Vorlage „Einbau Patchfelder / Verkabelung“ einhängen.</li>
 <li><b>Patchliste aus mehreren Aufträgen:</b> In „Patchaufträge“ Aufträge ankreuzen → „Patchliste aus Auswahl“: eine gemeinsame, nach Ort sortierte Arbeitsliste zum Abhaken, Exportieren und Drucken.</li>
@@ -91,8 +93,8 @@ export const sections = [
 <p>Benutzer können Rollen nur für einzelne Standorte erhalten und sehen dann nur diese. Bereichs-Administratoren verwalten ihren Standort samt Benutzern. Siehe Verwaltung → Benutzer.</p>` },
 
   { id: 'ausblick', title: 'Ausblick', html: `
-<ul><li>Verbindungen und Patchaufträge mit Freigabe und Verlauf</li>
-<li>Schnittstelle zu OpenPlan (Aufgaben für die Ausführung)</li>
-<li>Soll/Ist-Abgleich über LLDP</li>
-<li>Durchgängige Pfadansicht über Patchfelder und Dosen</li></ul>` },
+<ul><li>Webhooks an andere Systeme (z. B. „Auftrag bestätigt“, „LLDP-Abweichung“)</li>
+<li>VLAN-Soll/Ist für Trunks, Voice-VLANs und andere Hersteller</li>
+<li>Historie für Geräte-Orte und Patchfeld-Paare (Zeitreise mit den Orten von damals)</li>
+<li>Englisch für Mails, Arbeitsanweisung (PDF) und Etiketten</li></ul>` },
 ]

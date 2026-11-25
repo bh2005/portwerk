@@ -2,6 +2,10 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.20.0 – 2026-11-25
+- Handbuch und Hilfe auf Englisch: Bei englischer Oberfläche erscheinen das Handbuch und die Kontexthilfe (F1) vollständig auf Englisch (eigene Dateien `helpContent.en.js`, `helpTexts.en.js`; fehlt ein Abschnitt, gilt der deutsche).
+- Handbuch und Hilfe aktualisiert (beide Sprachen): veralteten Einstieg und „Ausblick“ auf den heutigen Stand gebracht; ergänzt um Sprachwahl, Autorouting, externe Sicherungsziele, Abwesenheiten und Geräte aus OpenPlan, „fehlt seit“ und „Verbindung übernehmen“ im Soll/Ist-Abgleich sowie „Port umkonfigurieren“.
+
 ## 0.19.0 – 2026-11-25
 - Englisch (Etappe 5, Verwaltung und Import): Benutzer und Rechte, API-Zugänge, AD/LDAP, Zertifikat (ACME), Sicherung mit externen Zielen, E-Mail, Checkmk, OpenPlan, Audit-Log, Releases und Import sind übersetzt, dazu rund 90 Server-Meldungen aus diesen Bereichen. Damit ist die gesamte Oberfläche auf Englisch umstellbar. Das Handbuch und die Hilfetexte bleiben vorerst deutsch (mit Hinweis), ebenso Mails, Arbeitsanweisung (PDF) und Etiketten.
 
