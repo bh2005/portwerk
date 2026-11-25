@@ -7,7 +7,7 @@
     <div class="flex items-center gap-2 h-14 px-2 border-b border-white/10 flex-shrink-0">
       <button @click="collapsed = !collapsed"
         class="p-1.5 rounded text-white/60 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
-        :title="collapsed ? 'Aufklappen' : 'Einklappen'">
+        :title="collapsed ? $t('Aufklappen') : $t('Einklappen')">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
@@ -15,17 +15,17 @@
       <img src="/logo.svg" alt="" class="w-7 h-7 flex-shrink-0" />
       <div v-show="!collapsed" class="leading-tight min-w-0 overflow-hidden">
         <div class="text-white font-bold text-sm tracking-wide whitespace-nowrap">Portwerk</div>
-        <div class="text-white/50 text-[10px] italic tracking-wide whitespace-nowrap" title="Patchplanung – Soll und Ist der Verkabelung">– so isses.</div>
+        <div class="text-white/50 text-[10px] italic tracking-wide whitespace-nowrap" :title="$t('Patchplanung – Soll und Ist der Verkabelung')">– so isses.</div>
       </div>
     </div>
 
     <!-- Schnellsuche -->
     <div class="px-1.5 pt-2">
-      <button @click="$emit('open-search')" :title="'Suche (Strg+K oder /)'"
+      <button @click="$emit('open-search')" :title="$t('Suche (Strg+K oder /)')"
         class="w-full flex items-center gap-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors px-2.5 py-1.5 text-sm">
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-        <span v-show="!collapsed" class="flex-1 text-left whitespace-nowrap">Suchen …</span>
-        <kbd v-show="!collapsed" class="text-[10px] text-white/40 border border-white/20 rounded px-1">Strg K</kbd>
+        <span v-show="!collapsed" class="flex-1 text-left whitespace-nowrap">{{ $t('Suchen …') }}</span>
+        <kbd v-show="!collapsed" class="text-[10px] text-white/40 border border-white/20 rounded px-1">{{ $t('Strg K') }}</kbd>
       </button>
     </div>
 
@@ -39,7 +39,7 @@
       <div class="flex items-center" :class="collapsed ? 'flex-col gap-1' : 'justify-between'">
         <button @click="toggleTheme"
           class="p-1.5 rounded text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-          :title="isDark ? 'Light Mode' : 'Dark Mode'">
+          :title="isDark ? $t('Light Mode') : $t('Dark Mode')">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path v-if="isDark" fill-rule="evenodd" clip-rule="evenodd"
               d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/>
@@ -49,11 +49,11 @@
 
         <button @click="$emit('toggle-help')"
           class="p-1.5 rounded text-white/60 hover:text-white hover:bg-white/10 transition-colors font-bold text-[15px] leading-none w-7 h-7"
-          title="Hilfe (F1)">?</button>
+          :title="$t('Hilfe (F1)')">?</button>
 
         <button @click="$emit('open-profile')"
           class="p-1.5 rounded text-white/50 hover:text-white hover:bg-white/10 transition-colors"
-          title="Mein Profil – Passwort ändern">
+          :title="$t('Mein Profil – Passwort ändern')">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -61,7 +61,7 @@
         </button>
 
         <button @click="doLogout"
-          class="p-1.5 rounded text-white/50 hover:text-white hover:bg-white/10 transition-colors" title="Abmelden">
+          class="p-1.5 rounded text-white/50 hover:text-white hover:bg-white/10 transition-colors" :title="$t('Abmelden')">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -69,7 +69,7 @@
         </button>
       </div>
 
-      <button v-if="!collapsed" @click="$emit('open-profile')" class="group w-full text-left px-1 pb-0.5" title="Mein Profil – Passwort ändern">
+      <button v-if="!collapsed" @click="$emit('open-profile')" class="group w-full text-left px-1 pb-0.5" :title="$t('Mein Profil – Passwort ändern')">
         <div class="text-white/40 group-hover:text-white/80 text-[10px] uppercase tracking-wide truncate transition-colors">
           {{ user.username }}<span v-if="roleText"> · {{ roleText }}</span> <span class="opacity-60">⚙</span>
         </div>
@@ -84,6 +84,7 @@ import { useRouter } from 'vue-router'
 import NavLink from './SidebarNavLink.vue'
 import { api, clearToken, isAdmin, hasRole, canAdministerUsers, getUser } from '../api.js'
 import { roleLabel } from '../ui.js'
+import { t } from '../i18n.js'
 
 defineEmits(['open-profile', 'toggle-help', 'open-search'])
 const router = useRouter()
@@ -132,7 +133,7 @@ const visibleLinks = computed(() => allLinks.filter(l => {
   if (l.userAdmin) return canAdministerUsers()
   if (l.roleAny)   return isAdmin() || hasRole(...l.roleAny)
   return true
-}))
+}).map(l => ({ ...l, label: t(l.label), desc: t(l.desc) })))
 
 function toggleTheme() {
   isDark.value = !isDark.value

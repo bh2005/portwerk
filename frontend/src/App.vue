@@ -32,6 +32,7 @@ import ProfileModal from './components/ProfileModal.vue'
 import HelpPanel from './components/HelpPanel.vue'
 import QuickSearch from './components/QuickSearch.vue'
 import LiveBanner from './components/LiveBanner.vue'
+import { t } from './i18n.js'
 
 const route = useRoute(), router = useRouter()
 const isDark = ref(false)
@@ -44,7 +45,7 @@ const noRights = computed(() => !!token.value && !!user.value?.id && !(user.valu
 const noRightsMsg = ref(''), checking = ref(false)
 async function recheck() {
   checking.value = true; noRightsMsg.value = ''
-  try { setUser(await api.me()); sync(); if (noRights.value) noRightsMsg.value = 'Es wurden noch keine Rechte vergeben.' }
+  try { setUser(await api.me()); sync(); if (noRights.value) noRightsMsg.value = t('Es wurden noch keine Rechte vergeben.') }
   catch { /* abgelaufene Sitzung: der Interceptor leitet zur Anmeldung */ } finally { checking.value = false }
 }
 async function logoutNow() { try { await api.logout() } catch { /* egal */ } clearToken(); sync(); router.push('/login') }

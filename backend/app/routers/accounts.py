@@ -55,11 +55,12 @@ class NotifyPrefsIn(BaseModel):
 class UiPrefsIn(BaseModel):
     default_site_id: Optional[int] = None            # None = kein Standard-Standort
     start_page: str = ""                              # leer = Übersicht (am Handy für Techniker: mobile Ansicht)
+    lang: Optional[str] = None                        # de | en; None = unverändert
 
 
 @router.put("/auth/me/preferences")
 def set_my_preferences(body: UiPrefsIn, p: Principal = Depends(require_user)):
-    """Standard-Standort und Startseite (gelten auf allen Geräten)."""
+    """Standard-Standort, Startseite und Sprache (gelten auf allen Geräten)."""
     from .. import access
     if body.start_page and body.start_page not in auth.START_PAGES:
         raise HTTPException(400, "Startseite unbekannt")
@@ -67,7 +68,10 @@ def set_my_preferences(body: UiPrefsIn, p: Principal = Depends(require_user)):
         if not db.row("SELECT id FROM sites WHERE id = ?", (body.default_site_id,)):
             raise HTTPException(404, "Standort nicht gefunden")
         access.require_read(p, body.default_site_id, "Standort")
-    prefs = {"default_site_id": body.default_site_id, "start_page": body.start_page}
+    if body.lang is not None and body.lang not in auth.LANGS:
+        raise HTTPException(400, "Sprache unbekannt")
+    old = auth.ui_prefs(db.row("SELECT ui_prefs FROM users WHERE id = ?", (p.user_id,))["ui_prefs"])
+    prefs = {"default_site_id": body.default_site_id, "start_page": body.start_page, "lang": body.lang or old["lang"]}
     db.execute("UPDATE users SET ui_prefs = ? WHERE id = ?", (json.dumps(prefs), p.user_id))
     audit.log(p.name, "user.ui_prefs", "user", p.user_id, json.dumps(prefs))
     return auth.ui_prefs(json.dumps(prefs))

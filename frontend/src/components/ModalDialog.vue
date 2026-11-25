@@ -4,7 +4,7 @@
          :class="huge ? 'max-w-6xl' : wide ? 'max-w-2xl' : 'max-w-md'" role="dialog" aria-modal="true" :aria-label="title">
       <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700">
         <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ title }}</h2>
-        <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Schließen (Esc)">
+        <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" :title="$t('Schließen (Esc)')">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>

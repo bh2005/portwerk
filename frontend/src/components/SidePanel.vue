@@ -5,7 +5,7 @@
              role="dialog" aria-modal="true" :aria-label="title">
         <div class="flex items-start justify-between gap-3 px-5 py-3 border-b border-slate-100 dark:border-slate-700">
           <div class="min-w-0 flex-1"><slot name="title"><h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ title }}</h2></slot></div>
-          <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0" title="Schließen (Esc)" @click="$emit('close')">
+          <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0" :title="$t('Schließen (Esc)')" @click="$emit('close')">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>

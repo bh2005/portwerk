@@ -1,4 +1,5 @@
 // Gemeinsame Tailwind-Klassen und Beschriftungen (damit alle Seiten gleich aussehen).
+import { locale, t } from './i18n.js'
 
 export const inp = 'w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-ks-500 transition-colors disabled:opacity-60'
 export const lbl = 'block text-xs font-medium text-slate-400 uppercase tracking-wide mb-1'
@@ -21,7 +22,7 @@ export const DEVICE_TYPES = [
 export const PASSIVE_TYPES = ['cable_mgmt', 'blank_panel', 'shelf']      // Platzhalter ohne Ports: belegen nur Rackplatz
 export const MOUNT_SIDES = [['front', 'Vorderseite'], ['rear', 'Rückseite'], ['both', 'beide Seiten (durchgehend)']]
 export const SIDE_SLOTS = [['left', 'links'], ['right', 'rechts']]
-export const mountLabel = k => (MOUNT_SIDES.find(x => x[0] === k) || [k, k])[1]
+export const mountLabel = k => t((MOUNT_SIDES.find(x => x[0] === k) || [k, k])[1])
 export const DEVICE_STATUS = [['planned', 'geplant'], ['active', 'aktiv'], ['retired', 'außer Betrieb']]
 export const LOCATION_KINDS = [['building', 'Gebäude'], ['floor', 'Etage'], ['room', 'Raum'], ['machine', 'Anlage/Maschine'], ['vehicle', 'Mobile Maschine'],
   ['rack', 'Rack'], ['wallrack', 'Wandgehäuse'], ['cabinet', 'Schaltschrank']]
@@ -42,7 +43,7 @@ export const ROLES = [
   ['viewer', 'Betrachter', 'darf nur lesen'],
 ]
 
-const labelOf = (list, key) => (list.find(x => x[0] === key) || [key, key])[1]
+const labelOf = (list, key) => t((list.find(x => x[0] === key) || [key, key])[1])        // Beschriftungen in der eingestellten Sprache
 export const typeLabel = k => labelOf(DEVICE_TYPES, k)
 export const statusLabel = k => labelOf(DEVICE_STATUS, k)
 export const kindLabel = k => labelOf(LOCATION_KINDS, k)
@@ -68,5 +69,5 @@ export function withOffset(v) {
   const p = n => String(Math.trunc(Math.abs(n))).padStart(2, '0'), off = -d.getTimezoneOffset()
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}${off >= 0 ? '+' : '-'}${p(off / 60)}:${p(off % 60)}`
 }
-export function fmtTime(ts) { return ts ? new Date(ts * 1000).toLocaleString('de-DE') : '–' }
+export function fmtTime(ts) { return ts ? new Date(ts * 1000).toLocaleString(locale()) : '–' }
 export function fmtSpeed(m) { return !m ? '–' : (m >= 1000 ? `${m / 1000} Gbit/s` : `${m} Mbit/s`) }

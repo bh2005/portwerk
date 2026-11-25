@@ -1,16 +1,17 @@
 <template>
   <Transition name="help-slide">
     <div v-if="open" class="help-overlay" @click.self="$emit('close')">
-      <aside class="help-panel" role="complementary" aria-label="Hilfe">
+      <aside class="help-panel" role="complementary" :aria-label="$t('Hilfe')">
         <div class="help-header">
-          <span class="help-title">Hilfe</span>
+          <span class="help-title">{{ $t('Hilfe') }}</span>
           <div class="help-header-actions">
-            <router-link to="/handbuch" class="help-manual-link" @click="$emit('close')">Handbuch →</router-link>
-            <button class="help-close" @click="$emit('close')" title="Schließen (Esc)">✕</button>
+            <router-link to="/handbuch" class="help-manual-link" @click="$emit('close')">{{ $t('Handbuch →') }}</router-link>
+            <button class="help-close" @click="$emit('close')" :title="$t('Schließen (Esc)')">✕</button>
           </div>
         </div>
+        <p v-if="lang === 'en'" class="help-lang-note">The help texts are currently only available in German.</p>
         <div class="help-body" v-html="content"></div>
-        <div class="help-footer">F1 oder ? zum Öffnen/Schließen</div>
+        <div class="help-footer">{{ $t('F1 oder ? zum Öffnen/Schließen') }}</div>
       </aside>
     </div>
   </Transition>
@@ -21,6 +22,7 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getHelp } from '../content/helpTexts.js'
 import { helpContext } from '../content/helpContext.js'
+import { lang } from '../i18n.js'
 
 const props = defineProps({ open: { type: Boolean, default: false } })
 const emit  = defineEmits(['close'])
@@ -34,6 +36,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
 </script>
 
 <style>
+.help-lang-note { margin: 10px 16px 0; padding: 6px 10px; font-size: 12px; border-radius: 6px; background: #fef3c7; color: #92400e; }
 .help-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.3); }
 .help-panel {
   position: fixed; top: 0; right: 0; bottom: 0; width: 380px; max-width: 95vw;
