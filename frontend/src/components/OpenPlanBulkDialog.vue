@@ -10,7 +10,7 @@
       <p class="text-sm text-slate-500">{{ $t('{n} Patchauftrag/Patchaufträge ausgewählt. Je Auftrag entsteht ein Vorgang in OpenPlan (Status und Fortschritt werden danach automatisch abgeglichen).', { n: ids.length }) }}</p>
       <div class="inline-flex rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600 text-sm">
         <button v-for="[k, l] in [['tasks', 'In bestehendes Projekt'], ['project', 'Neues Projekt aus Vorlage']]" :key="k" type="button" @click="mode = k"
-          class="px-3 py-1.5" :class="mode === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'">{{ l }}</button>
+          class="px-3 py-1.5" :class="mode === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'">{{ $t(l) }}</button>
       </div>
 
       <template v-if="mode === 'tasks'">

@@ -2,7 +2,7 @@
   <ModalDialog wide :title="`${wo.number} mit OpenPlan verbinden`" :error="error" @close="$emit('close')">
     <div class="inline-flex rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600 text-sm">
       <button v-for="[k, l] in [['create', 'Neue Aufgabe anlegen'], ['link', 'Mit vorhandener Aufgabe verknüpfen']]" :key="k" type="button" @click="mode = k"
-        class="px-3 py-1.5" :class="mode === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'">{{ l }}</button>
+        class="px-3 py-1.5" :class="mode === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'">{{ $t(l) }}</button>
     </div>
 
     <div><label :class="lbl">{{ $t('OpenPlan-Projekt') }}</label>

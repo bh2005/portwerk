@@ -36,7 +36,7 @@
       <div v-if="wo.planned_to"><span :class="metaLbl">{{ $t('Geplant bis') }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo.planned_to }}</span></div>
       <div v-if="wo.location"><span :class="metaLbl">{{ $t('Standort') }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo.location.name }}</span></div>
       <div v-if="wo.note"><span :class="metaLbl">{{ $t('Notiz') }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo.note }}</span></div>
-      <div v-for="[k, l] in ACTOR_FIELDS.filter(([k]) => wo[k])" :key="k"><span :class="metaLbl">{{ l }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo[k] }}</span></div>
+      <div v-for="[k, l] in ACTOR_FIELDS.filter(([k]) => wo[k])" :key="k"><span :class="metaLbl">{{ $t(l) }}</span><span class="text-slate-700 dark:text-slate-200">{{ wo[k] }}</span></div>
       <div v-if="wo.four_eyes_override && wo.four_eyes_override.length" class="col-span-2 md:col-span-4">
         <span :class="metaLbl">{{ $t('Vier-Augen-Prinzip übersteuert') }}</span>
         <span v-for="o in wo.four_eyes_override" :key="o" class="block text-amber-700 dark:text-amber-400">{{ o }}</span>
@@ -227,7 +227,7 @@
             <div>
               <label :class="lbl">{{ $t('Priorität') }}</label>
               <select v-model="editForm.priority" :class="inp">
-                <option v-for="[v, l] in PRIO_OPTIONS" :key="v" :value="v">{{ l }}</option>
+                <option v-for="[v, l] in PRIO_OPTIONS" :key="v" :value="v">{{ $t(l) }}</option>
               </select>
             </div>
             <div><label :class="lbl">{{ $t('Von') }}</label><input v-model="editForm.planned_from" type="date" :class="inp" /></div>

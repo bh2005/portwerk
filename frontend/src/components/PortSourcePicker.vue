@@ -4,7 +4,7 @@
       <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ label }}</span>
       <div class="inline-flex rounded overflow-hidden border border-slate-300 dark:border-slate-600 text-xs">
         <button v-for="[k, l] in [['device', 'Ein Gerät'], ['location', 'Alle Geräte einer Location']]" :key="k" type="button" @click="setMode(k)"
-          class="px-2 py-1" :class="mode === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'">{{ l }}</button>
+          class="px-2 py-1" :class="mode === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'">{{ $t(l) }}</button>
       </div>
     </div>
 

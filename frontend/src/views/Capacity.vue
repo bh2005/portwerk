@@ -1,34 +1,33 @@
 <template>
   <div class="space-y-4">
     <div class="flex items-center justify-between gap-3 flex-wrap">
-      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Kapazität</h1>
+      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Kapazität') }}</h1>
       <div class="flex gap-2 items-center flex-wrap text-sm">
         <select v-model="siteId" :class="inp" class="!w-48 !py-1.5" @change="load">
-          <option :value="null">alle Standorte</option>
+          <option :value="null">{{ $t('alle Standorte') }}</option>
           <option v-for="s in allSites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option>
         </select>
-        <label class="text-slate-500">Engpass unter</label>
+        <label class="text-slate-500">{{ $t('Engpass unter') }}</label>
         <select v-model.number="warn" :class="inp" class="!w-24 !py-1.5" @change="load">
           <option v-for="w in [5, 10, 15, 20, 30]" :key="w" :value="w">{{ w }} %</option>
         </select>
-        <label class="flex items-center gap-1 text-slate-600 dark:text-slate-300"><input v-model="onlyIssues" type="checkbox" /> nur Engpässe</label>
+        <label class="flex items-center gap-1 text-slate-600 dark:text-slate-300"><input v-model="onlyIssues" type="checkbox" />{{ ' ' + $t('nur Engpässe') }}</label>
       </div>
     </div>
     <p class="text-sm text-slate-500 dark:text-slate-400">
-      Ports je Kategorie: <Legend /> Bei Patchfeldern und Dosen zählt nur die Vorderseite. HE: belegt = mindestens eine Seite;
-      „frei“ = vorne und hinten frei; „Block“ = größter zusammenhängender freier Bereich (passt ein Gerät dieser Höhe hinein?).
+      {{ $t('Ports je Kategorie:') + ' ' }}<Legend />{{ ' ' + $t('Bei Patchfeldern und Dosen zählt nur die Vorderseite. HE: belegt = mindestens eine Seite; „frei“ = vorne und hinten frei; „Block“ = größter zusammenhängender freier Bereich (passt ein Gerät dieser Höhe hinein?).') }}
     </p>
     <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
 
     <!-- Engpässe -->
     <div v-if="data && data.alerts.length" :class="card" class="p-4 border-l-4 border-l-red-500">
-      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{{ data.alerts.length }} Engpass/Engpässe (weniger als {{ data.warn }} % frei)</h2>
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{{ $t('{n} Engpass/Engpässe (weniger als {p} % frei)', { n: data.alerts.length, p: data.warn }) }}</h2>
       <ul class="text-sm space-y-1">
         <li v-for="(a, i) in data.alerts.slice(0, showAll ? undefined : 8)" :key="i" class="flex gap-2 flex-wrap">
           <span class="font-medium text-red-600 tabular-nums w-14 text-right dark:text-red-400">{{ a.free_pct }} %</span>
-          <span class="text-slate-700 dark:text-slate-200">{{ a.label }}</span>
+          <span class="text-slate-700 dark:text-slate-200">{{ $t(a.label) }}</span>
           <span class="text-slate-500">{{ a.path }}</span>
-          <span class="text-slate-400">({{ a.free }} von {{ a.total }} frei<template v-if="a.kind === 'units'">, größter Block {{ a.largest_block }} HE</template>)</span>
+          <span class="text-slate-400">({{ $t('{a} von {b} frei', { a: a.free, b: a.total }) }}<template v-if="a.kind === 'units'">, {{ $t('größter Block {n} HE', { n: a.largest_block }) }}</template>)</span>
         </li>
       </ul>
       <button v-if="data.alerts.length > 8" :class="btnLink" class="mt-2" @click="showAll = !showAll">{{ showAll ? 'weniger' : `alle ${data.alerts.length} anzeigen` }}</button>
@@ -37,9 +36,9 @@
     <div v-if="data" :class="card" class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead><tr class="bg-slate-50 dark:bg-slate-700/40">
-          <th :class="th">Ort</th>
-          <th v-for="(l, c) in data.categories" :key="c" :class="th" class="min-w-[9rem]">{{ l }}</th>
-          <th :class="th" class="min-w-[9rem]">Höheneinheiten</th>
+          <th :class="th">{{ $t('Ort') }}</th>
+          <th v-for="(l, c) in data.categories" :key="c" :class="th" class="min-w-[9rem]">{{ $t(l) }}</th>
+          <th :class="th" class="min-w-[9rem]">{{ $t('Höheneinheiten') }}</th>
         </tr></thead>
         <tbody>
           <tr v-for="r in rows" :key="r.key" class="border-t border-slate-100 dark:border-slate-700" :class="r.level === 0 ? 'bg-slate-50/60 dark:bg-slate-800/60' : ''">
@@ -47,7 +46,7 @@
               <span :style="{ paddingLeft: `${r.level * 1.1}rem` }" class="inline-flex items-center gap-1">
                 <button v-if="r.hasKids" class="w-4 text-slate-400" @click="toggle(r.key)">{{ open.has(r.key) ? '▾' : '▸' }}</button><span v-else class="w-4"></span>
                 <span :class="r.level === 0 ? 'font-semibold' : ''" class="text-slate-800 dark:text-slate-100">{{ r.name }}</span>
-                <span class="text-[11px] text-slate-400">{{ r.kindLabel }}</span>
+                <span class="text-[11px] text-slate-400">{{ $t(r.kindLabel) }}</span>
               </span>
             </td>
             <td v-for="(l, c) in data.categories" :key="c" :class="td">
@@ -56,12 +55,12 @@
             <td :class="td">
               <div v-if="r.units" class="text-xs" :class="r.warn.includes('units') ? 'text-red-600 dark:text-red-400 font-medium' : 'text-slate-600 dark:text-slate-300'">
                 <UnitBar :u="r.units" :warn="r.warn.includes('units')" />
-                {{ r.units.free }} von {{ r.units.total }} frei · Block {{ r.units.largest_block }}
-                <span v-if="r.units.half_free" class="text-slate-400"> · {{ r.units.half_free }} halb</span>
-                <span v-if="r.units.planned" class="text-sky-600"> · {{ r.units.planned }} verplant</span>
-                <span v-if="r.units.freed" class="text-green-600 dark:text-green-400"> · {{ r.units.freed }} wird frei</span>
+                {{ $t('{a} von {b} frei', { a: r.units.free, b: r.units.total }) }} · {{ $t('Block') }} {{ r.units.largest_block }}
+                <span v-if="r.units.half_free" class="text-slate-400"> · {{ $t('{n} halb', { n: r.units.half_free }) }}</span>
+                <span v-if="r.units.planned" class="text-sky-600"> · {{ $t('{n} verplant', { n: r.units.planned }) }}</span>
+                <span v-if="r.units.freed" class="text-green-600 dark:text-green-400"> · {{ $t('{n} wird frei', { n: r.units.freed }) }}</span>
               </div>
-              <div v-else-if="r.siteUnits && r.siteUnits.racks" class="text-xs text-slate-500">{{ r.siteUnits.free }} von {{ r.siteUnits.total }} HE frei ({{ r.siteUnits.racks }} Racks)</div>
+              <div v-else-if="r.siteUnits && r.siteUnits.racks" class="text-xs text-slate-500">{{ $t('{a} von {b} HE frei ({n} Racks)', { a: r.siteUnits.free, b: r.siteUnits.total, n: r.siteUnits.racks }) }}</div>
             </td>
           </tr>
         </tbody>
@@ -72,12 +71,13 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { computed, h, onMounted, ref } from 'vue'
 import { api, errText, defaultSite } from '../api.js'
 import { inp, card, th, td, btnLink, kindLabel } from '../ui.js'
 
 const COLORS = { used: '#64748b', planned: '#0ea5e9', reserved: '#f59e0b', free: '#22c55e' }
-const NAMES = { used: 'belegt', planned: 'verplant', reserved: 'reserviert', free: 'frei' }
+const NAMES = { used: t('belegt'), planned: t('verplant'), reserved: t('reserviert'), free: t('frei') }
 const pct = s => s.total ? 100 * s.free / s.total : 100
 
 const Legend = () => h('span', { class: 'inline-flex gap-3 mr-1' }, Object.keys(COLORS).map(k =>
@@ -90,7 +90,7 @@ const Bar = (p) => {
     h('div', { class: 'flex h-2 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 ' + (p.warn ? 'ring-2 ring-red-500' : '') },
       Object.keys(COLORS).map(k => s[k] ? h('div', { style: { width: `${100 * s[k] / s.total}%`, background: COLORS[k] } }) : null)),
     h('div', { class: 'mt-0.5 ' + (p.warn ? 'text-red-600 dark:text-red-400 font-medium' : 'text-slate-600 dark:text-slate-300') },
-      `${s.free} / ${s.total} frei (${Math.round(pct(s))} %)`),
+      t('{a} / {b} frei ({p} %)', { a: s.free, b: s.total, p: Math.round(pct(s)) })),
   ])
 }
 Bar.props = ['s', 'warn']

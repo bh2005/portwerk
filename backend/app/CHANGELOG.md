@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.18.0 – 2026-11-25
+- Englisch (Etappe 4, Analyse): Soll/Ist-Abgleich (Verkabelung und VLANs, „In Bestand übernehmen“, Checkmk-Anlage und -Aktivierung), Kapazität, Zeitreise, Aufräumen, VLANs & Portprofile, WAN und Katalog sind übersetzt, dazu rund 40 Server-Meldungen (Checkmk, Katalog, Zeitreise) und die Kapazitätskategorien. Auswahl- und Reiterbeschriftungen aus Listen erscheinen jetzt überall in der eingestellten Sprache.
+
 ## 0.17.0 – 2026-11-25
 - Englisch (Etappe 3, Patchaufträge): Auftragsliste und -detail (Freigabe-Ablauf, Zuweisung, LLDP-Prüfung, OpenPlan), mobile Techniker-Ansicht mit Scanner, Patchliste, Kabeletiketten, Kabel-Scanseite, Reservierungen, Kabel-, Massenverkabelungs-, Arbeitsplatz- und Autorouting-Assistent sowie Versand- und OpenPlan-Dialoge sind übersetzt, dazu rund 120 Server-Meldungen und die LLDP-Prüftexte. Rückfragen bei belegten, reservierten oder verplanten Ports erscheinen auf Englisch, auch wenn sie mehrere Ports nennen. Vom Server gelieferte Beschriftungen (Auftragsstatus, Aktionen, Entfernungen) werden übersetzt. Zusätzlich übersetzt: Texte in Ausdrücken der Vorlagen (z. B. „Prüfe …“/„Jetzt prüfen“) in allen Ansichten.
 

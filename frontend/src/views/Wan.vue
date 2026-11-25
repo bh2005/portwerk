@@ -1,26 +1,26 @@
 <template>
   <div class="max-w-7xl space-y-4">
     <div class="flex items-center justify-between flex-wrap gap-2">
-      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">WAN-Verbindungen</h1>
+      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('WAN-Verbindungen') }}</h1>
       <div class="flex gap-2">
-        <a :class="btnGhost" :href="csvUrl" @click.prevent="downloadCsv">CSV-Export</a>
-        <button v-if="canWrite" :class="btnPrimary" @click="openForm()">+ WAN-Verbindung</button>
+        <a :class="btnGhost" :href="csvUrl" @click.prevent="downloadCsv">{{ $t('CSV-Export') }}</a>
+        <button v-if="canWrite" :class="btnPrimary" @click="openForm()">{{ $t('+ WAN-Verbindung') }}</button>
       </div>
     </div>
     <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <p v-if="note" class="text-sm text-green-600 dark:text-green-400">{{ note }}</p>
 
     <div class="flex flex-wrap gap-3 items-center">
-      <input v-model="q" :class="inp" class="max-w-xs" placeholder="Suchen (Name, Provider, Leitungs-ID …)" @input="loadSoon" />
-      <select v-model="fStatus" :class="inp" class="max-w-[11rem]" @change="load"><option value="">alle Status</option><option v-for="s in meta.statuses" :key="s.value" :value="s.value">{{ s.label }}</option></select>
-      <select v-model="fSite" :class="inp" class="max-w-[14rem]" @change="load"><option value="">alle Standorte</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
-      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="expiring" @change="load" /> Vertrag läuft in 90 Tagen aus</label>
+      <input v-model="q" :class="inp" class="max-w-xs" :placeholder="$t('Suchen (Name, Provider, Leitungs-ID …)')" @input="loadSoon" />
+      <select v-model="fStatus" :class="inp" class="max-w-[11rem]" @change="load"><option value="">{{ $t('alle Status') }}</option><option v-for="s in meta.statuses" :key="s.value" :value="s.value">{{ s.label }}</option></select>
+      <select v-model="fSite" :class="inp" class="max-w-[14rem]" @change="load"><option value="">{{ $t('alle Standorte') }}</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
+      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="expiring" @change="load" />{{ ' ' + $t('Vertrag läuft in 90 Tagen aus') }}</label>
     </div>
 
     <div :class="card" class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead><tr><th :class="th">Name</th><th :class="th">Status</th><th :class="th">Strecke</th><th :class="th">Technik</th><th :class="th">Provider / Leitung</th>
-          <th :class="th">Bandbreite</th><th :class="th">Vertragsende</th><th :class="th"></th></tr></thead>
+        <thead><tr><th :class="th">{{ $t('Name') }}</th><th :class="th">{{ $t('Status') }}</th><th :class="th">{{ $t('Strecke') }}</th><th :class="th">{{ $t('Technik') }}</th><th :class="th">{{ $t('Provider / Leitung') }}</th>
+          <th :class="th">{{ $t('Bandbreite') }}</th><th :class="th">{{ $t('Vertragsende') }}</th><th :class="th"></th></tr></thead>
         <tbody>
           <tr v-for="l in links" :key="l.id" class="border-t border-slate-100 dark:border-slate-700" :class="sel?.id === l.id ? 'bg-ks-50 dark:bg-ks-900/20' : ''">
             <td :class="td" class="font-medium text-slate-800 dark:text-slate-100">{{ l.name }}</td>
@@ -29,10 +29,10 @@
             <td :class="td" class="text-xs">{{ $t(l.technology_label) }}</td>
             <td :class="td" class="text-xs">{{ l.provider || '–' }}<span v-if="l.circuit_id" class="block font-mono text-slate-400">{{ l.circuit_id }}</span></td>
             <td :class="td" class="text-xs">{{ bw(l) }}</td>
-            <td :class="td" class="text-xs"><template v-if="l.contract_end">{{ l.contract_end }}<span v-if="l.status !== 'terminated' && l.days_left != null && l.days_left <= 90" class="block" :class="l.days_left < 0 ? 'text-red-600' : 'text-amber-600'">{{ l.days_left < 0 ? 'abgelaufen' : `in ${l.days_left} Tagen` }}</span></template><span v-else class="text-slate-400">–</span></td>
-            <td :class="td" class="text-right whitespace-nowrap"><button :class="btnLink" @click="select(l)">Details</button></td>
+            <td :class="td" class="text-xs"><template v-if="l.contract_end">{{ l.contract_end }}<span v-if="l.status !== 'terminated' && l.days_left != null && l.days_left <= 90" class="block" :class="l.days_left < 0 ? 'text-red-600' : 'text-amber-600'">{{ l.days_left < 0 ? $t('abgelaufen') : $t('in {n} Tagen', { n: l.days_left }) }}</span></template><span v-else class="text-slate-400">–</span></td>
+            <td :class="td" class="text-right whitespace-nowrap"><button :class="btnLink" @click="select(l)">{{ $t('Details') }}</button></td>
           </tr>
-          <tr v-if="!links.length"><td colspan="8" class="px-3 py-6 text-center text-slate-400">Keine WAN-Verbindungen gefunden.</td></tr>
+          <tr v-if="!links.length"><td colspan="8" class="px-3 py-6 text-center text-slate-400">{{ $t('Keine WAN-Verbindungen gefunden.') }}</td></tr>
         </tbody>
       </table>
     </div>
@@ -47,22 +47,22 @@
       </template>
       <template v-if="sel">
         <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-          <div v-for="[k, v] in details" :key="k" :class="WIDE.includes(k) ? 'sm:col-span-2' : ''"><dt :class="lbl">{{ k }}</dt><dd class="text-slate-700 dark:text-slate-200 break-words whitespace-pre-line">{{ v || '–' }}</dd></div>
+          <div v-for="[k, v] in details" :key="k" :class="WIDE.includes(k) ? 'sm:col-span-2' : ''"><dt :class="lbl">{{ $t(k) }}</dt><dd class="text-slate-700 dark:text-slate-200 break-words whitespace-pre-line">{{ v || '–' }}</dd></div>
         </dl>
         <div v-if="sel.orders?.length">
-          <h3 :class="lbl">Aufträge</h3>
+          <h3 :class="lbl">{{ $t('Aufträge') }}</h3>
           <ul class="text-sm space-y-1"><li v-for="o in sel.orders" :key="o.id + o.action">
             <router-link :to="`/workorders/${o.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ o.number }}</router-link> {{ o.title }} <span class="text-xs text-slate-400">· {{ ACTIONS[o.action] || o.action }} · {{ o.status }}</span></li></ul>
         </div>
       </template>
       <template #footer v-if="sel && canPlan(sel)">
         <div class="flex gap-3 items-center flex-wrap">
-          <button v-if="sel.status !== 'active' && sel.status !== 'terminated'" :class="btnPrimary" :disabled="busy" @click="orderFor(sel, 'wan_activate')">In Betrieb nehmen (Auftrag)</button>
-          <button v-if="sel.status !== 'terminated'" :class="btnGhost" :disabled="busy" @click="openForm(sel, true)">Ändern per Auftrag …</button>
-          <button v-if="sel.status !== 'terminated'" :class="btnDanger" :disabled="busy" @click="orderFor(sel, 'wan_terminate')">Kündigen (Auftrag)</button>
+          <button v-if="sel.status !== 'active' && sel.status !== 'terminated'" :class="btnPrimary" :disabled="busy" @click="orderFor(sel, 'wan_activate')">{{ $t('In Betrieb nehmen (Auftrag)') }}</button>
+          <button v-if="sel.status !== 'terminated'" :class="btnGhost" :disabled="busy" @click="openForm(sel, true)">{{ $t('Ändern per Auftrag …') }}</button>
+          <button v-if="sel.status !== 'terminated'" :class="btnDanger" :disabled="busy" @click="orderFor(sel, 'wan_terminate')">{{ $t('Kündigen (Auftrag)') }}</button>
           <template v-if="canWrite">
-            <button :class="btnLink" @click="openForm(sel)">Direkt bearbeiten</button>
-            <button v-if="['planned', 'terminated'].includes(sel.status)" :class="btnDanger" @click="remove(sel)">Löschen</button>
+            <button :class="btnLink" @click="openForm(sel)">{{ $t('Direkt bearbeiten') }}</button>
+            <button v-if="['planned', 'terminated'].includes(sel.status)" :class="btnDanger" @click="remove(sel)">{{ $t('Löschen') }}</button>
           </template>
         </div>
       </template>
@@ -70,30 +70,30 @@
 
     <!-- Formular -->
     <ModalDialog v-if="form" wide :title="formTitle" :error="formError" @close="form = null">
-      <p v-if="asOrder" class="text-xs text-slate-400">Es wird ein Patchauftrag mit den geänderten Feldern angelegt. Die Verbindung selbst ändert sich erst, wenn der Auftrag bestätigt wird.</p>
+      <p v-if="asOrder" class="text-xs text-slate-400">{{ $t('Es wird ein Patchauftrag mit den geänderten Feldern angelegt. Die Verbindung selbst ändert sich erst, wenn der Auftrag bestätigt wird.') }}</p>
       <div class="grid sm:grid-cols-2 gap-3">
-        <div><label :class="lbl">Name</label><input v-model="form.name" :class="inp" placeholder="z. B. MPLS Werk A ↔ Werk B" /></div>
-        <div v-if="!asOrder"><label :class="lbl">Status</label><select v-model="form.status" :class="inp"><option v-for="s in meta.statuses" :key="s.value" :value="s.value">{{ s.label }}</option></select></div>
-        <div><label :class="lbl">Technik</label><select v-model="form.technology" :class="inp"><option v-for="t in meta.technologies" :key="t.value" :value="t.value">{{ t.label }}</option></select></div>
-        <div><label :class="lbl">Standort A</label><select v-model="form.site_a_id" :class="inp" :disabled="asOrder"><option :value="null" disabled>wählen …</option><option v-for="s in writeSites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select></div>
-        <div><label :class="lbl">Standort B (Gegenstelle)</label><select v-model="form.site_b_id" :class="inp"><option :value="null">(kein eigener Standort)</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select></div>
-        <div v-if="!form.site_b_id"><label :class="lbl">Gegenstelle (Freitext)</label><input v-model="form.remote_label" :class="inp" placeholder="z. B. Internet, Provider-Wolke, Cloud" /></div>
-        <div><label :class="lbl">Port A (optional)</label><select v-model="form.port_a_id" :class="inp"><option :value="null">–</option><option v-for="p in portsA" :key="p.id" :value="p.id">{{ p.label }}</option></select></div>
-        <div><label :class="lbl">Port B (optional)</label><select v-model="form.port_b_id" :class="inp" :disabled="!form.site_b_id"><option :value="null">–</option><option v-for="p in portsB" :key="p.id" :value="p.id">{{ p.label }}</option></select></div>
-        <div><label :class="lbl">Provider</label><input v-model="form.provider" :class="inp" /></div>
-        <div><label :class="lbl">Leitungs-ID / Circuit-ID</label><input v-model="form.circuit_id" :class="inp" /></div>
-        <div><label :class="lbl">Bandbreite Down (Mbit/s)</label><input v-model.number="form.bandwidth_down" type="number" min="0" step="any" :class="inp" /></div>
-        <div><label :class="lbl">Bandbreite Up (Mbit/s)</label><input v-model.number="form.bandwidth_up" type="number" min="0" step="any" :class="inp" /></div>
-        <div><label :class="lbl">Vertragsnummer</label><input v-model="form.contract_number" :class="inp" /></div>
-        <div><label :class="lbl">Kosten pro Monat</label><input v-model.number="form.monthly_cost" type="number" min="0" step="any" :class="inp" /></div>
-        <div><label :class="lbl">Vertragsbeginn</label><input v-model="form.contract_start" type="date" :class="inp" /></div>
-        <div><label :class="lbl">Vertragsende</label><input v-model="form.contract_end" type="date" :class="inp" /></div>
-        <div><label :class="lbl">Kündigungsfrist (Tage)</label><input v-model.number="form.notice_days" type="number" min="0" :class="inp" /></div>
-        <div><label :class="lbl">Ansprechpartner / Störungsnummer</label><input v-model="form.contact" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Name') }}</label><input v-model="form.name" :class="inp" :placeholder="$t('z. B. MPLS Werk A ↔ Werk B')" /></div>
+        <div v-if="!asOrder"><label :class="lbl">{{ $t('Status') }}</label><select v-model="form.status" :class="inp"><option v-for="s in meta.statuses" :key="s.value" :value="s.value">{{ s.label }}</option></select></div>
+        <div><label :class="lbl">{{ $t('Technik') }}</label><select v-model="form.technology" :class="inp"><option v-for="t in meta.technologies" :key="t.value" :value="t.value">{{ t.label }}</option></select></div>
+        <div><label :class="lbl">{{ $t('Standort A') }}</label><select v-model="form.site_a_id" :class="inp" :disabled="asOrder"><option :value="null" disabled>{{ $t('wählen …') }}</option><option v-for="s in writeSites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select></div>
+        <div><label :class="lbl">{{ $t('Standort B (Gegenstelle)') }}</label><select v-model="form.site_b_id" :class="inp"><option :value="null">{{ $t('(kein eigener Standort)') }}</option><option v-for="s in sites" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select></div>
+        <div v-if="!form.site_b_id"><label :class="lbl">{{ $t('Gegenstelle (Freitext)') }}</label><input v-model="form.remote_label" :class="inp" :placeholder="$t('z. B. Internet, Provider-Wolke, Cloud')" /></div>
+        <div><label :class="lbl">{{ $t('Port A (optional)') }}</label><select v-model="form.port_a_id" :class="inp"><option :value="null">–</option><option v-for="p in portsA" :key="p.id" :value="p.id">{{ p.label }}</option></select></div>
+        <div><label :class="lbl">{{ $t('Port B (optional)') }}</label><select v-model="form.port_b_id" :class="inp" :disabled="!form.site_b_id"><option :value="null">–</option><option v-for="p in portsB" :key="p.id" :value="p.id">{{ p.label }}</option></select></div>
+        <div><label :class="lbl">{{ $t('Provider') }}</label><input v-model="form.provider" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Leitungs-ID / Circuit-ID') }}</label><input v-model="form.circuit_id" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Bandbreite Down (Mbit/s)') }}</label><input v-model.number="form.bandwidth_down" type="number" min="0" step="any" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Bandbreite Up (Mbit/s)') }}</label><input v-model.number="form.bandwidth_up" type="number" min="0" step="any" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Vertragsnummer') }}</label><input v-model="form.contract_number" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Kosten pro Monat') }}</label><input v-model.number="form.monthly_cost" type="number" min="0" step="any" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Vertragsbeginn') }}</label><input v-model="form.contract_start" type="date" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Vertragsende') }}</label><input v-model="form.contract_end" type="date" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Kündigungsfrist (Tage)') }}</label><input v-model.number="form.notice_days" type="number" min="0" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Ansprechpartner / Störungsnummer') }}</label><input v-model="form.contact" :class="inp" /></div>
       </div>
-      <div><label :class="lbl">Notiz</label><input v-model="form.note" :class="inp" /></div>
+      <div><label :class="lbl">{{ $t('Notiz') }}</label><input v-model="form.note" :class="inp" /></div>
       <template #footer>
-        <button :class="btnGhost" @click="form = null">Abbrechen</button>
+        <button :class="btnGhost" @click="form = null">{{ $t('Abbrechen') }}</button>
         <button :class="btnPrimary" :disabled="busy || !form.name || !form.site_a_id" @click="submit">{{ asOrder ? $t('Änderungsauftrag anlegen') : $t('Speichern') }}</button>
       </template>
     </ModalDialog>
@@ -101,6 +101,7 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
@@ -117,13 +118,13 @@ const form = ref(null), formError = ref(''), asOrder = ref(false), editId = ref(
 const portsA = ref([]), portsB = ref([])
 const WIDE = ['Kontakt', 'Notiz']
 const csvUrl = '/api/wan/export.csv'
-const ACTIONS = { wan_activate: 'in Betrieb nehmen', wan_change: 'ändern', wan_terminate: 'kündigen' }
+const ACTIONS = { wan_activate: t('in Betrieb nehmen'), wan_change: t('ändern'), wan_terminate: t('kündigen') }
 const FIELDS = ['name', 'technology', 'provider', 'circuit_id', 'bandwidth_down', 'bandwidth_up', 'contract_number', 'contract_start', 'contract_end',
   'notice_days', 'monthly_cost', 'contact', 'note', 'remote_label', 'site_b_id', 'port_a_id', 'port_b_id']
 
 const writeSites = computed(() => isGlobal() ? sites.value : sites.value.filter(s => siteAdminIds().includes(s.id)))
 const canPlan = l => isGlobal() || scopesOf().some(x => x.site_id === l.site_a_id && ['planer', 'admin'].includes(x.role))
-const formTitle = computed(() => asOrder.value ? `${original.value?.name}: Änderung per Auftrag` : editId.value ? 'WAN-Verbindung bearbeiten' : 'Neue WAN-Verbindung')
+const formTitle = computed(() => asOrder.value ? `${original.value?.name}: ${t('Änderung per Auftrag')}` : editId.value ? t('WAN-Verbindung bearbeiten') : t('Neue WAN-Verbindung'))
 const statusClass = s => ({ planned: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300', ordered: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
   active: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', suspended: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   terminated: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' }[s] || '')
@@ -132,7 +133,7 @@ const portLabel = p => p ? `${p.device_hostname}:${p.name}` : ''
 const details = computed(() => !sel.value ? [] : [
   ['Port A', portLabel(sel.value.port_a)], ['Port B', portLabel(sel.value.port_b)], ['Bandbreite (Down / Up)', bw(sel.value) === '–' ? '' : bw(sel.value)],
   ['Vertragsnummer', sel.value.contract_number], ['Vertragsbeginn', sel.value.contract_start], ['Vertragsende', sel.value.contract_end],
-  ['Kündigungsfrist', sel.value.notice_days != null ? `${sel.value.notice_days} Tage` : ''], ['Kosten / Monat', sel.value.monthly_cost != null ? sel.value.monthly_cost.toFixed(2) : ''],
+  ['Kündigungsfrist', sel.value.notice_days != null ? t('{n} Tage', { n: sel.value.notice_days }) : ''], ['Kosten / Monat', sel.value.monthly_cost != null ? sel.value.monthly_cost.toFixed(2) : ''],
   ['Kontakt', sel.value.contact], ['Notiz', sel.value.note]])
 
 watch([() => form.value?.site_a_id, () => form.value?.site_b_id], refreshPorts)
@@ -179,7 +180,7 @@ async function submit() {
     if (asOrder.value) {
       const patch = {}
       for (const k of FIELDS) { const a = form.value[k] ?? null, b = original.value[k] ?? null; if ((a === '' ? null : a) !== (b === '' ? null : b)) patch[k] = form.value[k] === '' ? null : form.value[k] }
-      if (!Object.keys(patch).length) { formError.value = 'Es wurde nichts geändert.'; return }
+      if (!Object.keys(patch).length) { formError.value = t('Es wurde nichts geändert.'); return }
       await makeOrder(original.value, 'wan_change', patch)
     } else {
       const saved = editId.value ? await api.updateWan(editId.value, form.value) : await api.createWan(form.value)
@@ -195,12 +196,12 @@ async function makeOrder(l, action, patch) {
   router.push(`/workorders/${wo.id}`)
 }
 async function orderFor(l, action) {
-  if (!confirm(`Patchauftrag „WAN ${ACTIONS[action]}: ${l.name}“ anlegen?`)) return
+  if (!confirm(t('Patchauftrag „{n}“ anlegen?', { n: `WAN ${ACTIONS[action]}: ${l.name}` }))) return
   busy.value = true; error.value = ''
   try { await makeOrder(l, action) } catch (e) { error.value = errText(e) } finally { busy.value = false }
 }
 async function remove(l) {
-  if (!confirm(`WAN-Verbindung „${l.name}“ löschen?`)) return
+  if (!confirm(t('WAN-Verbindung „{n}“ löschen?', { n: l.name }))) return
   try { await api.deleteWan(l.id); sel.value = null; await load() } catch (e) { error.value = errText(e) }
 }
 
