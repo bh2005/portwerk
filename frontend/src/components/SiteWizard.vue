@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog wide :title="siteId ? `Struktur ergänzen – ${siteLabel}` : 'Assistent: Neuer Standort'" :error="error" @close="$emit('close')">
+  <ModalDialog wide :title="siteId ? `Struktur ergänzen – ${siteLabel}` : $t('Assistent: Neuer Standort')" :error="error" @close="$emit('close')">
     <!-- Fortschritt -->
     <ol class="flex items-center gap-2 text-xs mb-1">
       <li v-for="(l, i) in steps" :key="l" class="flex items-center gap-2">
@@ -54,7 +54,7 @@
       <button :class="btnGhost" @click="$emit('close')">{{ $t('Abbrechen') }}</button>
       <button v-if="step > 0" :class="btnGhost" :disabled="busy" @click="back">{{ $t('Zurück') }}</button>
       <button v-if="stepKey !== 'check'" :class="btnPrimary" :disabled="!canNext" @click="next">{{ $t('Weiter') }}</button>
-      <button v-else :class="btnPrimary" :disabled="busy || !preview" @click="create">{{ busy ? '…' : 'Anlegen' }}</button>
+      <button v-else :class="btnPrimary" :disabled="busy || !preview" @click="create">{{ busy ? '…' : $t('Anlegen') }}</button>
     </template>
   </ModalDialog>
 </template>

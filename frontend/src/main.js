@@ -27,7 +27,7 @@ import MobileHome from './views/mobile/MobileHome.vue'
 import MobileOrder from './views/mobile/MobileOrder.vue'
 import { isLoggedIn, isAdmin, canAdministerUsers, startPage } from './api.js'
 import { helpContext } from './content/helpContext.js'
-import { t } from './i18n.js'
+import { t, tApi } from './i18n.js'
 import './style.css'
 
 const router = createRouter({
@@ -72,4 +72,5 @@ router.afterEach(() => { helpContext.value = '' })
 
 const app = createApp(App)
 app.config.globalProperties.$t = t                // Übersetzung in allen Vorlagen: {{ $t('Speichern') }}
+app.config.globalProperties.$tApi = tApi          // Texte vom Server (Meldungen) in der eingestellten Sprache
 app.use(router).mount('#app')

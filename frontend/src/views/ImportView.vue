@@ -83,7 +83,7 @@
           <tr v-if="!runs.length"><td colspan="5" class="px-3 py-6 text-center text-slate-400">Noch keine Importe.</td></tr>
           <tr v-for="r in runs" :key="r.id" class="border-t border-slate-100 dark:border-slate-700">
             <td :class="td">{{ fmtTime(r.started_at) }}</td><td :class="td">{{ sourceLabel(r.source) }}</td><td :class="td">{{ r.actor || '–' }}</td>
-            <td :class="td">{{ r.dry_run ? 'Trockenlauf' : (r.stats.applied ? 'angewendet' : 'nicht angewendet') }}</td>
+            <td :class="td">{{ r.dry_run ? $t('Trockenlauf') : (r.stats.applied ? 'angewendet' : $t('nicht angewendet')) }}</td>
             <td :class="td" class="text-slate-500">{{ r.stats.created }} neu · {{ r.stats.updated }} geändert · {{ r.stats.unchanged }} gleich<span v-if="r.stats.errors" class="text-red-500 dark:text-red-400"> · {{ r.stats.errors }} Fehler</span></td>
           </tr>
         </tbody>
@@ -95,9 +95,9 @@
     <!-- Ergebnis -->
     <div v-if="result && tab !== 'runs'" :class="card" class="p-4 space-y-3">
       <div class="flex items-center gap-3 flex-wrap">
-        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ result.dry_run ? 'Ergebnis des Trockenlaufs' : 'Ergebnis' }}</h2>
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ result.dry_run ? $t('Ergebnis des Trockenlaufs') : $t('Ergebnis') }}</h2>
         <span class="text-[11px] px-2 py-0.5 rounded-full" :class="result.applied ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'">
-          {{ result.applied ? 'gespeichert' : 'nichts gespeichert' }}</span>
+          {{ result.applied ? 'gespeichert' : $t('nichts gespeichert') }}</span>
         <span class="text-sm text-slate-500">{{ result.stats.created }} neu · {{ result.stats.updated }} geändert · {{ result.stats.unchanged }} gleich · {{ result.stats.errors }} Fehler</span>
       </div>
       <p v-if="!result.dry_run && !result.applied && result.stats.errors" class="text-sm text-amber-600 dark:text-amber-400">Wegen der Fehler wurde nichts gespeichert (atomar).</p>

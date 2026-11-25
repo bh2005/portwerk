@@ -19,7 +19,7 @@
           <router-link :to="`/workorders/${w.id}`" class="font-mono font-medium text-ks-700 dark:text-ks-400 hover:underline">{{ w.number }}</router-link>
           <span class="flex-1 truncate text-slate-700 dark:text-slate-200">{{ w.title }}</span>
           <span v-if="w.assigned_to && w.assigned_to.username !== myName" class="text-xs text-sky-700 dark:text-sky-300 whitespace-nowrap">{{ $t('in Vertretung für {name}', { name: w.assigned_to.full_name || w.assigned_to.username }) }}</span>
-          <span class="text-xs text-slate-400 whitespace-nowrap">{{ w.status_label }} · {{ w.progress.done }}/{{ w.progress.total }}</span>
+          <span class="text-xs text-slate-400 whitespace-nowrap">{{ $t(w.status_label) }} · {{ w.progress.done }}/{{ w.progress.total }}</span>
         </li>
       </ul>
     </div>

@@ -11,7 +11,7 @@
     <section :class="box">
       <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
         <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Sicherungen auf dem Server</h3>
-        <button :class="btnPrimary" :disabled="!!busy" @click="create">{{ busy === 'create' ? 'Sichere …' : 'Jetzt sichern' }}</button>
+        <button :class="btnPrimary" :disabled="!!busy" @click="create">{{ busy === 'create' ? $t('Sichere …') : $t('Jetzt sichern') }}</button>
       </div>
       <p v-if="!items.length" class="text-sm text-slate-400">Noch keine Sicherung vorhanden.</p>
       <table v-else class="w-full text-sm">
@@ -56,7 +56,7 @@
       </p>
       <div class="flex items-center gap-3 flex-wrap">
         <input ref="fileInput" type="file" accept=".zip,.db,.sqlite" class="text-sm" @change="file = $event.target.files[0] || null" />
-        <button :class="btnGhost" :disabled="!file || !!busy" @click="restoreUpload">{{ busy === 'upload' ? 'Stelle wieder her …' : 'Wiederherstellen' }}</button>
+        <button :class="btnGhost" :disabled="!file || !!busy" @click="restoreUpload">{{ busy === 'upload' ? $t('Stelle wieder her …') : $t('Wiederherstellen') }}</button>
       </div>
     </section>
   </div>

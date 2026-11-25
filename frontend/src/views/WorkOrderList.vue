@@ -1,42 +1,42 @@
 <template>
   <div class="max-w-5xl space-y-4">
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Patchaufträge</h1>
+      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Patchaufträge') }}</h1>
       <div class="flex gap-2 items-center">
-        <button :class="btnGhost" :disabled="!picked.size" :title="picked.size ? '' : 'Aufträge in der Liste ankreuzen'" @click="openPatchlist">Patchliste aus Auswahl<template v-if="picked.size"> ({{ picked.size }})</template></button>
-        <button v-if="ops.enabled && canCreate" :class="btnGhost" :disabled="!picked.size" :title="picked.size ? '' : 'Aufträge in der Liste ankreuzen'" @click="bulkOpen = true">In OpenPlan …</button>
-        <button v-if="canCreate" :class="btnGhost" title="Dose bis zum Switch patchen und VLAN setzen" @click="showWorkplace = true">+ Arbeitsplatz</button>
-        <button v-if="canCreate" :class="btnPrimary" @click="openNew">+ Neuer Auftrag</button>
+        <button :class="btnGhost" :disabled="!picked.size" :title="picked.size ? '' : 'Aufträge in der Liste ankreuzen'" @click="openPatchlist">{{ $t('Patchliste aus Auswahl') }}<template v-if="picked.size"> ({{ picked.size }})</template></button>
+        <button v-if="ops.enabled && canCreate" :class="btnGhost" :disabled="!picked.size" :title="picked.size ? '' : 'Aufträge in der Liste ankreuzen'" @click="bulkOpen = true">{{ $t('In OpenPlan …') }}</button>
+        <button v-if="canCreate" :class="btnGhost" :title="$t('Dose bis zum Switch patchen und VLAN setzen')" @click="showWorkplace = true">{{ $t('+ Arbeitsplatz') }}</button>
+        <button v-if="canCreate" :class="btnPrimary" @click="openNew">{{ $t('+ Neuer Auftrag') }}</button>
       </div>
     </div>
 
     <!-- Filter -->
     <div class="flex gap-2 flex-wrap">
       <select v-model="filterStatus" :class="inp" class="w-48">
-        <option value="">Alle Status</option>
+        <option value="">{{ $t('Alle Status') }}</option>
         <option v-for="[v, l] in STATUS_OPTIONS" :key="v" :value="v">{{ l }}</option>
       </select>
-      <select v-model="filterAssigned" :class="inp" class="w-44" @change="load"><option value="">Alle Aufträge</option><option value="me">Mir zugewiesen</option></select>
-      <input v-model="filterQ" :class="inp" class="flex-1 min-w-48" placeholder="Suche Nummer / Titel / Ersteller…" @keyup.enter="load" />
-      <button :class="btnGhost" @click="load">Suchen</button>
+      <select v-model="filterAssigned" :class="inp" class="w-44" @change="load"><option value="">{{ $t('Alle Aufträge') }}</option><option value="me">{{ $t('Mir zugewiesen') }}</option></select>
+      <input v-model="filterQ" :class="inp" class="flex-1 min-w-48" :placeholder="$t('Suche Nummer / Titel / Ersteller…')" @keyup.enter="load" />
+      <button :class="btnGhost" @click="load">{{ $t('Suchen') }}</button>
     </div>
 
     <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
 
     <div :class="card" class="overflow-hidden">
-      <p v-if="!rows.length" class="p-6 text-sm text-slate-400">Keine Aufträge gefunden.</p>
+      <p v-if="!rows.length" class="p-6 text-sm text-slate-400">{{ $t('Keine Aufträge gefunden.') }}</p>
       <table v-else class="w-full text-sm">
         <thead class="border-b border-slate-100 dark:border-slate-700">
           <tr>
-            <th :class="th" class="w-8"><input type="checkbox" :checked="allPicked" title="alle ankreuzen" @change="pickAll" /></th>
-            <th :class="th">Nummer</th>
-            <th :class="th">Titel</th>
-            <th :class="th">Status</th>
-            <th :class="th">Priorität</th>
-            <th :class="th">Zugewiesen</th>
-            <th :class="th">Fortschritt</th>
-            <th :class="th">Erstellt</th>
-            <th :class="th">Ersteller</th>
+            <th :class="th" class="w-8"><input type="checkbox" :checked="allPicked" :title="$t('alle ankreuzen')" @change="pickAll" /></th>
+            <th :class="th">{{ $t('Nummer') }}</th>
+            <th :class="th">{{ $t('Titel') }}</th>
+            <th :class="th">{{ $t('Status') }}</th>
+            <th :class="th">{{ $t('Priorität') }}</th>
+            <th :class="th">{{ $t('Zugewiesen') }}</th>
+            <th :class="th">{{ $t('Fortschritt') }}</th>
+            <th :class="th">{{ $t('Erstellt') }}</th>
+            <th :class="th">{{ $t('Ersteller') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -46,9 +46,9 @@
             <td :class="td" @click.stop><input type="checkbox" :checked="picked.has(w.id)" @change="pick(w.id)" /></td>
             <td :class="td" class="font-mono font-medium text-ks-700 dark:text-ks-400">{{ w.number }}</td>
             <td :class="td" class="font-medium text-slate-800 dark:text-slate-200 max-w-xs truncate">{{ w.title }}</td>
-            <td :class="td"><span :class="statusClass(w.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">{{ w.status_label }}</span>
-              <span v-if="w.status === 'done' && w.lldp_status === 'ok'" class="ml-1 text-xs text-green-600 font-medium dark:text-green-400" title="LLDP-Prüfung stimmt – Vorschlag: bestätigen">LLDP ✓</span>
-              <span v-else-if="['done', 'in_progress'].includes(w.status) && w.lldp_status === 'problem'" class="ml-1 text-xs text-red-600 font-medium dark:text-red-400" title="LLDP meldet eine Abweichung">LLDP ⚠</span></td>
+            <td :class="td"><span :class="statusClass(w.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">{{ $t(w.status_label) }}</span>
+              <span v-if="w.status === 'done' && w.lldp_status === 'ok'" class="ml-1 text-xs text-green-600 font-medium dark:text-green-400" :title="$t('LLDP-Prüfung stimmt – Vorschlag: bestätigen')">{{ $t('LLDP ✓') }}</span>
+              <span v-else-if="['done', 'in_progress'].includes(w.status) && w.lldp_status === 'problem'" class="ml-1 text-xs text-red-600 font-medium dark:text-red-400" :title="$t('LLDP meldet eine Abweichung')">{{ $t('LLDP ⚠') }}</span></td>
             <td :class="td"><span :class="prioClass(w.priority)" class="text-xs font-medium">{{ prioLabel(w.priority) }}</span></td>
             <td :class="td" class="text-slate-500 text-xs">{{ w.assigned_to ? (w.assigned_to.full_name || w.assigned_to.username) : '–' }}</td>
             <td :class="td" class="text-slate-500 whitespace-nowrap">{{ w.progress.done }}/{{ w.progress.total }}
@@ -66,35 +66,35 @@
     <Teleport to="body">
       <div v-if="dialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="dialog=false">
         <div :class="card" class="w-full max-w-lg p-6 space-y-4">
-          <h2 class="font-semibold text-slate-800 dark:text-slate-100">Neuer Patchauftrag</h2>
+          <h2 class="font-semibold text-slate-800 dark:text-slate-100">{{ $t('Neuer Patchauftrag') }}</h2>
           <div>
-            <label :class="lbl">Titel *</label>
-            <input v-model="form.title" :class="inp" placeholder="z. B. Neue Dosen EG Raum 112" />
+            <label :class="lbl">{{ $t('Titel *') }}</label>
+            <input v-model="form.title" :class="inp" :placeholder="$t('z. B. Neue Dosen EG Raum 112')" />
           </div>
           <div>
-            <label :class="lbl">Beschreibung</label>
+            <label :class="lbl">{{ $t('Beschreibung') }}</label>
             <textarea v-model="form.description" :class="inp" rows="3" />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label :class="lbl">Priorität</label>
+              <label :class="lbl">{{ $t('Priorität') }}</label>
               <select v-model="form.priority" :class="inp">
                 <option v-for="[v, l] in PRIO_OPTIONS" :key="v" :value="v">{{ l }}</option>
               </select>
             </div>
             <div>
-              <label :class="lbl">Zeitraum von</label>
+              <label :class="lbl">{{ $t('Zeitraum von') }}</label>
               <input v-model="form.planned_from" type="date" :class="inp" />
             </div>
           </div>
           <div>
-            <label :class="lbl">Zeitraum bis</label>
+            <label :class="lbl">{{ $t('Zeitraum bis') }}</label>
             <input v-model="form.planned_to" type="date" :class="inp" />
           </div>
           <p v-if="dialogErr" class="text-sm text-red-500 dark:text-red-400">{{ dialogErr }}</p>
           <div class="flex justify-end gap-2">
-            <button :class="btnGhost" @click="dialog=false">Abbrechen</button>
-            <button :class="btnPrimary" @click="save" :disabled="saving">{{ saving ? 'Speichere…' : 'Anlegen' }}</button>
+            <button :class="btnGhost" @click="dialog=false">{{ $t('Abbrechen') }}</button>
+            <button :class="btnPrimary" @click="save" :disabled="saving">{{ saving ? $t('Speichere…') : $t('Anlegen') }}</button>
           </div>
         </div>
       </div>
@@ -104,6 +104,7 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import WorkplaceWizard from '../components/WorkplaceWizard.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -112,11 +113,11 @@ import { api, errText, hasRole } from '../api.js'
 import { card, inp, lbl, th, td, btnPrimary, btnGhost, fmtTime } from '../ui.js'
 
 const STATUS_OPTIONS = [
-  ['draft','Entwurf'],['submitted','Eingereicht'],['approved','Freigegeben'],
-  ['rejected','Abgelehnt'],['in_progress','In Ausführung'],['done','Ausgeführt'],
-  ['confirmed','Bestätigt'],['rework','Nacharbeit'],
+  ['draft',t('Entwurf')],['submitted',t('Eingereicht')],['approved',t('Freigegeben')],
+  ['rejected',t('Abgelehnt')],['in_progress',t('In Ausführung')],['done',t('Ausgeführt')],
+  ['confirmed',t('Bestätigt')],['rework',t('Nacharbeit')],
 ]
-const PRIO_OPTIONS = [['low','Niedrig'],['normal','Normal'],['high','Hoch'],['critical','Kritisch']]
+const PRIO_OPTIONS = [['low',t('Niedrig')],['normal',t('Normal')],['high',t('Hoch')],['critical',t('Kritisch')]]
 
 const statusClass = s => ({
   draft:       'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
@@ -131,7 +132,7 @@ const statusClass = s => ({
 
 const prioClass = p => ({ low:'text-slate-400', normal:'text-slate-600 dark:text-slate-300',
   high:'text-amber-600 dark:text-amber-400', critical:'text-red-600 dark:text-red-400 font-semibold' }[p] || '')
-const prioLabel = p => ({ low:'Niedrig', normal:'Normal', high:'Hoch', critical:'Kritisch' }[p] || p)
+const prioLabel = p => ({ low:t('Niedrig'), normal:t('Normal'), high:t('Hoch'), critical:t('Kritisch') }[p] || p)
 
 const rows = ref([])
 const picked = ref(new Set())
@@ -171,7 +172,7 @@ function openNew() {
 }
 
 async function save() {
-  if (!form.value.title.trim()) { dialogErr.value = 'Titel ist erforderlich'; return }
+  if (!form.value.title.trim()) { dialogErr.value = t('Titel ist erforderlich'); return }
   saving.value = true
   try {
     const wo = await api.createWorkorder(form.value)

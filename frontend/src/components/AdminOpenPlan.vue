@@ -11,7 +11,7 @@
         <div><label :class="lbl">OpenPlan-Adresse (für die API)</label><input v-model="f.base_url" :class="inp" placeholder="https://openplan.example.test" /></div>
         <div><label :class="lbl">OpenPlan-Adresse für Links (Browser, optional)</label><input v-model="f.link_url" :class="inp" placeholder="leer = wie API-Adresse" />
           <p :class="hint">Nur nötig, wenn Portwerk OpenPlan unter einer anderen Adresse erreicht als die Benutzer – z. B. im Docker-Netz <code>http://openplan:8080</code>, im Browser <code>https://openplan.example.test</code>.</p></div>
-        <div><label :class="lbl">API-Token (Dienstkonto)</label><input v-model="f.token" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.token_set ? '●●●●●● gespeichert – leer lassen zum Beibehalten' : 'op_…'" />
+        <div><label :class="lbl">API-Token (Dienstkonto)</label><input v-model="f.token" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.token_set ? $t('●●●●●● gespeichert – leer lassen zum Beibehalten') : 'op_…'" />
           <label v-if="meta.token_set" class="flex items-center gap-2 text-xs text-slate-500 mt-1"><input type="checkbox" v-model="f.clear_token" /> gespeichertes Token entfernen</label></div>
         <div><label :class="lbl">Standard-Projekt (ID, optional)</label><input v-model="f.default_project_id" :class="inp" placeholder="z. B. 7" /></div>
         <div class="flex items-end gap-5 text-sm text-slate-600 dark:text-slate-300 pb-2">
@@ -43,7 +43,7 @@
       <div class="grid sm:grid-cols-2 gap-3">
         <div><label :class="lbl">Adresse dieser Anwendung (für Links in OpenPlan)</label><input v-model="f.own_url" :class="inp" placeholder="https://opp.example.test" />
           <p :class="hint">Leer = öffentliche URL aus den E-Mail-Einstellungen. Den Webhook in OpenPlan auf die Adresse richten, unter der <i>OpenPlan</i> Portwerk erreicht (im Docker-Netz z. B. <code>http://portwerk:8084/api/integrations/openplan/webhook</code>).</p></div>
-        <div><label :class="lbl">Webhook-Geheimnis</label><input v-model="f.webhook_secret" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.webhook_secret_set ? '●●●●●● gespeichert' : 'whsec_…'" />
+        <div><label :class="lbl">Webhook-Geheimnis</label><input v-model="f.webhook_secret" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.webhook_secret_set ? $t('●●●●●● gespeichert') : 'whsec_…'" />
           <label v-if="meta.webhook_secret_set" class="flex items-center gap-2 text-xs text-slate-500 mt-1"><input type="checkbox" v-model="f.clear_webhook_secret" /> entfernen</label></div>
       </div>
       <p :class="hint">In OpenPlan unter <i>Verwaltung → Webhooks</i> einen Webhook auf <code class="break-all">{{ meta.webhook_url || '<Adresse>/api/integrations/openplan/webhook' }}</code> anlegen (Ereignis <code>task.status</code>) und das angezeigte Geheimnis (<code>whsec_…</code>) hier eintragen.

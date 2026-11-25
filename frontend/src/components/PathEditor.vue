@@ -36,14 +36,14 @@
             <span v-if="p.reservation" class="text-amber-700 dark:text-amber-300"> · {{ $t('reserviert:') }} {{ p.reservation }}</span>
           </div>
           <!-- LLDP/CDP-Ist an den Enden -->
-          <div v-if="lldpAt(i)" class="text-xs mt-1" :class="lldpClass(lldpAt(i).status)">{{ lldpIcon(lldpAt(i).status) }} {{ lldpAt(i).text }}</div>
+          <div v-if="lldpAt(i)" class="text-xs mt-1" :class="lldpClass(lldpAt(i).status)">{{ lldpIcon(lldpAt(i).status) }} {{ $tApi(lldpAt(i).text) }}</div>
         </div>
 
         <!-- Kabel zur nächsten Station -->
         <div v-if="i < links.length" class="ml-5 pl-4 py-2 border-l-2" :class="links[i].provisional ? 'border-dashed border-amber-400' : 'border-slate-300 dark:border-slate-600'">
           <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             <span class="text-slate-400">│</span>
-            <span class="font-medium text-slate-700 dark:text-slate-200">{{ links[i].label || 'Kabel' }}</span>
+            <span class="font-medium text-slate-700 dark:text-slate-200">{{ links[i].label || $t('Kabel') }}</span>
             <span class="text-xs text-slate-500">{{ cableText(links[i]) }}</span>
             <span v-if="links[i].provisional" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" :title="$t('Aus dem Soll/Ist-Abgleich übernommen – Dosen und Patchfelder fehlen ggf. noch')">{{ $t('vorläufig') }}</span>
             <span v-if="links[i].measurement_ok === true" class="text-green-600 dark:text-green-400" :title="$t('Messung bestanden')">✓</span>
@@ -51,9 +51,9 @@
           </div>
           <p v-if="links[i].note" class="text-xs text-slate-400 mt-0.5">{{ links[i].note }}</p>
           <div v-if="canWrite" class="flex gap-3 mt-1">
-            <button :class="btnLink" @click="toggleEdit(i)">{{ edit?.i === i ? 'schließen' : 'bearbeiten' }}</button>
+            <button :class="btnLink" @click="toggleEdit(i)">{{ edit?.i === i ? $t('schließen') : 'bearbeiten' }}</button>
             <button :class="btnLink" @click="toggleMove(i)">{{ mv?.i === i ? 'abbrechen' : 'umstecken' }}</button>
-            <button :class="btnLink" @click="toggleInsert(i)">{{ ins?.i === i ? 'abbrechen' : '+ Zwischenstation' }}</button>
+            <button :class="btnLink" @click="toggleInsert(i)">{{ ins?.i === i ? 'abbrechen' : $t('+ Zwischenstation') }}</button>
             <button :class="btnDanger" :disabled="busy" @click="unplug(i)">{{ $t('lösen') }}</button>
           </div>
 

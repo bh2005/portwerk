@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.17.0 – 2026-11-25
+- Englisch (Etappe 3, Patchaufträge): Auftragsliste und -detail (Freigabe-Ablauf, Zuweisung, LLDP-Prüfung, OpenPlan), mobile Techniker-Ansicht mit Scanner, Patchliste, Kabeletiketten, Kabel-Scanseite, Reservierungen, Kabel-, Massenverkabelungs-, Arbeitsplatz- und Autorouting-Assistent sowie Versand- und OpenPlan-Dialoge sind übersetzt, dazu rund 120 Server-Meldungen und die LLDP-Prüftexte. Rückfragen bei belegten, reservierten oder verplanten Ports erscheinen auf Englisch, auch wenn sie mehrere Ports nennen. Vom Server gelieferte Beschriftungen (Auftragsstatus, Aktionen, Entfernungen) werden übersetzt. Zusätzlich übersetzt: Texte in Ausdrücken der Vorlagen (z. B. „Prüfe …“/„Jetzt prüfen“) in allen Ansichten.
+
 ## 0.16.0 – 2026-11-25
 - Englisch (Etappe 2, Bestand): Standorte mit Struktur-Assistent, Geräte, Gerätedetail (Ports, Reservierung, VLAN, Verbindungs-Historie), Racks & Schränke, Geräte-Assistent, Port-Zuordnung, Strecken-Editor, Pfadgrafik und „Geräte aus OpenPlan“ sind übersetzt, ebenso rund 100 Server-Meldungen aus diesen Bereichen. Auswahllisten für Gerätetyp, Status, Ortsart, Quelle und Rolle erscheinen jetzt überall in der eingestellten Sprache.
 

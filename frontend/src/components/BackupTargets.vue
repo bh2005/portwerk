@@ -28,7 +28,7 @@
                 <div v-else class="text-slate-400 font-mono break-all">{{ t.last_name }}</div>
               </template></td>
             <td :class="td" class="text-right whitespace-nowrap">
-              <button :class="btnLink" :disabled="!!busy" @click="test(t)">{{ busy === 'test' + t.id ? 'Teste …' : 'Testen' }}</button>
+              <button :class="btnLink" :disabled="!!busy" @click="test(t)">{{ busy === 'test' + t.id ? $t('Teste …') : $t('Testen') }}</button>
               <button :class="btnLink" class="ml-3" @click="openItems(t)">Sicherungen</button>
               <button :class="btnLink" class="ml-3" @click="openForm(t)">Bearbeiten</button>
               <button :class="btnDanger" class="ml-3" :disabled="!!busy" @click="remove(t)">Entfernen</button>
@@ -39,7 +39,7 @@
     </div>
 
     <!-- Ziel anlegen/bearbeiten -->
-    <SidePanel :open="!!form" :title="form?.id ? 'Sicherungsziel bearbeiten' : 'Sicherungsziel hinzufügen'" @close="form = null">
+    <SidePanel :open="!!form" :title="form?.id ? $t('Sicherungsziel bearbeiten') : $t('Sicherungsziel hinzufügen')" @close="form = null">
       <template v-if="form">
         <div class="grid grid-cols-2 gap-3">
           <div><label :class="lbl">Typ</label>
@@ -73,7 +73,7 @@ volumes:
             <div><label :class="lbl">Region</label><input v-model="form.region" :class="inp" placeholder="us-east-1" /></div>
             <div class="col-span-2"><label :class="lbl">Ordner im Bucket (optional)</label><input v-model="form.prefix" :class="inp" placeholder="portwerk/prod" /></div>
             <div><label :class="lbl">Zugangsschlüssel</label><input v-model="form.access_key" :class="inp" autocomplete="off" /></div>
-            <div><label :class="lbl">Secret</label><input v-model="form.secret_key" type="password" :class="inp" autocomplete="new-password" :placeholder="form.secret_key_set ? '(gesetzt – leer = unverändert)' : ''" /></div>
+            <div><label :class="lbl">Secret</label><input v-model="form.secret_key" type="password" :class="inp" autocomplete="new-password" :placeholder="form.secret_key_set ? $t('(gesetzt – leer = unverändert)') : ''" /></div>
           </div>
           <label v-if="form.endpoint" class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input v-model="form.path_style" type="checkbox" /> Pfad-Stil (<code>host/bucket</code>, bei MinIO und den meisten Eigenbauten nötig)</label>
         </template>
@@ -82,7 +82,7 @@ volumes:
           <div><label :class="lbl">WebDAV-Adresse</label><input v-model="form.url" :class="inp" placeholder="https://cloud.example.test/remote.php/dav/files/benutzer" /></div>
           <div class="grid grid-cols-2 gap-3">
             <div><label :class="lbl">Benutzer</label><input v-model="form.user" :class="inp" autocomplete="off" /></div>
-            <div><label :class="lbl">Passwort</label><input v-model="form.password" type="password" :class="inp" autocomplete="new-password" :placeholder="form.password_set ? '(gesetzt – leer = unverändert)' : ''" /></div>
+            <div><label :class="lbl">Passwort</label><input v-model="form.password" type="password" :class="inp" autocomplete="new-password" :placeholder="form.password_set ? $t('(gesetzt – leer = unverändert)') : ''" /></div>
             <div class="col-span-2"><label :class="lbl">Ordner (optional)</label><input v-model="form.prefix" :class="inp" placeholder="Sicherungen/portwerk" /></div>
           </div>
         </template>
@@ -100,7 +100,7 @@ volumes:
         <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2">
           <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input v-model="form.encrypt" type="checkbox" /> Vor der Übertragung verschlüsseln (AES-256-GCM)</label>
           <div v-if="form.encrypt"><label :class="lbl">Passphrase</label>
-            <input v-model="form.passphrase" type="password" :class="inp" autocomplete="new-password" :placeholder="form.passphrase_set ? '(gesetzt – leer = unverändert)' : ''" />
+            <input v-model="form.passphrase" type="password" :class="inp" autocomplete="new-password" :placeholder="form.passphrase_set ? $t('(gesetzt – leer = unverändert)') : ''" />
             <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">Ohne die Passphrase sind die Sicherungen auf dem Ziel nicht lesbar. Sie liegt in der Portwerk-Datenbank (die ihrerseits in der Sicherung steckt) –
               bewahren Sie sie zusätzlich getrennt auf, sonst ist eine Wiederherstellung auf einem neuen Server nicht möglich.</p></div>
           <p v-else class="text-xs text-slate-400">Die Sicherung enthält Passwort-Hashes, Zugangsdaten und das Server-Zertifikat. Ohne Verschlüsselung muss das Ziel entsprechend geschützt sein.</p>
@@ -114,7 +114,7 @@ volumes:
     </SidePanel>
 
     <!-- Sicherungen auf dem Ziel -->
-    <SidePanel :open="!!remote" :title="remote ? 'Sicherungen auf ' + remote.t.name : ''" @close="remote = null">
+    <SidePanel :open="!!remote" :title="remote ? $t('Sicherungen auf') + ' ' + remote.t.name : ''" @close="remote = null">
       <template v-if="remote">
         <p v-if="remote.error" class="text-sm text-red-500 dark:text-red-400">{{ remote.error }}</p>
         <p v-else-if="remote.loading" class="text-sm text-slate-400">Lade …</p>

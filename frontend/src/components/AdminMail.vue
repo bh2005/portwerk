@@ -12,7 +12,7 @@
         <div><label :class="lbl">Verschlüsselung</label>
           <select v-model="f.security" :class="inp"><option value="none">keine (z. B. internes Relay, Port 25)</option><option value="starttls">STARTTLS (Port 587)</option><option value="ssl">SSL/TLS (Port 465)</option></select></div>
         <div><label :class="lbl">Benutzer (optional)</label><input v-model="f.username" :class="inp" autocomplete="off" /></div>
-        <div><label :class="lbl">Passwort</label><input v-model="f.password" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.password_set ? '●●●●●● gespeichert – leer lassen zum Beibehalten' : ''" />
+        <div><label :class="lbl">Passwort</label><input v-model="f.password" type="password" autocomplete="new-password" :class="inp" :placeholder="meta.password_set ? $t('●●●●●● gespeichert – leer lassen zum Beibehalten') : ''" />
           <label v-if="meta.password_set" class="flex items-center gap-2 text-xs text-slate-500 mt-1"><input type="checkbox" v-model="f.clear_password" /> gespeichertes Passwort entfernen</label></div>
       </div>
     </fieldset>

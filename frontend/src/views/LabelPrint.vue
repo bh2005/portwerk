@@ -2,28 +2,27 @@
   <div class="space-y-4">
     <div class="print:hidden space-y-4">
       <div class="flex items-center justify-between gap-3 flex-wrap">
-        <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Kabeletiketten <span class="text-sm font-normal text-slate-400">{{ source }}</span></h1>
+        <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Kabeletiketten') + ' ' }}<span class="text-sm font-normal text-slate-400">{{ source }}</span></h1>
         <div class="flex gap-2">
-          <button :class="btnGhost" @click="$router.back()">Zurück</button>
-          <button :class="btnPrimary" :disabled="!sheets.length" @click="print">Drucken</button>
+          <button :class="btnGhost" @click="$router.back()">{{ $t('Zurück') }}</button>
+          <button :class="btnPrimary" :disabled="!sheets.length" @click="print">{{ $t('Drucken') }}</button>
         </div>
       </div>
       <p v-if="err" class="text-sm text-red-500 dark:text-red-400">{{ err }}</p>
 
       <div :class="card" class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-        <div class="md:col-span-2"><label :class="lbl">Format</label>
+        <div class="md:col-span-2"><label :class="lbl">{{ $t('Format') }}</label>
           <select v-model="fmtKey" :class="inp"><option v-for="(f, k) in FORMATS" :key="k" :value="k">{{ f.name }}</option></select></div>
-        <div v-if="fmt.sheet"><label :class="lbl">Startposition auf dem Bogen</label>
+        <div v-if="fmt.sheet"><label :class="lbl">{{ $t('Startposition auf dem Bogen') }}</label>
           <input v-model.number="skip" type="number" min="1" :max="fmt.cols * fmt.rows" :class="inp" /></div>
-        <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input v-model="perEnd" type="checkbox" /> je Kabelende ein Etikett</label>
+        <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input v-model="perEnd" type="checkbox" />{{ ' ' + $t('je Kabelende ein Etikett') }}</label>
         <p class="md:col-span-4 text-xs text-slate-400">
-          {{ labels.length }} Etiketten<span v-if="missing"> · {{ missing }} Position(en) ohne Kabelnummer – ohne QR-Code (Nummer im Auftrag vergeben)</span>.
-          Beim Drucken „Tatsächliche Größe“ bzw. Skalierung 100 % und keine Ränder wählen. Der QR-Code führt nach dem Scannen zu dieser Portwerk-Instanz ({{ base }}).
+          {{ $t('{n} Etiketten', { n: labels.length }) }}<span v-if="missing"> · {{ $t('{n} Position(en) ohne Kabelnummer – ohne QR-Code (Nummer im Auftrag vergeben)', { n: missing }) }}</span>{{ $t('. Beim Drucken „Tatsächliche Größe“ bzw. Skalierung 100 % und keine Ränder wählen. Der QR-Code führt nach dem Scannen zu dieser Portwerk-Instanz ({base}).', { base }) }}
         </p>
       </div>
     </div>
 
-    <p v-if="!loading && !labels.length" class="text-sm text-slate-400 print:hidden">Keine Kabel für Etiketten gefunden.</p>
+    <p v-if="!loading && !labels.length" class="text-sm text-slate-400 print:hidden">{{ $t('Keine Kabel für Etiketten gefunden.') }}</p>
 
     <div class="label-preview" :style="{ '--zoom': fmt.sheet ? 0.6 : 1.6 }">
       <div v-for="(page, pi) in sheets" :key="pi" class="label-page" :style="pageStyle">
@@ -44,6 +43,7 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api, errText } from '../api.js'
@@ -65,7 +65,7 @@ const fmtKey = ref(localStorage.getItem(KEY) in FORMATS ? localStorage.getItem(K
 const perEnd = ref(true), skip = ref(1)
 const fmt = computed(() => FORMATS[fmtKey.value])
 const base = location.origin
-const source = computed(() => route.query.workorder ? 'aus Patchauftrag' : route.query.device ? 'eines Geräts' : '')
+const source = computed(() => route.query.workorder ? t('aus Patchauftrag') : route.query.device ? t('eines Geräts') : '')
 watch(fmtKey, k => { localStorage.setItem(KEY, k); skip.value = 1 })
 
 const meta = l => [l.cable_type !== 'other' ? l.cable_type : '', l.length_m ? `${l.length_m} m` : '', l.color].filter(Boolean).join(' · ')

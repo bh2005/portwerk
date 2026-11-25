@@ -73,7 +73,7 @@
     </div>
 
     <!-- Dialog Modell -->
-    <ModalDialog v-if="mForm" wide :title="mForm.id ? 'Modell bearbeiten' : 'Neues Modell'" :error="formError" @close="mForm = null">
+    <ModalDialog v-if="mForm" wide :title="mForm.id ? $t('Modell bearbeiten') : $t('Neues Modell')" :error="formError" @close="mForm = null">
       <div class="grid grid-cols-2 gap-3">
         <div><label :class="lbl">Hersteller</label><input v-model="mForm.vendor" :class="inp" /></div>
         <div><label :class="lbl">Modell</label><input v-model="mForm.model" :class="inp" placeholder="z. B. C9300-48P" /></div>
@@ -116,7 +116,7 @@
     </ModalDialog>
 
     <!-- Dialog Kabelart -->
-    <ModalDialog v-if="cForm" :title="cForm.id ? 'Kabelart bearbeiten' : 'Neue Kabelart'" :error="formError" @close="cForm = null">
+    <ModalDialog v-if="cForm" :title="cForm.id ? $t('Kabelart bearbeiten') : $t('Neue Kabelart')" :error="formError" @close="cForm = null">
       <div><label :class="lbl">Name</label>
         <input v-model="cForm.name" :class="inp" :disabled="!!cForm.id" placeholder="z. B. Telefon-Cu 20x2" />
         <p v-if="cForm.id" class="text-[11px] text-slate-400 mt-1">Der Name ist unveränderlich, weil bestehende Kabel darauf verweisen. Für einen neuen Namen eine neue Kabelart anlegen und diese deaktivieren.</p></div>

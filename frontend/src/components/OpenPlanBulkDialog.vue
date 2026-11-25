@@ -1,41 +1,41 @@
 <template>
-  <ModalDialog wide title="Aufträge nach OpenPlan übertragen" :error="error" @close="$emit('close')">
+  <ModalDialog wide :title="$t('Aufträge nach OpenPlan übertragen')" :error="error" @close="$emit('close')">
     <div v-if="result" class="space-y-2 text-sm">
-      <p v-if="result.url" class="text-green-600 dark:text-green-400">Projekt „{{ result.name }}“ angelegt: <a :href="result.url" target="_blank" rel="noopener" class="underline">in OpenPlan öffnen</a> ({{ result.tasks }} Vorgänge aus der Vorlage).</p>
-      <p v-if="result.created.length" class="text-green-600 dark:text-green-400">{{ result.created.length }} Vorgang/Vorgänge für Patchaufträge angelegt: {{ result.created.map(c => c.number).join(', ') }}</p>
-      <p v-if="result.skipped_linked.length" class="text-slate-500">Bereits verknüpft (übersprungen): {{ result.skipped_linked.join(', ') }}</p>
+      <p v-if="result.url" class="text-green-600 dark:text-green-400">{{ $t('Projekt „{name}“ angelegt:', { name: result.name }) }} <a :href="result.url" target="_blank" rel="noopener" class="underline">{{ $t('in OpenPlan öffnen') }}</a> ({{ $t('{n} Vorgänge aus der Vorlage', { n: result.tasks }) }}).</p>
+      <p v-if="result.created.length" class="text-green-600 dark:text-green-400">{{ $t('{n} Vorgang/Vorgänge für Patchaufträge angelegt:', { n: result.created.length }) }} {{ result.created.map(c => c.number).join(', ') }}</p>
+      <p v-if="result.skipped_linked.length" class="text-slate-500">{{ $t('Bereits verknüpft (übersprungen):') }} {{ result.skipped_linked.join(', ') }}</p>
       <ul v-if="result.errors.length" class="text-red-500 list-disc pl-5 dark:text-red-400"><li v-for="(e, i) in result.errors" :key="i">{{ e.number || e.id }}: {{ e.message }}</li></ul>
     </div>
     <template v-else>
-      <p class="text-sm text-slate-500">{{ ids.length }} Patchauftrag/Patchaufträge ausgewählt. Je Auftrag entsteht ein Vorgang in OpenPlan (Status und Fortschritt werden danach automatisch abgeglichen).</p>
+      <p class="text-sm text-slate-500">{{ $t('{n} Patchauftrag/Patchaufträge ausgewählt. Je Auftrag entsteht ein Vorgang in OpenPlan (Status und Fortschritt werden danach automatisch abgeglichen).', { n: ids.length }) }}</p>
       <div class="inline-flex rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600 text-sm">
         <button v-for="[k, l] in [['tasks', 'In bestehendes Projekt'], ['project', 'Neues Projekt aus Vorlage']]" :key="k" type="button" @click="mode = k"
           class="px-3 py-1.5" :class="mode === k ? 'bg-ks-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'">{{ l }}</button>
       </div>
 
       <template v-if="mode === 'tasks'">
-        <div><label :class="lbl">OpenPlan-Projekt</label>
-          <select v-model="projectId" :class="inp" @change="loadSections"><option :value="null" disabled>wählen …</option><option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }} (ID {{ p.id }})</option></select></div>
-        <div v-if="projectId"><label :class="lbl">Unter Abschnitt</label>
-          <select v-model="parentId" :class="inp"><option :value="null">(oberste Ebene)</option><option v-for="t in sections" :key="t.id" :value="t.id">{{ t.suggested ? '★ ' : '' }}{{ t.wbs }} {{ t.name }}</option></select></div>
+        <div><label :class="lbl">{{ $t('OpenPlan-Projekt') }}</label>
+          <select v-model="projectId" :class="inp" @change="loadSections"><option :value="null" disabled>{{ $t('wählen …') }}</option><option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }} (ID {{ p.id }})</option></select></div>
+        <div v-if="projectId"><label :class="lbl">{{ $t('Unter Abschnitt') }}</label>
+          <select v-model="parentId" :class="inp"><option :value="null">{{ $t('(oberste Ebene)') }}</option><option v-for="t in sections" :key="t.id" :value="t.id">{{ t.suggested ? '★ ' : '' }}{{ t.wbs }} {{ t.name }}</option></select></div>
       </template>
 
       <template v-else>
         <div class="grid grid-cols-2 gap-3">
-          <div><label :class="lbl">Projektname</label><input v-model="proj.name" :class="inp" placeholder="z. B. Patchfelder RZ ↔ Etage 1" /></div>
-          <div><label :class="lbl">Startdatum</label><input v-model="proj.start_date" type="date" :class="inp" /></div>
+          <div><label :class="lbl">{{ $t('Projektname') }}</label><input v-model="proj.name" :class="inp" :placeholder="$t('z. B. Patchfelder RZ ↔ Etage 1')" /></div>
+          <div><label :class="lbl">{{ $t('Startdatum') }}</label><input v-model="proj.start_date" type="date" :class="inp" /></div>
         </div>
-        <div><label :class="lbl">Beschreibung (optional)</label><input v-model="proj.description" :class="inp" /></div>
-        <div><label :class="lbl">Weitere Beteiligte (OpenPlan-Benutzernamen, einer pro Zeile)</label>
+        <div><label :class="lbl">{{ $t('Beschreibung (optional)') }}</label><input v-model="proj.description" :class="inp" /></div>
+        <div><label :class="lbl">{{ $t('Weitere Beteiligte (OpenPlan-Benutzernamen, einer pro Zeile)') }}</label>
           <textarea v-model="proj.members" rows="2" :class="inp" class="font-mono text-xs" spellcheck="false" placeholder="anna&#10;bernd"></textarea>
-          <p class="text-[11px] text-slate-400 mt-1">Sie werden als Bearbeiter eingetragen. Das Projekt gehört dem OpenPlan-Dienstkonto; ein OpenPlan-Administrator kann die Verantwortung übertragen.</p></div>
-        <p class="text-xs text-slate-400">Vorlage „Einbau Patchfelder / Verkabelung“: Planung, Beschaffung, Montage je Standort, Trunk und Patchung, Messung und Abnahme. Die Aufträge werden unter „Patchaufträge (aus Portwerk)“ angehängt.</p>
+          <p class="text-[11px] text-slate-400 mt-1">{{ $t('Sie werden als Bearbeiter eingetragen. Das Projekt gehört dem OpenPlan-Dienstkonto; ein OpenPlan-Administrator kann die Verantwortung übertragen.') }}</p></div>
+        <p class="text-xs text-slate-400">{{ $t('Vorlage „Einbau Patchfelder / Verkabelung“: Planung, Beschaffung, Montage je Standort, Trunk und Patchung, Messung und Abnahme. Die Aufträge werden unter „Patchaufträge (aus Portwerk)“ angehängt.') }}</p>
       </template>
     </template>
 
     <template #footer>
-      <button :class="btnGhost" @click="$emit('close')">{{ result ? 'Schließen' : 'Abbrechen' }}</button>
-      <button v-if="!result" :class="btnPrimary" :disabled="busy || !canSubmit" @click="submit">{{ busy ? '…' : (mode === 'tasks' ? 'Vorgänge anlegen' : 'Projekt anlegen') }}</button>
+      <button :class="btnGhost" @click="$emit('close')">{{ result ? $t('Schließen') : $t('Abbrechen') }}</button>
+      <button v-if="!result" :class="btnPrimary" :disabled="busy || !canSubmit" @click="submit">{{ busy ? '…' : (mode === 'tasks' ? $t('Vorgänge anlegen') : $t('Projekt anlegen')) }}</button>
     </template>
   </ModalDialog>
 </template>
