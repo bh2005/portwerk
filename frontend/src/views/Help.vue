@@ -7,7 +7,6 @@
     </nav>
     <div class="flex-1 min-w-0 space-y-6">
       <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Handbuch') }}</h1>
-      <p v-if="lang === 'en'" class="text-sm rounded-lg px-3 py-2 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">The manual is currently only available in German.</p>
       <section v-for="s in sections" :id="s.id" :key="s.id" :class="card" class="p-5">
         <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">{{ s.title }}</h2>
         <div class="manual" v-html="s.html"></div>
@@ -18,8 +17,13 @@
 
 <script setup>
 import { lang } from '../i18n.js'
-import { sections } from '../content/helpContent.js'
+import { sections as sectionsDe } from '../content/helpContent.js'
+import { sectionsEn } from '../content/helpContent.en.js'
 import { card } from '../ui.js'
+import { computed } from 'vue'
+
+/** Handbuch in der eingestellten Sprache; fehlt ein englischer Abschnitt, erscheint der deutsche. */
+const sections = computed(() => lang.value === 'en' ? sectionsDe.map(s => sectionsEn.find(e => e.id === s.id) || s) : sectionsDe)
 
 function jump(id) { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
 </script>

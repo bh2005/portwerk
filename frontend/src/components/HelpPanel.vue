@@ -9,7 +9,6 @@
             <button class="help-close" @click="$emit('close')" :title="$t('Schließen (Esc)')">✕</button>
           </div>
         </div>
-        <p v-if="lang === 'en'" class="help-lang-note">The help texts are currently only available in German.</p>
         <div class="help-body" v-html="content"></div>
         <div class="help-footer">{{ $t('F1 oder ? zum Öffnen/Schließen') }}</div>
       </aside>
@@ -22,7 +21,6 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getHelp } from '../content/helpTexts.js'
 import { helpContext } from '../content/helpContext.js'
-import { lang } from '../i18n.js'
 
 const props = defineProps({ open: { type: Boolean, default: false } })
 const emit  = defineEmits(['close'])
@@ -36,7 +34,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
 </script>
 
 <style>
-.help-lang-note { margin: 10px 16px 0; padding: 6px 10px; font-size: 12px; border-radius: 6px; background: #fef3c7; color: #92400e; }
 .help-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.3); }
 .help-panel {
   position: fixed; top: 0; right: 0; bottom: 0; width: 380px; max-width: 95vw;

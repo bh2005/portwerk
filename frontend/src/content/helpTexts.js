@@ -1,4 +1,8 @@
 // Kontexthilfe pro Seite (F1 / ?). Schlüssel: Route, optional mit "#tab" für Seiten mit Reitern.
+// Englische Fassung in helpTexts.en.js (gleiche Schlüssel); fehlt dort ein Eintrag, erscheint der deutsche Text.
+import { lang } from '../i18n.js'
+import { T_EN, DEFAULT_EN } from './helpTexts.en.js'
+
 const T = {
   '/dashboard': `<h2>Übersicht</h2>
 <p>Hier siehst du auf einen Blick, was im Bestand liegt: Standorte, Racks, Geräte und Ports.</p>
@@ -35,7 +39,8 @@ const T = {
 <p>Anbindung an die Projektplanung OpenPlan (Standard: <b>aus</b>). Dafür in OpenPlan ein Dienstkonto mit API-Token anlegen (Umfang write, Rolle Bearbeiter) und es im Projekt als Mitglied eintragen.</p>
 <ul><li><b>Verbindung testen</b> zeigt das Dienstkonto und die sichtbaren Projekte.</li>
 <li><b>Automatisch abgleichen:</b> Jede Statusänderung und jedes Abhaken meldet Status und Fortschritt an die verknüpfte Aufgabe. Ein Ausfall von OpenPlan stört den Patchauftrag nie; „Jetzt abgleichen“ holt es nach.</li>
-<li><b>Webhook (optional):</b> OpenPlan meldet Änderungen an der Aufgabe zurück; der Status erscheint am Auftrag. Geheimnis und Adresse stehen auf dieser Seite.</li></ul>`,
+<li><b>Webhook (optional):</b> OpenPlan meldet Änderungen an der Aufgabe zurück; der Status erscheint am Auftrag. Geheimnis und Adresse stehen auf dieser Seite.</li>
+<li><b>Abwesenheiten (optional):</b> übernimmt stündlich die persönlichen Abwesenheiten aus OpenPlan; für sie gilt die Standard-Vertretung aus dem Profil. Der API-Zugang in OpenPlan braucht die Freigabe „Abwesenheiten“.</li></ul>`,
 
   '/admin#tls': `<h2>Zertifikat (ACME)</h2>
 <p>Die App fordert ihr Server-Zertifikat selbst von einer ACME-CA an (z. B. interne step-ca) und erneuert es automatisch.</p>
@@ -46,7 +51,9 @@ const T = {
   '/compare': `<h2>Soll/Ist-Abgleich</h2>
 <p>Vergleicht die dokumentierte Verkabelung (<b>Soll</b>, auch über Patchfelder und Dosen hinweg) mit den per LLDP/CDP gemeldeten Nachbarn (<b>Ist</b>).</p>
 <ul><li><b>stimmt</b> · <b>anderer Port</b> (richtiges Gerät, falscher Port) · <b>anderes Gerät</b> · <b>nicht gesehen</b> (dokumentiert, aber kein Nachbar gemeldet) · <b>nicht dokumentiert</b> (Nachbar gesehen, kein Kabel erfasst).</li>
+<li>Bei „nicht gesehen“ steht, seit wann die Verbindung fehlt (ab dem ersten Import ohne sie).</li>
 <li>Die Nachbardaten kommen mit dem Checkmk-Import; jeder Import ersetzt die Daten der enthaltenen Geräte. Reine MAC-Adressen (Telefone, Kameras) werden ignoriert.</li>
+<li><b>Verbindung übernehmen</b> dokumentiert eine gesehene, aber nicht erfasste Verbindung als vorläufiges Direktkabel; <b>In Bestand übernehmen</b> legt ein unbekanntes Nachbargerät an.</li>
 <li>Die Chips filtern; CSV-Export für Berichte.</li></ul>`,
 
   '/wan': `<h2>WAN-Verbindungen</h2>
@@ -58,7 +65,7 @@ const T = {
 
   '/workorders': `<h2>Patchaufträge</h2>
 <p>Änderungen an Verkabelung und Geräten laufen als Auftrag: <b>Entwurf → Einreichen → Freigeben → Ausführen → Bestätigen</b>. Erst die Bestätigung ändert den Bestand.</p>
-<ul><li>Positionen: Verbindung herstellen, trennen, umstecken sowie <b>Gerät einbauen</b> und <b>Gerät zurückbauen</b>; für WAN-Verbindungen <b>in Betrieb nehmen</b>, <b>ändern</b> und <b>kündigen</b>.</li>
+<ul><li>Positionen: Verbindung herstellen, trennen, umstecken sowie <b>Gerät einbauen</b> und <b>Gerät zurückbauen</b>; für WAN-Verbindungen <b>in Betrieb nehmen</b>, <b>ändern</b> und <b>kündigen</b>; <b>Port umkonfigurieren</b> für VLAN/Profil.</li>
 <li><b>Belegter Port:</b> Wird ein neuer Patch auf einen belegten Port geplant, fragt die Oberfläche „Alten Patch zurückbauen?“. Bei <b>Ja</b> entsteht automatisch ein <b>Rückbau-Auftrag</b>; der neue Auftrag kann erst starten, wenn der Rückbau bestätigt ist.</li>
 <li>Gleiches gilt für <b>belegte Höheneinheiten</b>: Das alte Gerät wird per Rückbau-Auftrag ausgebaut (Kabel getrennt, Status „außer Betrieb“, HE frei).</li>
 <li><b>Arbeitsliste:</b> Große Aufträge (z. B. aus der Massenverkabelung) sind eine Liste mit einer Position je Kabel. Fortschritt, Filter und <b>Mehrfachauswahl</b> („Auswahl abhaken“, „Abweichung …“, „Zurücksetzen“) erleichtern die Ausführung; „Arbeitsliste (CSV)“ öffnet sich direkt in Excel.</li>
@@ -88,8 +95,9 @@ const T = {
   '/devices': `<h2>Geräte</h2>
 <p>Alle Geräte mit Ports: Switches, Router, Firewalls, Access Points, Server, Patchfelder und Dosen.</p>
 <ul><li>Filter nach Suchtext, Typ, Status, Quelle und Standort sind kombinierbar.</li>
-<li><b>Quelle</b> zeigt, woher das Gerät kommt (manuell, CSV, Checkmk …).</li>
-<li>Klick auf einen Hostnamen öffnet Details und Ports.</li></ul>`,
+<li><b>Quelle</b> zeigt, woher das Gerät kommt (manuell, CSV, Checkmk, OpenPlan …).</li>
+<li>Klick auf einen Hostnamen öffnet Details und Ports.</li>
+<li><b>Aus OpenPlan …</b> übernimmt Geräte aus einem Geräte-Rollout in OpenPlan als „geplant“ (wenn die Anbindung aktiv ist).</li></ul>`,
 
   '/racks': `<h2>Racks</h2>
 <p>Schrankansicht mit Höheneinheiten (HE). Die HE 1 ist unten.</p>
@@ -123,6 +131,7 @@ const T = {
 <li><b>Rechte pro Standort</b>: eine Rolle nur für einen Standort (mehrere Zeilen = mehrere Standorte). Wer <i>keine</i> globale Rolle hat, sieht nur diese Standorte – samt Locations, Geräten, Kabeln und Aufträgen.</li>
 <li>Ein <b>Bereichs-Administrator</b> (Rolle Administrator an einem Standort) verwaltet Stammdaten und Benutzer seines Standorts, aber keine API-Zugänge, AD, Zertifikat, Katalog oder Import. Benutzer, die auch zu anderen Standorten gehören, sperrt oder löscht er nicht.</li>
 <li>Bei AD-Benutzern kommen Rollen und Standort-Rechte aus den AD-Gruppen (Reiter „AD / LDAP“); sie werden bei jeder Anmeldung neu gesetzt.</li>
+<li>„Abwesenheit“ trägt für einen Benutzer eine Abwesenheit mit Vertretung ein (Administratoren).</li>
 <li>„Sitzungen beenden“ meldet den Benutzer überall ab.</li>
 <li>Der letzte aktive Administrator kann nicht entfernt oder entzogen werden.</li></ul>`,
   '/admin#tokens': `<h2>API-Zugänge</h2>
@@ -138,5 +147,12 @@ const DEFAULT = '<h2>Hilfe</h2><p>Für diese Seite gibt es keinen eigenen Hilfet
 
 export function getHelp(path, ctx = '') {
   const base = path.startsWith('/devices/') ? '/devices' : path.startsWith('/workorders/') ? '/workorders' : path === '/patchlist' ? '/workorders' : path
-  return (ctx && T[`${base}#${ctx}`]) || T[base] || DEFAULT
+  const keys = [ctx && `${base}#${ctx}`, base].filter(Boolean)
+  if (lang.value === 'en') {
+    for (const k of keys) if (T_EN[k]) return T_EN[k]
+    for (const k of keys) if (T[k]) return T[k]
+    return DEFAULT_EN
+  }
+  for (const k of keys) if (T[k]) return T[k]
+  return DEFAULT
 }

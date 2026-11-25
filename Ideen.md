@@ -6,7 +6,7 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 
 - **Englisch – weitere Etappen**
   Etappe 1 (Grundgerüst, Sprachwahl, Rahmen, Übersicht, Profil), Etappe 2 (Bestand), Etappe 3 (Patchaufträge), Etappe 4 (Analyse) und Etappe 5 (Verwaltung, Import) sind umgesetzt –
-  die Oberfläche ist vollständig umstellbar. Offen: Handbuch/Hilfe, Mails (in der Sprache des Empfängers), Arbeitsanweisung als PDF,
+  die Oberfläche, Handbuch und Hilfe sind vollständig umstellbar. Offen: Mails (in der Sprache des Empfängers), Arbeitsanweisung als PDF,
   Etiketten und seltene Server-Meldungen, die noch nicht in `frontend/src/locales/en.api.js` stehen (sie erscheinen dann deutsch).
 
 - **VLAN-Soll/Ist für Trunks, Voice-VLANs und andere Hersteller**
@@ -68,4 +68,5 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Englisch, Etappe 2: Bestand (Standorte, Geräte, Racks, Strecken, Geräte-Assistent) | #35 |
 | Englisch, Etappe 3: Patchaufträge (Liste, Detail, mobile Ansicht, Patchliste, Etiketten, Reservierungen, Kabel-Assistenten) | #36 |
 | Englisch, Etappe 4: Analyse (Soll/Ist, Kapazität, Zeitreise, Aufräumen, VLANs, WAN, Katalog) | #37 |
-| Englisch, Etappe 5: Verwaltung und Import (Oberfläche vollständig) | (dieser PR) |
+| Englisch, Etappe 5: Verwaltung und Import (Oberfläche vollständig) | #38 |
+| Handbuch und Hilfe auf Englisch; Handbuch aktualisiert | (dieser PR) |
