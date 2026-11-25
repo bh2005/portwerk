@@ -28,7 +28,9 @@
         <thead><tr><th :class="th">Ergebnis</th><th :class="th">Gerät : Port</th><th :class="th">Soll (dokumentiert)</th><th :class="th">Ist (gesehen)</th><th :class="th"></th></tr></thead>
         <tbody>
           <tr v-for="r in shown" :key="r.device_id + ':' + r.port" class="border-t border-slate-100 dark:border-slate-700 align-top">
-            <td :class="td"><span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="chipClass(r.status)">{{ r.status_label }}</span></td>
+            <td :class="td"><span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" :class="chipClass(r.status)">{{ r.status_label }}</span>
+              <div v-if="r.status === 'not_seen' && r.missing_since" class="text-[11px] text-slate-500 mt-1 whitespace-nowrap" :title="r.last_ok ? `zuletzt gesehen ${fmtDay(r.last_ok)}` : 'seit Beginn der Aufzeichnung nicht gesehen'">
+                seit {{ fmtDay(r.missing_since) }}</div></td>
             <td :class="td" class="font-mono text-xs"><router-link :to="`/devices/${r.device_id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ r.device }}</router-link>:{{ r.port }}</td>
             <td :class="td" class="text-xs">
               <template v-if="r.soll?.label"><span class="font-mono text-slate-700 dark:text-slate-200">{{ r.soll.label }}</span>
@@ -119,6 +121,7 @@ function setTab(k) { tab.value = k; router.replace({ query: k === 'vlan' ? { tab
 const res = ref(null), sites = ref([]), fSite = ref(defaultSite() || ''), q = ref(''), error = ref(''), msg = ref(''), busy = ref(null), hist = ref(null), strecke = ref(null), dev = ref(null), cmkOn = ref(false), cmkFolders = ref([]), cmkDefault = ref('/')
 const canWrite = canWriteMaster()
 const cmkTags = computed(() => sites.value.filter(s => /^LOC\d+$/i.test(s.code)).map(s => ({ code: s.code, name: s.name })))
+const fmtDay = ts => new Date(ts * 1000).toLocaleDateString('de-DE')
 const active = ref(new Set(['mismatch', 'port_mismatch', 'undocumented', 'not_seen', 'unmapped']))
 const chips = [['mismatch', 'anderes Gerät'], ['port_mismatch', 'anderer Port'], ['undocumented', 'nicht dokumentiert'], ['not_seen', 'nicht gesehen'], ['unmapped', 'Port unbekannt'], ['unknown', 'keine Daten'], ['ok', 'stimmt']]
 const chipClass = s => ({ ok: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', mismatch: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',

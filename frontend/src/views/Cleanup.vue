@@ -54,15 +54,18 @@
       <section id="not_seen" :class="card" class="p-4">
         <h2 :class="h2">Verbindungen, die LLDP nicht sieht <span class="text-slate-400 font-normal">({{ data.not_seen.length }})</span></h2>
         <p :class="hint">Dokumentiert, aber keines der beiden Geräte meldet den Nachbarn, obwohl beide LLDP/CDP-Daten liefern. Oft eine tote Patchung
-          (abgezogen, Gerät ausgeschaltet) – vor Ort prüfen und ggf. per Auftrag trennen.</p>
+          (abgezogen, Gerät ausgeschaltet) – vor Ort prüfen und ggf. per Auftrag trennen. „Fehlt seit“ zählt ab dem ersten Import ohne die Verbindung;
+          ab {{ data.days }} Tagen hervorgehoben, die ältesten zuerst.</p>
         <p v-if="!data.not_seen.length" :class="none">Nichts gefunden.</p>
         <table v-else class="w-full text-sm">
-          <thead><tr><th :class="th">Port</th><th :class="th">Dokumentiertes Gegenüber</th><th :class="th">LLDP-Stand</th><th :class="th"></th></tr></thead>
+          <thead><tr><th :class="th">Port</th><th :class="th">Dokumentiertes Gegenüber</th><th :class="th">Fehlt seit</th><th :class="th"></th></tr></thead>
           <tbody>
             <tr v-for="r in data.not_seen" :key="r.port_id" class="border-t border-slate-100 dark:border-slate-700">
               <td :class="td" class="font-mono"><router-link :to="`/devices/${r.device_id}`" :class="link">{{ r.device }}:{{ r.port }}</router-link></td>
               <td :class="td" class="font-mono">{{ r.soll }}<span v-if="r.via.length" class="text-xs text-slate-400"> über {{ r.via.join(', ') }}</span></td>
-              <td :class="td" class="text-slate-500 whitespace-nowrap">{{ fmtTime(r.seen_at) }}</td>
+              <td :class="td" class="whitespace-nowrap">
+                <span :class="r.old ? 'text-amber-700 dark:text-amber-300 font-medium' : 'text-slate-600 dark:text-slate-300'">{{ r.missing_since ? ago(r.age_days) : 'unbekannt' }}</span>
+                <span class="block text-xs text-slate-400">{{ r.last_ok ? `zuletzt gesehen ${fmtDate(r.last_ok)}` : 'nie gesehen' }}</span></td>
               <td :class="td" class="text-right"><button :class="btnLink" @click="strecke = r.port_id">Strecke</button></td>
             </tr>
           </tbody>
@@ -134,7 +137,7 @@
 import { onMounted, ref } from 'vue'
 import PathEditor from '../components/PathEditor.vue'
 import { api, errText, defaultSite, isAdmin } from '../api.js'
-import { inp, card, th, td, btnLink, btnGhost, fmtTime, typeLabel } from '../ui.js'
+import { inp, card, th, td, btnLink, btnGhost, typeLabel } from '../ui.js'
 
 /** Aufräumbericht: vorläufige Kabel, von LLDP nicht gesehene Verbindungen, abgelaufene Reservierungen, liegengebliebene Aufträge, geplante Geräte. */
 const h2 = 'text-sm font-semibold text-slate-700 dark:text-slate-200'
@@ -147,6 +150,7 @@ const siteId = ref(defaultSite()), days = ref(30), allSites = ref([]), strecke =
 const admin = isAdmin()
 
 const ago = d => d == null ? '–' : d === 0 ? 'heute' : d === 1 ? 'vor 1 Tag' : `vor ${d} Tagen`
+const fmtDate = ts => new Date(ts * 1000).toLocaleDateString('de-DE')
 const fmtDay = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('de-DE') : '–'
 
 async function load() {
