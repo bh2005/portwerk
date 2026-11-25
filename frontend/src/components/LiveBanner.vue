@@ -1,7 +1,7 @@
 <template>
   <div role="status" class="mb-4 flex items-center gap-3 flex-wrap rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 print:hidden">
     <span class="flex-1 min-w-[12rem]">
-      <b>{{ info.by || $t('Jemand') }}</b> {{ $t('hat Daten geändert') }}<template v-if="ago"> ({{ ago }})</template>. {{ $t('Diese Ansicht zeigt ggf. nicht mehr den aktuellen Stand.') }}
+      <b>{{ info.by || $t('Jemand') }}</b>{{ ' ' + $t('hat Daten geändert') }}<template v-if="ago"> ({{ ago }})</template>. {{ $t('Diese Ansicht zeigt ggf. nicht mehr den aktuellen Stand.') }}
     </span>
     <button class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors" @click="$emit('reload')">{{ $t('Neu laden') }}</button>
     <button class="text-xs text-amber-800 dark:text-amber-200 hover:underline" :title="$t('Hinweis ausblenden, bis wieder jemand etwas ändert')" @click="$emit('dismiss')">{{ $t('Ausblenden') }}</button>

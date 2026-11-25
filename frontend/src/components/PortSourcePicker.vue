@@ -10,7 +10,7 @@
 
     <template v-if="mode === 'device'">
       <div v-if="!device" class="space-y-1">
-        <input v-model="q" :class="inp" placeholder="Gerät suchen (Hostname, mind. 2 Zeichen)" @input="search" />
+        <input v-model="q" :class="inp" :placeholder="$t('Gerät suchen (Hostname, mind. 2 Zeichen)')" @input="search" />
         <div v-if="results.length" class="max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-700">
           <button v-for="d in results" :key="d.id" type="button" @click="pick(d)" class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/40">
             {{ d.hostname }} <span class="text-xs text-slate-400">· {{ typeLabel(d.type) }} · {{ d.location_path }}</span></button>
@@ -18,29 +18,29 @@
       </div>
       <div v-else class="flex items-center justify-between text-sm">
         <span class="font-medium text-slate-800 dark:text-slate-100">{{ device.hostname }} <span class="text-xs font-normal text-slate-400">· {{ typeLabel(device.type) }} · {{ device.location_path }}</span></span>
-        <button type="button" :class="btnLink" @click="clear">anderes Gerät</button>
+        <button type="button" :class="btnLink" @click="clear">{{ $t('anderes Gerät') }}</button>
       </div>
       <div v-if="device" class="grid grid-cols-2 gap-3">
-        <div><label :class="lbl">Seite (Patchfeld)</label>
-          <select v-model="side" :class="inp" @change="load"><option value="all">alle Ports</option><option value="front">Vorderseite</option><option value="back">Rückseite</option></select></div>
-        <label class="flex items-end gap-2 text-sm text-slate-600 dark:text-slate-300 pb-2"><input type="checkbox" v-model="onlyFree" @change="load" /> nur freie Ports</label>
+        <div><label :class="lbl">{{ $t('Seite (Patchfeld)') }}</label>
+          <select v-model="side" :class="inp" @change="load"><option value="all">{{ $t('alle Ports') }}</option><option value="front">{{ $t('Vorderseite') }}</option><option value="back">{{ $t('Rückseite') }}</option></select></div>
+        <label class="flex items-end gap-2 text-sm text-slate-600 dark:text-slate-300 pb-2"><input type="checkbox" v-model="onlyFree" @change="load" />{{ ' ' + $t('nur freie Ports') }}</label>
       </div>
     </template>
 
     <template v-else>
       <div class="grid grid-cols-2 gap-3">
-        <div><label :class="lbl">Location</label>
-          <select v-model="locationId" :class="inp" @change="load"><option :value="null" disabled>wählen …</option>
+        <div><label :class="lbl">{{ $t('Location') }}</label>
+          <select v-model="locationId" :class="inp" @change="load"><option :value="null" disabled>{{ $t('wählen …') }}</option>
             <option v-for="l in locations" :key="l.id" :value="l.id">{{ kindLabel(l.kind) }}: {{ l.path }}</option></select></div>
-        <div><label :class="lbl">Gerätetyp</label>
-          <select v-model="types" :class="inp" @change="load"><option value="outlet">Datendosen</option><option value="">alle Geräte</option><option value="patchpanel">Patchfelder</option><option value="switch">Switches</option></select></div>
+        <div><label :class="lbl">{{ $t('Gerätetyp') }}</label>
+          <select v-model="types" :class="inp" @change="load"><option value="outlet">{{ $t('Datendosen') }}</option><option value="">{{ $t('alle Geräte') }}</option><option value="patchpanel">{{ $t('Patchfelder') }}</option><option value="switch">{{ $t('Switches') }}</option></select></div>
       </div>
-      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="onlyFree" @change="load" /> nur freie Ports</label>
+      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="onlyFree" @change="load" />{{ ' ' + $t('nur freie Ports') }}</label>
     </template>
 
     <p v-if="error" class="text-xs text-red-500 dark:text-red-400">{{ error }}</p>
-    <p v-else-if="loading" class="text-xs text-slate-400">Lade Ports …</p>
-    <p v-else-if="ports !== null" class="text-xs" :class="ports.length ? 'text-green-600' : 'text-slate-400'">{{ ports.length }} Ports<template v-if="ports.length"> · {{ ports[0].hostname }}:{{ ports[0].name }} … {{ ports[ports.length - 1].hostname }}:{{ ports[ports.length - 1].name }}</template><template v-if="truncated"> (gekürzt auf 2000)</template></p>
+    <p v-else-if="loading" class="text-xs text-slate-400">{{ $t('Lade Ports …') }}</p>
+    <p v-else-if="ports !== null" class="text-xs" :class="ports.length ? 'text-green-600' : 'text-slate-400'">{{ ports.length }} {{ $t('Ports') }}<template v-if="ports.length"> · {{ ports[0].hostname }}:{{ ports[0].name }} … {{ ports[ports.length - 1].hostname }}:{{ ports[ports.length - 1].name }}</template><template v-if="truncated">{{ ' ' + $t('(gekürzt auf 2000)') }}</template></p>
   </div>
 </template>
 

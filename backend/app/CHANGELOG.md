@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.16.0 – 2026-11-25
+- Englisch (Etappe 2, Bestand): Standorte mit Struktur-Assistent, Geräte, Gerätedetail (Ports, Reservierung, VLAN, Verbindungs-Historie), Racks & Schränke, Geräte-Assistent, Port-Zuordnung, Strecken-Editor, Pfadgrafik und „Geräte aus OpenPlan“ sind übersetzt, ebenso rund 100 Server-Meldungen aus diesen Bereichen. Auswahllisten für Gerätetyp, Status, Ortsart, Quelle und Rolle erscheinen jetzt überall in der eingestellten Sprache.
+
 ## 0.15.0 – 2026-11-25
 - Englisch (Etappe 1): Die Oberfläche lässt sich auf Englisch umstellen – im Profil unter „Persönliche Einstellungen → Sprache“ (gilt auf allen Geräten) oder vor der Anmeldung mit „English“ auf der Anmeldeseite. Übersetzt sind bisher Navigation, Anmeldung, Profil mit Abwesenheiten, Übersicht, Schnellsuche, Hinweise und Dialoge sowie die Gerätetypen, Status, Orte und Rollen in allen Ansichten; Fehlermeldungen des Servers zu Anmeldung, Rechten, Benutzern und Abwesenheiten erscheinen ebenfalls auf Englisch. Die übrigen Ansichten, das Handbuch, Mails und PDFs folgen in weiteren Etappen und bleiben bis dahin deutsch.
 

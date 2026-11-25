@@ -112,13 +112,13 @@
       </div>
       <div v-if="globalAdmin"><label :class="lbl">Globale Rollen <span class="normal-case text-slate-300">– gelten für alle Standorte, Benutzer sehen alles</span></label>
         <label v-for="[k, l, desc] in ROLES" :key="k" class="flex items-center gap-2 text-sm py-0.5 text-slate-700 dark:text-slate-200">
-          <input type="checkbox" :value="k" v-model="userForm.roles" class="rounded text-ks-600" /> {{ l }} <span class="text-xs text-slate-400">– {{ desc }}</span></label></div>
+          <input type="checkbox" :value="k" v-model="userForm.roles" class="rounded text-ks-600" /> {{ $t(l) }} <span class="text-xs text-slate-400">– {{ $t(desc) }}</span></label></div>
       <div>
         <div class="flex items-center justify-between"><label :class="lbl" class="!mb-0">Rechte pro Standort <span class="normal-case text-slate-300">– Benutzer ohne globale Rolle sehen nur diese Standorte</span></label>
           <button type="button" :class="btnLink" @click="addScope">+ Standort-Recht</button></div>
         <p v-if="!userForm.scopes.length && !userForm.ldapScopes.length" class="text-xs text-slate-400 mt-1">Keine Standort-Rechte.</p>
         <div v-for="(sc, i) in userForm.scopes" :key="i" class="flex gap-2 mt-1.5 items-center">
-          <select v-model="sc.role" :class="inp" class="!w-44"><option v-for="[k, l] in ROLES" :key="k" :value="k">{{ l }}</option></select>
+          <select v-model="sc.role" :class="inp" class="!w-44"><option v-for="[k, l] in ROLES" :key="k" :value="k">{{ $t(l) }}</option></select>
           <label v-if="globalAdmin" class="flex items-center gap-1.5 text-xs whitespace-nowrap text-slate-600 dark:text-slate-300" title="Rolle gilt für alle Standorte (wird als globale Rolle gespeichert)"><input type="checkbox" v-model="sc.all" class="rounded text-ks-600" /> alle Standorte</label>
           <select v-model="sc.site_id" :class="inp" :disabled="sc.all"><option :value="null" disabled>Standort wählen …</option><option v-for="s in siteChoices()" :key="s.id" :value="s.id">{{ s.code }} · {{ s.name }}</option></select>
           <button type="button" :class="btnDanger" @click="userForm.scopes.splice(i, 1)">✕</button>

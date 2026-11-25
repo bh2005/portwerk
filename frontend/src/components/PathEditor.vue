@@ -1,39 +1,39 @@
 <template>
-  <SidePanel :open="open" title="Strecke" @close="$emit('close')">
+  <SidePanel :open="open" :title="$t('Strecke')" @close="$emit('close')">
     <template #title>
-      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Strecke</h2>
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('Strecke') }}</h2>
       <p class="text-xs text-slate-500 dark:text-slate-400 truncate font-mono">{{ data?.summary || '' }}</p>
     </template>
 
     <p v-if="error" class="text-sm text-red-500 dark:text-red-400">{{ error }}</p>
     <p v-if="msg" class="text-sm text-green-600 dark:text-green-400">{{ msg }}</p>
-    <p v-if="loading && !data" class="text-sm text-slate-400">Lade …</p>
+    <p v-if="loading && !data" class="text-sm text-slate-400">{{ $t('Lade …') }}</p>
 
     <template v-if="data">
       <p v-if="!data.complete" class="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">
-        Strecke unvollständig<template v-if="openEnds.length">: {{ openEnds.join(' · ') }}</template><template v-else-if="nodes.length === 1"> – der Port ist nicht verbunden</template>.</p>
+        {{ $t('Strecke unvollständig') }}<template v-if="openEnds.length">: {{ openEnds.join(' · ') }}</template><template v-else-if="nodes.length === 1">{{ ' ' + $t('– der Port ist nicht verbunden') }}</template>.</p>
 
       <!-- offenes Ende links -->
-      <ConnectBox v-if="openLeft" :key="'cl' + startOf(0)" label="Verbindung am Anfang herstellen" :port-id="startOf(0)" @done="reload('Verbindung hergestellt.')" @error="e => error = e" />
+      <ConnectBox v-if="openLeft" :key="'cl' + startOf(0)" :label="$t('Verbindung am Anfang herstellen')" :port-id="startOf(0)" @done="reload('Verbindung hergestellt.')" @error="e => error = e" />
 
       <div v-for="(n, i) in nodes" :key="i">
         <!-- Station -->
         <div class="rounded-lg border px-3 py-2" :class="n.passive ? 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/30' : 'border-ks-300 dark:border-ks-700 bg-white dark:bg-slate-800'">
           <div class="flex items-center justify-between gap-2">
             <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{{ role(i) }}</span>
-            <button v-if="i > 0 && i < nodes.length - 1 && n.passive && canWrite" :class="btnDanger" :disabled="busy" @click="removeStation(n)">entfernen</button>
+            <button v-if="i > 0 && i < nodes.length - 1 && n.passive && canWrite" :class="btnDanger" :disabled="busy" @click="removeStation(n)">{{ $t('entfernen') }}</button>
           </div>
           <div class="font-mono text-sm text-slate-800 dark:text-slate-100">
             <router-link v-if="n.device.id" :to="`/devices/${n.device.id}`" class="text-ks-600 dark:text-ks-400 hover:underline" @click="$emit('close')">{{ n.device.hostname }}</router-link>
             <span v-else class="text-slate-400">{{ n.device.hostname }}</span>
             <span class="text-slate-500"> : {{ n.ports.map(p => p.name).join(' ⇄ ') }}</span>
           </div>
-          <div class="text-xs text-slate-400">{{ typeLabel(n.device.type) }}<template v-if="n.device.location"> · {{ n.device.location }}</template><template v-if="n.device.unit"> · HE {{ n.device.unit }}</template></div>
+          <div class="text-xs text-slate-400">{{ typeLabel(n.device.type) }}<template v-if="n.device.location"> · {{ n.device.location }}</template><template v-if="n.device.unit"> · {{ $t('HE') }} {{ n.device.unit }}</template></div>
           <div v-for="p in n.ports.filter(x => x.planned.length || x.reservation || x.config)" :key="p.id" class="text-xs text-slate-500 mt-0.5">
             <span class="font-mono">{{ p.name }}</span>
             <span v-if="p.config" class="text-indigo-600 dark:text-indigo-400"> · {{ p.config }}</span>
-            <span v-for="(pl, k) in p.planned" :key="k" class="text-sky-700 dark:text-sky-300"> · verplant: {{ pl.workorder.number }} ({{ pl.action }})</span>
-            <span v-if="p.reservation" class="text-amber-700 dark:text-amber-300"> · reserviert: {{ p.reservation }}</span>
+            <span v-for="(pl, k) in p.planned" :key="k" class="text-sky-700 dark:text-sky-300"> · {{ $t('verplant:') }} {{ pl.workorder.number }} ({{ $t(pl.action) }})</span>
+            <span v-if="p.reservation" class="text-amber-700 dark:text-amber-300"> · {{ $t('reserviert:') }} {{ p.reservation }}</span>
           </div>
           <!-- LLDP/CDP-Ist an den Enden -->
           <div v-if="lldpAt(i)" class="text-xs mt-1" :class="lldpClass(lldpAt(i).status)">{{ lldpIcon(lldpAt(i).status) }} {{ lldpAt(i).text }}</div>
@@ -45,74 +45,75 @@
             <span class="text-slate-400">│</span>
             <span class="font-medium text-slate-700 dark:text-slate-200">{{ links[i].label || 'Kabel' }}</span>
             <span class="text-xs text-slate-500">{{ cableText(links[i]) }}</span>
-            <span v-if="links[i].provisional" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" title="Aus dem Soll/Ist-Abgleich übernommen – Dosen und Patchfelder fehlen ggf. noch">vorläufig</span>
-            <span v-if="links[i].measurement_ok === true" class="text-green-600 dark:text-green-400" title="Messung bestanden">✓</span>
-            <span v-if="links[i].measurement_ok === false" class="text-red-500 dark:text-red-400" title="Messung nicht bestanden">✗</span>
+            <span v-if="links[i].provisional" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" :title="$t('Aus dem Soll/Ist-Abgleich übernommen – Dosen und Patchfelder fehlen ggf. noch')">{{ $t('vorläufig') }}</span>
+            <span v-if="links[i].measurement_ok === true" class="text-green-600 dark:text-green-400" :title="$t('Messung bestanden')">✓</span>
+            <span v-if="links[i].measurement_ok === false" class="text-red-500 dark:text-red-400" :title="$t('Messung nicht bestanden')">✗</span>
           </div>
           <p v-if="links[i].note" class="text-xs text-slate-400 mt-0.5">{{ links[i].note }}</p>
           <div v-if="canWrite" class="flex gap-3 mt-1">
             <button :class="btnLink" @click="toggleEdit(i)">{{ edit?.i === i ? 'schließen' : 'bearbeiten' }}</button>
             <button :class="btnLink" @click="toggleMove(i)">{{ mv?.i === i ? 'abbrechen' : 'umstecken' }}</button>
             <button :class="btnLink" @click="toggleInsert(i)">{{ ins?.i === i ? 'abbrechen' : '+ Zwischenstation' }}</button>
-            <button :class="btnDanger" :disabled="busy" @click="unplug(i)">lösen</button>
+            <button :class="btnDanger" :disabled="busy" @click="unplug(i)">{{ $t('lösen') }}</button>
           </div>
 
           <!-- Kabel bearbeiten -->
           <div v-if="edit?.i === i" class="mt-2 rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">
             <CableFields :model-value="edit.f" />
-            <div class="flex gap-2 justify-end"><button :class="btnGhost" @click="edit = null">Abbrechen</button><button :class="btnPrimary" :disabled="busy" @click="saveCable">Speichern</button></div>
+            <div class="flex gap-2 justify-end"><button :class="btnGhost" @click="edit = null">{{ $t('Abbrechen') }}</button><button :class="btnPrimary" :disabled="busy" @click="saveCable">{{ $t('Speichern') }}</button></div>
           </div>
 
           <!-- Ziel ändern: ein Ende an einen anderen Port stecken -->
           <div v-if="mv?.i === i" class="mt-2 rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">
-            <div class="text-xs text-slate-500">Welches Ende soll an einen anderen Port?</div>
+            <div class="text-xs text-slate-500">{{ $t('Welches Ende soll an einen anderen Port?') }}</div>
             <label class="flex items-center gap-2 text-sm"><input v-model="mv.end" type="radio" value="left" /> <span class="font-mono">{{ endName(i, false) }}</span></label>
             <label class="flex items-center gap-2 text-sm"><input v-model="mv.end" type="radio" value="right" /> <span class="font-mono">{{ endName(i, true) }}</span></label>
-            <PortPicker :key="'mv' + i + mv.end" v-model="mv.portId" label="Neuer Port" @select="p => mv.sel = p" />
-            <p v-if="mv.sel" class="text-xs text-slate-500">Danach: <span class="font-mono">{{ mv.end === 'left' ? mv.sel.device.hostname + ':' + mv.sel.name : endName(i, false) }}</span> →
+            <PortPicker :key="'mv' + i + mv.end" v-model="mv.portId" :label="$t('Neuer Port')" @select="p => mv.sel = p" />
+            <p v-if="mv.sel" class="text-xs text-slate-500">{{ $t('Danach:') + ' ' }}<span class="font-mono">{{ mv.end === 'left' ? mv.sel.device.hostname + ':' + mv.sel.name : endName(i, false) }}</span> →
               <span class="font-mono">{{ mv.end === 'left' ? endName(i, true) : mv.sel.device.hostname + ':' + mv.sel.name }}</span></p>
-            <p v-if="mv.sel?.cable" class="text-xs text-red-500 dark:text-red-400">Der Port ist bereits verbunden ({{ mv.sel.cable.device_hostname }}:{{ mv.sel.cable.port_name }}). Zuerst dort lösen.</p>
-            <p class="text-xs text-slate-400">Das Kabel behält alle Angaben; in der Historie endet die alte Verbindung, die neue beginnt.</p>
-            <div class="flex gap-2 justify-end"><button :class="btnGhost" @click="mv = null">Abbrechen</button>
-              <button :class="btnPrimary" :disabled="busy || !mv.sel || !!mv.sel.cable" @click="moveEnd(i)">Umstecken</button></div>
+            <p v-if="mv.sel?.cable" class="text-xs text-red-500 dark:text-red-400">{{ $t('Der Port ist bereits verbunden ({p}). Zuerst dort lösen.', { p: mv.sel.cable.device_hostname + ':' + mv.sel.cable.port_name }) }}</p>
+            <p class="text-xs text-slate-400">{{ $t('Das Kabel behält alle Angaben; in der Historie endet die alte Verbindung, die neue beginnt.') }}</p>
+            <div class="flex gap-2 justify-end"><button :class="btnGhost" @click="mv = null">{{ $t('Abbrechen') }}</button>
+              <button :class="btnPrimary" :disabled="busy || !mv.sel || !!mv.sel.cable" @click="moveEnd(i)">{{ $t('Umstecken') }}</button></div>
           </div>
 
           <!-- Zwischenstation einfügen -->
           <div v-if="ins?.i === i" class="mt-2 rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">
-            <PortPicker v-model="ins.portId" label="Patchfeld / Dose und Port" @select="p => ins.sel = p" />
+            <PortPicker v-model="ins.portId" :label="$t('Patchfeld / Dose und Port')" @select="p => ins.sel = p" />
             <template v-if="ins.sel">
-              <p v-if="!stationOk(ins.sel)" class="text-xs text-red-500 dark:text-red-400">{{ ins.sel.device.hostname }} ist kein Patchfeld und keine Dose, oder der Port hat keine Gegenseite (vorn ↔ hinten).</p>
+              <p v-if="!stationOk(ins.sel)" class="text-xs text-red-500 dark:text-red-400">{{ $t('{name} ist kein Patchfeld und keine Dose, oder der Port hat keine Gegenseite (vorn ↔ hinten).', { name: ins.sel.device.hostname }) }}</p>
               <template v-else>
-                <p class="text-xs text-slate-500">Reihenfolge: <span class="font-mono">{{ endName(i, ins.swap) }}</span> → <span class="font-mono">{{ ins.sel.name }}</span> ⇄
+                <p class="text-xs text-slate-500">{{ $t('Reihenfolge:') + ' ' }}<span class="font-mono">{{ endName(i, ins.swap) }}</span> → <span class="font-mono">{{ ins.sel.name }}</span> ⇄
                   <span class="font-mono">{{ ins.sel.peer_port_name || '?' }}</span> → <span class="font-mono">{{ endName(i, !ins.swap) }}</span></p>
-                <label class="flex items-center gap-2 text-xs text-slate-500"><input v-model="ins.swap" type="checkbox" /> Seiten tauschen (der gewählte Port zeigt zum anderen Ende)</label>
-                <p class="text-xs text-slate-400">Das erste Teilkabel behält Nummer, Länge und Einbaudatum, beide behalten Kabelart und Farbe. Das Messprotokoll gehört zum alten Kabel und entfällt.</p>
+                <label class="flex items-center gap-2 text-xs text-slate-500"><input v-model="ins.swap" type="checkbox" />{{ ' ' + $t('Seiten tauschen (der gewählte Port zeigt zum anderen Ende)') }}</label>
+                <p class="text-xs text-slate-400">{{ $t('Das erste Teilkabel behält Nummer, Länge und Einbaudatum, beide behalten Kabelart und Farbe. Das Messprotokoll gehört zum alten Kabel und entfällt.') }}</p>
               </template>
             </template>
-            <div class="flex gap-2 justify-end"><button :class="btnGhost" @click="ins = null">Abbrechen</button>
-              <button :class="btnPrimary" :disabled="busy || !ins.sel || !stationOk(ins.sel)" @click="insertStation(i)">Einfügen</button></div>
+            <div class="flex gap-2 justify-end"><button :class="btnGhost" @click="ins = null">{{ $t('Abbrechen') }}</button>
+              <button :class="btnPrimary" :disabled="busy || !ins.sel || !stationOk(ins.sel)" @click="insertStation(i)">{{ $t('Einfügen') }}</button></div>
           </div>
         </div>
       </div>
 
       <!-- offenes Ende rechts / nicht verbundener Port -->
-      <ConnectBox v-if="openRight" :key="'cr' + startOf(1)" label="Verbindung am Ende herstellen" :port-id="startOf(1)" @done="reload('Verbindung hergestellt.')" @error="e => error = e" />
-      <ConnectBox v-else-if="nodes.length === 1 && !openLeft" :key="'c1' + startOf(1)" label="Verbindung herstellen" :port-id="startOf(1)" @done="reload('Verbindung hergestellt.')" @error="e => error = e" />
+      <ConnectBox v-if="openRight" :key="'cr' + startOf(1)" :label="$t('Verbindung am Ende herstellen')" :port-id="startOf(1)" @done="reload('Verbindung hergestellt.')" @error="e => error = e" />
+      <ConnectBox v-else-if="nodes.length === 1 && !openLeft" :key="'c1' + startOf(1)" :label="$t('Verbindung herstellen')" :port-id="startOf(1)" @done="reload('Verbindung hergestellt.')" @error="e => error = e" />
 
-      <details v-if="nodes.length > 1" class="text-sm"><summary class="cursor-pointer text-xs text-slate-500">Grafik</summary>
+      <details v-if="nodes.length > 1" class="text-sm"><summary class="cursor-pointer text-xs text-slate-500">{{ $t('Grafik') }}</summary>
         <div class="mt-2"><PathGraphic :path="data" @navigate="$emit('close')" /></div></details>
     </template>
 
     <template #footer>
       <div class="flex items-center justify-between gap-2">
         <span class="text-xs text-slate-400">{{ links.length ? `${links.length} Kabel · ${Math.max(0, nodes.length - 2)} Zwischenstation(en)` : '' }}</span>
-        <button v-if="canWrite && links.some(l => l.provisional)" :class="btnGhost" :disabled="busy" title="Alle vorläufigen Kabel dieser Strecke als vollständig dokumentiert markieren" @click="complete">Strecke vollständig</button>
+        <button v-if="canWrite && links.some(l => l.provisional)" :class="btnGhost" :disabled="busy" :title="$t('Alle vorläufigen Kabel dieser Strecke als vollständig dokumentiert markieren')" @click="complete">{{ $t('Strecke vollständig') }}</button>
       </div>
     </template>
   </SidePanel>
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
 import { computed, ref, watch, h, defineComponent } from 'vue'
 import SidePanel from './SidePanel.vue'
 import PathGraphic from './PathGraphic.vue'
@@ -166,13 +167,13 @@ async function run(fn, done) {
   busy.value = true; error.value = ''
   try { await fn(); await reload(done) } catch (e) { error.value = errText(e) } finally { busy.value = false }
 }
-const saveCable = () => run(() => api.updateCable(links.value[edit.value.i].cable_id, { ...edit.value.f }), 'Kabel gespeichert.')
+const saveCable = () => run(() => api.updateCable(links.value[edit.value.i].cable_id, { ...edit.value.f }), t('Kabel gespeichert.'))
 async function moveEnd(i, reserved = false) {
   const m = mv.value
   busy.value = true; error.value = ''
   try {
     await api.moveCableEnd(links.value[i].cable_id, { end_port_id: (m.end === 'left' ? leftPort(i) : rightPort(i)).id, new_port_id: m.sel.id, use_reserved: reserved })
-    busy.value = false; await reload('Kabel umgesteckt.')
+    busy.value = false; await reload(t('Kabel umgesteckt.'))
   } catch (e) {
     busy.value = false
     const c = conflictOf(e)
@@ -180,17 +181,17 @@ async function moveEnd(i, reserved = false) {
     error.value = errText(e)
   }
 }
-const insertStation = i => run(() => api.insertStation(links.value[i].cable_id, { port_id: ins.value.sel.id, side_port_id: (ins.value.swap ? rightPort(i) : leftPort(i)).id }), 'Zwischenstation eingefügt.')
+const insertStation = i => run(() => api.insertStation(links.value[i].cable_id, { port_id: ins.value.sel.id, side_port_id: (ins.value.swap ? rightPort(i) : leftPort(i)).id }), t('Zwischenstation eingefügt.'))
 function removeStation(n) {
-  if (!confirm(`${n.device.hostname} (${n.ports.map(p => p.name).join(' ⇄ ')}) aus der Strecke nehmen?\n\nDie beiden Kabel werden zu einem vorläufigen Direktkabel.`)) return
-  return run(() => api.removeStation({ port_id: n.ports[0].id }), 'Zwischenstation entfernt.')
+  if (!confirm(t('{name} aus der Strecke nehmen?', { name: `${n.device.hostname} (${n.ports.map(p => p.name).join(' ⇄ ')})` }) + '\n\n' + t('Die beiden Kabel werden zu einem vorläufigen Direktkabel.'))) return
+  return run(() => api.removeStation({ port_id: n.ports[0].id }), t('Zwischenstation entfernt.'))
 }
 function unplug(i) {
-  if (!confirm('Dieses Kabel lösen?')) return
-  return run(() => api.setCable(leftPort(i).id, { port_b_id: null }), 'Kabel gelöst.')
+  if (!confirm(t('Dieses Kabel lösen?'))) return
+  return run(() => api.setCable(leftPort(i).id, { port_b_id: null }), t('Kabel gelöst.'))
 }
 function complete() {
-  return run(async () => { for (const l of links.value.filter(x => x.provisional)) await api.updateCable(l.cable_id, { ...cableFields(l), provisional: false }) }, 'Strecke als vollständig markiert.')
+  return run(async () => { for (const l of links.value.filter(x => x.provisional)) await api.updateCable(l.cable_id, { ...cableFields(l), provisional: false }) }, t('Strecke als vollständig markiert.'))
 }
 
 /** Verbindung an einem offenen Ende bzw. einem unverbundenen Port herstellen (Ziel wählen, Kabeldaten, Speichern). */
@@ -213,11 +214,11 @@ const ConnectBox = defineComponent({
       ? h('button', { class: btnLink + ' my-2', onClick: () => { open.value = true } }, '+ ' + p.label)
       : h('div', { class: 'my-2 rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3' }, [
         h('div', { class: 'text-xs font-semibold uppercase tracking-wide text-slate-500' }, p.label),
-        h(PortPicker, { modelValue: target.value, 'onUpdate:modelValue': v => { target.value = v }, label: 'Zielgerät und Zielport', onSelect: s => { sel.value = s } }),
+        h(PortPicker, { modelValue: target.value, 'onUpdate:modelValue': v => { target.value = v }, label: t('Zielgerät und Zielport'), onSelect: s => { sel.value = s } }),
         h(CableFields, { modelValue: f.value }),
         h('div', { class: 'flex gap-2 justify-end' }, [
-          h('button', { class: btnGhost, onClick: () => { open.value = false } }, 'Abbrechen'),
-          h('button', { class: btnPrimary, disabled: b.value || !target.value, onClick: () => save() }, 'Verbinden')]),
+          h('button', { class: btnGhost, onClick: () => { open.value = false } }, t('Abbrechen')),
+          h('button', { class: btnPrimary, disabled: b.value || !target.value, onClick: () => save() }, t('Verbinden'))]),
       ])
   },
 })
