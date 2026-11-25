@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.19.0 – 2026-11-25
+- Englisch (Etappe 5, Verwaltung und Import): Benutzer und Rechte, API-Zugänge, AD/LDAP, Zertifikat (ACME), Sicherung mit externen Zielen, E-Mail, Checkmk, OpenPlan, Audit-Log, Releases und Import sind übersetzt, dazu rund 90 Server-Meldungen aus diesen Bereichen. Damit ist die gesamte Oberfläche auf Englisch umstellbar. Das Handbuch und die Hilfetexte bleiben vorerst deutsch (mit Hinweis), ebenso Mails, Arbeitsanweisung (PDF) und Etiketten.
+
 ## 0.18.0 – 2026-11-25
 - Englisch (Etappe 4, Analyse): Soll/Ist-Abgleich (Verkabelung und VLANs, „In Bestand übernehmen“, Checkmk-Anlage und -Aktivierung), Kapazität, Zeitreise, Aufräumen, VLANs & Portprofile, WAN und Katalog sind übersetzt, dazu rund 40 Server-Meldungen (Checkmk, Katalog, Zeitreise) und die Kapazitätskategorien. Auswahl- und Reiterbeschriftungen aus Listen erscheinen jetzt überall in der eingestellten Sprache.
 

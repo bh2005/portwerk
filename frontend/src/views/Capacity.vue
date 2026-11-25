@@ -30,7 +30,7 @@
           <span class="text-slate-400">({{ $t('{a} von {b} frei', { a: a.free, b: a.total }) }}<template v-if="a.kind === 'units'">, {{ $t('größter Block {n} HE', { n: a.largest_block }) }}</template>)</span>
         </li>
       </ul>
-      <button v-if="data.alerts.length > 8" :class="btnLink" class="mt-2" @click="showAll = !showAll">{{ showAll ? 'weniger' : `alle ${data.alerts.length} anzeigen` }}</button>
+      <button v-if="data.alerts.length > 8" :class="btnLink" class="mt-2" @click="showAll = !showAll">{{ showAll ? $t('weniger') : `alle ${data.alerts.length} anzeigen` }}</button>
     </div>
 
     <div v-if="data" :class="card" class="overflow-x-auto">

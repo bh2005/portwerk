@@ -60,7 +60,7 @@
               <td :class="td" class="font-mono"><router-link :to="`/devices/${r.device_id}`" :class="link">{{ r.device }}:{{ r.port }}</router-link></td>
               <td :class="td" class="font-mono">{{ r.soll }}<span v-if="r.via.length" class="text-xs text-slate-400">{{ ' ' + $t('über') }} {{ r.via.join(', ') }}</span></td>
               <td :class="td" class="whitespace-nowrap">
-                <span :class="r.old ? 'text-amber-700 dark:text-amber-300 font-medium' : 'text-slate-600 dark:text-slate-300'">{{ r.missing_since ? ago(r.age_days) : 'unbekannt' }}</span>
+                <span :class="r.old ? 'text-amber-700 dark:text-amber-300 font-medium' : 'text-slate-600 dark:text-slate-300'">{{ r.missing_since ? ago(r.age_days) : $t('unbekannt') }}</span>
                 <span class="block text-xs text-slate-400">{{ r.last_ok ? `zuletzt gesehen ${fmtDate(r.last_ok)}` : $t('nie gesehen') }}</span></td>
               <td :class="td" class="text-right"><button :class="btnLink" @click="strecke = r.port_id">{{ $t('Strecke') }}</button></td>
             </tr>

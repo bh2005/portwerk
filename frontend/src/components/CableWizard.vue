@@ -59,7 +59,7 @@
         <label class="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="radio" value="workorder" v-model="form.mode" @change="modeChanged" class="mt-1" />
           <span><b>{{ $t('Per Patchauftrag') }}</b>{{ ' ' + $t('– das Kabel wird eine Position (Freigabe → Ausführung → Bestätigung).') }}</span></label>
       </div>
-      <p v-else class="text-sm text-slate-500">{{ $t('Umsetzung:') + ' ' }}<b>{{ canOrder && !canDirect ? $t('per Patchauftrag (du darfst Stammdaten nicht direkt ändern)') : 'sofort' }}</b></p>
+      <p v-else class="text-sm text-slate-500">{{ $t('Umsetzung:') + ' ' }}<b>{{ canOrder && !canDirect ? $t('per Patchauftrag (du darfst Stammdaten nicht direkt ändern)') : $t('sofort') }}</b></p>
       <div v-if="form.mode === 'workorder'" class="grid grid-cols-2 gap-3">
         <div><label :class="lbl">{{ $t('Patchauftrag') }}</label>
           <select v-model="form.workorder_id" :class="inp" @change="check"><option :value="null">{{ $t('Neuen Auftrag anlegen') }}</option>
