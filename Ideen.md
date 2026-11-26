@@ -4,11 +4,6 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 
 ## Offen
 
-- **Englisch – weitere Etappen**
-  Etappe 1 (Grundgerüst, Sprachwahl, Rahmen, Übersicht, Profil), Etappe 2 (Bestand), Etappe 3 (Patchaufträge), Etappe 4 (Analyse) und Etappe 5 (Verwaltung, Import) sind umgesetzt –
-  die Oberfläche, Handbuch und Hilfe sind vollständig umstellbar. Offen: Mails (in der Sprache des Empfängers), Arbeitsanweisung als PDF,
-  Etiketten und seltene Server-Meldungen, die noch nicht in `frontend/src/locales/en.api.js` stehen (sie erscheinen dann deutsch).
-
 - **VLAN-Soll/Ist für Trunks, Voice-VLANs und andere Hersteller**
   Checkmk liefert VLANs nur für Cisco und nur Access-VLANs (Plugin `inv_cisco_vlans`). Für Trunks/Voice bräuchte es eigene Daten
   (z. B. CISCO-VTP-MIB oder ein eigenes Inventar-Plugin).
@@ -69,4 +64,5 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Englisch, Etappe 3: Patchaufträge (Liste, Detail, mobile Ansicht, Patchliste, Etiketten, Reservierungen, Kabel-Assistenten) | #36 |
 | Englisch, Etappe 4: Analyse (Soll/Ist, Kapazität, Zeitreise, Aufräumen, VLANs, WAN, Katalog) | #37 |
 | Englisch, Etappe 5: Verwaltung und Import (Oberfläche vollständig) | #38 |
-| Handbuch und Hilfe auf Englisch; Handbuch aktualisiert | (dieser PR) |
+| Handbuch und Hilfe auf Englisch; Handbuch aktualisiert | #39 |
+| Englisch für Mails (Sprache des Empfängers), PDF, CSV und Etikettenformate – Portwerk vollständig zweisprachig | (dieser PR) |

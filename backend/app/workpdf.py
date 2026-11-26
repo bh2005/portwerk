@@ -14,6 +14,8 @@ import segno
 from fpdf import FPDF
 from fpdf.fonts import FontFace
 
+from . import i18n
+
 FONT_DIRS = ("/usr/share/fonts/truetype/dejavu", "/usr/share/fonts/dejavu", "/usr/share/fonts/TTF")
 FALLBACK = {"→": "->", "↔": "<->", "☐": "[ ]", "☑": "[x]", "☒": "[!]", "–": "-", "…": "...", "„": '"', "“": '"', "·": "-"}
 STATUS_BOX = {"open": "☐", "done": "☑", "deviation": "☒"}
@@ -30,6 +32,7 @@ def _font_dir() -> Optional[str]:
 class _Doc(FPDF):
     def __init__(self, footer_text: str):
         super().__init__(orientation="L", unit="mm", format="A4")
+        self.lang = "de"
         self.footer_text = footer_text
         d = _font_dir()
         if d:
@@ -60,7 +63,7 @@ class _Doc(FPDF):
         self.set_text_color(100, 116, 139)
         self.cell(0, 4, self.t(self.footer_text), align="L")
         self.set_x(-40)
-        self.cell(30, 4, self.t(f"Seite {self.page_no()}/{{nb}}"), align="R")
+        self.cell(30, 4, self.t(i18n.t(self.lang, "Seite {page}/{{nb}}", page=self.page_no())), align="R")
         self.set_text_color(0, 0, 0)
 
 
@@ -87,10 +90,13 @@ def _cable(x: dict) -> str:
 
 
 def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]], notes: list[str], qr_url: str = "",
-           warning: str = "", by: str = "", multi: bool = False) -> bytes:
-    """``data``: Ergebnis von ``patchlists.build``. ``multi``: Spalte „Auftrag“ (Patchliste aus mehreren Aufträgen)."""
+           warning: str = "", by: str = "", multi: bool = False, lang: str = "de") -> bytes:
+    """``data``: Ergebnis von ``patchlists.build``. ``multi``: Spalte „Auftrag“ (Patchliste aus mehreren Aufträgen).
+    Titel, Eckdaten und Hinweise kommen bereits übersetzt; die festen Texte und Beschriftungen übersetzt der Renderer (``lang``)."""
+    tr = lambda s, **kw: i18n.t(lang, s, **kw)                                                  # noqa: E731
     now = time.strftime("%d.%m.%Y %H:%M")
-    pdf = _Doc(f"Portwerk · {title} · erstellt {now}" + (f" von {by}" if by else ""))
+    pdf = _Doc(tr("Portwerk · {title} · erstellt {now}", title=title, now=now) + (tr(" von {by}", by=by) if by else ""))
+    pdf.lang = lang
     pdf.add_page()
     t = pdf.t
 
@@ -107,7 +113,7 @@ def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]]
         pdf.set_xy(pdf.w - pdf.r_margin - qr_size - 10, top + qr_size)
         pdf.font(6.5)
         pdf.set_text_color(100, 116, 139)
-        pdf.cell(qr_size + 10, 3, t("Auf dem Handy abhaken"), align="C")
+        pdf.cell(qr_size + 10, 3, t(tr("Auf dem Handy abhaken")), align="C")
         pdf.set_text_color(0, 0, 0)
         pdf.set_xy(pdf.l_margin, max(pdf.get_y(), top + 2))
     pdf.ln(2)
@@ -150,8 +156,8 @@ def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]]
     items = data["items"]
     if not items:
         pdf.font(10)
-        pdf.cell(0, 8, t("Keine Positionen."), new_x="LMARGIN", new_y="NEXT")
-    heads = ["", "Nr"] + (["Auftrag"] if multi else []) + ["Aktion", "Von (Gerät:Port / Ort)", "Nach (Gerät:Port / Ort)", "Kabel", "Bemerkung"]
+        pdf.cell(0, 8, t(tr("Keine Positionen.")), new_x="LMARGIN", new_y="NEXT")
+    heads = [tr(h) for h in ["", "Nr"] + (["Auftrag"] if multi else []) + ["Aktion", "Von (Gerät:Port / Ort)", "Nach (Gerät:Port / Ort)", "Kabel", "Bemerkung"]]
     widths = [7, 9] + ([20] if multi else []) + [27, 58, 58, 44, 0]
     widths[-1] = pdf.epw - sum(widths)
     groups: list[tuple[str, list]] = []
@@ -165,7 +171,7 @@ def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]]
             if pdf.get_y() > pdf.h - 40:
                 pdf.add_page()
             pdf.font(10.5, True)
-            pdf.cell(0, 7, t(name), new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 7, t(tr(name)), new_x="LMARGIN", new_y="NEXT")
         pdf.font(8.5)
         with pdf.table(col_widths=widths, line_height=4.4, text_align="LEFT", v_align="TOP", padding=1.2, repeat_headings=1,
                        headings_style=FontFace(emphasis="BOLD", fill_color=GREY), borders_layout="HORIZONTAL_LINES") as table:
@@ -179,20 +185,21 @@ def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]]
                 r.cell(str(n))
                 if multi:
                     r.cell(t(x["order"]))
-                r.cell(t(x["action_label"]))
-                r.cell(t(x["a"] + (f"\n{x['a_location']}" if x["a_location"] else "") + (f" · HE {x['a_unit']}" if x.get("a_unit") else "")))
+                r.cell(t(tr(x["action_label"])))
+                he = tr("HE")
+                r.cell(t(x["a"] + (f"\n{x['a_location']}" if x["a_location"] else "") + (f" · {he} {x['a_unit']}" if x.get("a_unit") else "")))
                 b_where = " · ".join(p for p in ((x["b_location"] if x["b_location"] != x["a_location"] else ""),
-                                                 (f"HE {x['b_unit']}" if x.get("b_unit") else "")) if p)
+                                                 (f"{he} {x['b_unit']}" if x.get("b_unit") else "")) if p)
                 b = x["b"] + (f"\n{b_where}" if x["b"] and b_where else "")
                 if x.get("old_b"):
-                    b += f"\n(bisher: {x['old_b']})"
+                    b += "\n" + tr("(bisher: {old})", old=x["old_b"])
                 r.cell(t(b))
                 r.cell(t(_cable(x)))
-                note = "\n".join(p for p in (f"Konfiguration: {x['cfg_text']}" if x.get("cfg_text") else "", x["note"]) if p)
+                note = "\n".join(p for p in (tr("Konfiguration: {cfg}", cfg=x["cfg_text"]) if x.get("cfg_text") else "", x["note"]) if p)
                 if x["item_status"] == "deviation" and x["deviation_note"]:
-                    note = (note + "\n" if note else "") + f"Abweichung: {x['deviation_note']}"
+                    note = (note + "\n" if note else "") + tr("Abweichung: {note}", note=x["deviation_note"])
                 elif x["item_status"] == "done" and x["executed_by"]:
-                    note = (note + "\n" if note else "") + f"erledigt: {x['executed_by']}"
+                    note = (note + "\n" if note else "") + tr("erledigt: {by}", by=x["executed_by"])
                 r.cell(t(note))
         pdf.ln(2)
 
@@ -201,7 +208,7 @@ def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]]
         pdf.add_page()
     pdf.ln(4)
     pdf.font(9, True)
-    pdf.cell(0, 5, t("Abweichungen / Bemerkungen"), new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 5, t(tr("Abweichungen / Bemerkungen")), new_x="LMARGIN", new_y="NEXT")
     pdf.set_draw_color(148, 163, 184)
     for _ in range(3):
         pdf.ln(7)
@@ -209,7 +216,7 @@ def render(data: dict, *, title: str, subtitle: str, meta: list[tuple[str, str]]
     pdf.ln(12)
     third = pdf.epw / 3
     y = pdf.get_y()
-    for i, label in enumerate(("Ausgeführt von (Name)", "Datum", "Unterschrift")):
+    for i, label in enumerate((tr("Ausgeführt von (Name)"), tr("Datum"), tr("Unterschrift"))):
         x0 = pdf.l_margin + i * third
         pdf.line(x0, y, x0 + third - 8, y)
         pdf.set_xy(x0, y + 0.8)

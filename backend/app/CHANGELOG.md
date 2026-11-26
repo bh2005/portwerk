@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.21.0 – 2026-11-26
+- Englisch für Mails, PDF und CSV: Automatische Benachrichtigungen (Zuweisung, Statusänderungen, Bestätigungsvorschlag, LLDP-Abweichung, Reservierungen, neuer Benutzer, Aufräumbericht) kommen in der Sprache des Empfängers, bei Vertretung in der der Vertretung; bei unterschiedlichen Sprachen geht je Sprache eine eigene Mail raus. „Senden …“ (Auftrag oder Patchliste, auch an freie Adressen) und die Testmail schreiben in der Sprache des Absenders. Arbeitsanweisung und Patchliste als PDF sowie die CSV-Arbeitslisten entstehen in der Sprache dessen, der sie abruft oder versendet (auch Dateinamen). Die Etikettenformate sind übersetzt. Damit ist Portwerk vollständig zweisprachig.
+
 ## 0.20.0 – 2026-11-25
 - Handbuch und Hilfe auf Englisch: Bei englischer Oberfläche erscheinen das Handbuch und die Kontexthilfe (F1) vollständig auf Englisch (eigene Dateien `helpContent.en.js`, `helpTexts.en.js`; fehlt ein Abschnitt, gilt der deutsche).
 - Handbuch und Hilfe aktualisiert (beide Sprachen): veralteten Einstieg und „Ausblick“ auf den heutigen Stand gebracht; ergänzt um Sprachwahl, Autorouting, externe Sicherungsziele, Abwesenheiten und Geräte aus OpenPlan, „fehlt seit“ und „Verbindung übernehmen“ im Soll/Ist-Abgleich sowie „Port umkonfigurieren“.

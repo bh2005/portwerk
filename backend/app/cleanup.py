@@ -123,23 +123,26 @@ def report(me: Principal, site_id: Optional[int] = None, days: int = 30) -> dict
 SYSTEM = Principal(kind="user", name="system", roles={"admin"})
 
 
-def mail_lines(rep: dict) -> list[str]:
+def mail_lines(rep: dict, lang: str = "de") -> list[str]:
+    from . import i18n
+    t = lambda s, **kw: i18n.t(lang, s, **kw)                                                   # noqa: E731
+    since = lambda x: t(" (seit {n} Tagen)", n=x["age_days"]) if x["age_days"] is not None else ""  # noqa: E731
     c = rep["counts"]
-    lines = ["Aufräumbericht – diese Stellen im Bestand sollten nachgepflegt werden:"]
+    lines = [t("Aufräumbericht – diese Stellen im Bestand sollten nachgepflegt werden:")]
     for key, title in SECTIONS.items():
         if c[key]:
-            lines.append(f"• {title}: {c[key]}")
+            lines.append(f"• {t(title)}: {c[key]}")
     old = sum(1 for x in rep["provisional"] if x["old"])
     if old:
-        lines.append(f"Davon vorläufige Kabel älter als {rep['days']} Tage: {old}.")
+        lines.append(t("Davon vorläufige Kabel älter als {days} Tage: {n}.", days=rep["days"], n=old))
     for x in rep["provisional"][:10]:
-        lines.append(f"  – vorläufig: {x['a']['text']} ↔ {x['b']['text']}" + (f" (seit {x['age_days']} Tagen)" if x["age_days"] is not None else ""))
+        lines.append(t("  – vorläufig: {a} ↔ {b}", a=x["a"]["text"], b=x["b"]["text"]) + since(x))
     old_ns = sum(1 for x in rep["not_seen"] if x["old"])
     if old_ns:
-        lines.append(f"Davon Verbindungen, die LLDP seit mehr als {rep['days']} Tagen nicht sieht: {old_ns}.")
+        lines.append(t("Davon Verbindungen, die LLDP seit mehr als {days} Tagen nicht sieht: {n}.", days=rep["days"], n=old_ns))
     for x in rep["not_seen"][:10]:
-        lines.append(f"  – nicht gesehen: {x['device']}:{x['port']} → {x['soll']}" + (f" (seit {x['age_days']} Tagen)" if x["age_days"] is not None else ""))
-    lines.append("Details und Aktionen in Portwerk unter „Aufräumen“.")
+        lines.append(t("  – nicht gesehen: {port} → {soll}", port=f"{x['device']}:{x['port']}", soll=x["soll"]) + since(x))
+    lines.append(t("Details und Aktionen in Portwerk unter „Aufräumen“."))
     return lines
 
 
@@ -160,4 +163,5 @@ def weekly_mail(today: Optional[date] = None, force: bool = False) -> int:
     if not sum(rep["counts"].values()):
         return 0
     total = sum(rep["counts"].values())
-    return notifications.send_cleanup_report(f"[Portwerk] Aufräumbericht: {total} offene Punkte", mail_lines(rep))
+    from . import i18n
+    return notifications.send_cleanup_report(lambda lang: (i18n.t(lang, "[Portwerk] Aufräumbericht: {n} offene Punkte", n=total), mail_lines(rep, lang)))

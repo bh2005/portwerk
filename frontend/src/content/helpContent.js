@@ -12,7 +12,7 @@ export const sections = [
 <ul><li><b>Hilfe:</b> F1 oder ? öffnet die Hilfe zur aktuellen Seite. Das Fragezeichen-Symbol neben Feldern zeigt einen Kurztipp.</li>
 <li><b>Dunkelmodus</b> und <b>Profil</b> (Passwort, Sprache, Benachrichtigungen) findest du unten in der Seitenleiste.</li>
 <li>Die Seitenleiste lässt sich über das Menü-Symbol einklappen.</li>
-<li><b>Sprache:</b> Deutsch oder Englisch, je Benutzer unter „Mein Profil → Persönliche Einstellungen“; vor der Anmeldung über den Umschalter auf der Anmeldeseite.</li>
+<li><b>Sprache:</b> Deutsch oder Englisch, je Benutzer unter „Mein Profil → Persönliche Einstellungen“; vor der Anmeldung über den Umschalter auf der Anmeldeseite. Benachrichtigungen kommen in der Sprache des Empfängers; PDF und CSV-Listen entstehen in der Sprache dessen, der sie abruft oder versendet.</li>
 <li><b>Änderungen anderer:</b> Ändert jemand anderes Daten (oder ein API-Zugang, z. B. der Checkmk-Import), erscheint oben der Hinweis „… hat Daten geändert“. <b>Neu laden</b> zeigt den aktuellen Stand, <b>Ausblenden</b> merkt sich ihn bis zur nächsten Änderung. Es wird nichts überschrieben und kein Formular verändert; nur die Übersicht lädt von selbst nach. Eigene Änderungen lösen keinen Hinweis aus.</li></ul>` },
 
   { id: 'standorte', title: 'Standorte und Racks', html: `
@@ -36,7 +36,7 @@ export const sections = [
 <li><b>Zeitreise:</b> „Vergleich“ zeigt, was sich zwischen zwei Zeitpunkten an der Verkabelung geändert hat – neu, entfernt, umgesteckt (ein Port vorher mit A, nachher mit B), nur zwischenzeitlich gesteckt – jeweils mit wem bzw. welchem Auftrag. „Stand am“ listet alle Verbindungen zu einem Zeitpunkt. Im Pfad-Dialog zeigt „Stand am“ die Strecke von damals. Historisiert sind die Verbindungen; Orte und Patchfeld-Gegenseiten sind der heutige Stand.</li>
 <li><b>Aufräumen:</b> sammelt Stellen, die nachgepflegt werden sollten: vorläufige Kabel aus dem Soll/Ist-Abgleich (im Strecken-Editor Dosen/Patchfelder nachtragen und „Strecke vollständig“ wählen), dokumentierte Verbindungen, die LLDP nicht sieht (mögliche tote Patchung; mit „fehlt seit“ ab dem ersten Import ohne die Verbindung und „zuletzt gesehen“, älteste zuerst), abgelaufene Reservierungen (gesammelt löschbar), offene Aufträge ohne Änderung seit X Tagen und geplante Geräte ohne Auftrag. Globale Administratoren bekommen montags eine Zusammenfassung per E-Mail (abbestellbar im Profil).</li>
 <li><b>Kapazität:</b> freie, belegte, verplante (offene Aufträge) und reservierte Ports je Kategorie (Switchports, Patchfeld, Dosen, PDU) über die Orte zusammengezählt, dazu je Rack die freien Höheneinheiten und der größte zusammenhängende freie Block. Bereiche unter der Schwelle (Standard 10 % frei) erscheinen als Engpass – auch als Karte auf der Übersicht.</li>
-<li><b>Arbeitsanweisung als PDF:</b> im Patchauftrag „Arbeitsanweisung (PDF)“, in der Patchliste „PDF“ – nach Ort gruppiert, mit Kästchen zum Abhaken, Feld für Abweichungen und Unterschrift sowie QR-Code zum Auftrag. Nicht freigegebene Aufträge tragen den Hinweis „nicht ausführen“. Beim Versand per E-Mail kann das PDF angehängt werden.</li>
+<li><b>Arbeitsanweisung als PDF:</b> im Patchauftrag „Arbeitsanweisung (PDF)“, in der Patchliste „PDF“ – nach Ort gruppiert, mit Kästchen zum Abhaken, Feld für Abweichungen und Unterschrift sowie QR-Code zum Auftrag. Nicht freigegebene Aufträge tragen den Hinweis „nicht ausführen“. Beim Versand per E-Mail kann das PDF angehängt werden. Es entsteht in der Sprache dessen, der es abruft oder versendet.</li>
 <li><b>Kabeletiketten:</b> „Etiketten“ auf der Geräteseite bzw. „Kabeletiketten“ im Patchauftrag (auch vor der Bestätigung) – Formate für Band (12/19/24 mm) und A4-Bögen, wahlweise je Kabelende ein Etikett. Der QR-Code enthält die Kabelnummer: nach dem Scannen zeigt Portwerk, wo das Kabel steckt, ob es geplant ist und wo es früher steckte. Ohne Kabelnummer gibt es bei geplanten Positionen keinen QR-Code.</li>
 <li><b>Verbindungs-Historie</b> (unten auf der Geräteseite): alle aktuellen und früheren Verbindungen mit Zeitraum, wer bzw. welcher Auftrag sie hergestellt und getrennt hat. Mit <b>Stand am</b> zeigt sie, was zu einem bestimmten Zeitpunkt steckte; <b>Historie</b> in der Portzeile filtert auf einen Port. Gelöschte Ports und Geräte bleiben mit ihrem damaligen Namen erhalten.</li></ul>` },
 
@@ -95,6 +95,5 @@ export const sections = [
   { id: 'ausblick', title: 'Ausblick', html: `
 <ul><li>Webhooks an andere Systeme (z. B. „Auftrag bestätigt“, „LLDP-Abweichung“)</li>
 <li>VLAN-Soll/Ist für Trunks, Voice-VLANs und andere Hersteller</li>
-<li>Historie für Geräte-Orte und Patchfeld-Paare (Zeitreise mit den Orten von damals)</li>
-<li>Englisch für Mails, Arbeitsanweisung (PDF) und Etiketten</li></ul>` },
+<li>Historie für Geräte-Orte und Patchfeld-Paare (Zeitreise mit den Orten von damals)</li></ul>` },
 ]
