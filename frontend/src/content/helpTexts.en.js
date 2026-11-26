@@ -57,7 +57,16 @@ export const T_EN = {
 <ul><li><b>Remote end:</b> one of your own sites or free text (e.g. internet). <b>Ports</b> on a router/firewall are optional; a port belongs to at most one active connection.</li>
 <li><b>Changes run as orders:</b> “Activate”, “Change via order” and “Terminate” create a patch order. The status or the new values only apply once the order is confirmed.</li>
 <li><b>Edit directly</b> (administrators): for recording existing circuits.</li>
-<li>The filter “Contract ends within 90 days” shows termination and renewal dates; CSV export for evaluations.</li></ul>`,
+<li>The filter “Contract ends within 90 days” shows termination and renewal dates; CSV export for evaluations.</li>
+<li>If <b>SIP trunks</b> run over the line, they are listed in the details – terminating or changing it then affects telephony.</li>
+<li>Visible only with the “WAN” grant (Administration → Users → Additional areas); administrators always see this area.</li></ul>`,
+
+  '/telephony': `<h2>Telephony: SIP trunks</h2>
+<p>Directory of SIP trunks: provider, trunk ID, registrar, connection (registration or static/IP peering), channels, number blocks and contract.</p>
+<ul><li><b>SBC:</b> the device where the trunk terminates (type SBC, voice gateway, gateway, router or firewall) – at the same site. <b>PBX:</b> a device of type PBX, e.g. the HiPath. <b>WAN line:</b> a line of this site.</li>
+<li><b>Changes run as orders:</b> “Activate”, “Change via order” and “Terminate” create a patch order; status and new values only apply once it is confirmed.</li>
+<li><b>Edit directly</b> (administrators): for recording existing trunks. Numbers one block per line, e.g. <code>+49 6181 1234-0…99</code>; the search also finds single numbers.</li>
+<li>Visible only with the “Telephony” grant (Administration → Users → Additional areas); administrators always see this area.</li></ul>`,
 
   '/workorders': `<h2>Patch orders</h2>
 <p>Changes to cabling and devices run as orders: <b>draft → submit → approve → carry out → confirm</b>. Only the confirmation changes the inventory.</p>

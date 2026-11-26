@@ -7,12 +7,15 @@ from pydantic import BaseModel, Field
 
 DEVICE_TYPES = ("switch", "router", "firewall", "ap", "server", "patchpanel", "outlet", "endpoint",
                 "pdu", "ups", "timeserver", "media_converter", "cable_mgmt", "blank_panel", "shelf",
-                "plc", "hmi", "io_module", "drive", "gateway", "power_supply", "other")
+                "plc", "hmi", "io_module", "drive", "gateway", "power_supply",
+                "pbx", "sbc", "voice_gateway", "dect_base", "phone", "other")
 DEVICE_STATUS = ("planned", "active", "retired")
 LOCATION_KINDS = ("building", "floor", "room", "machine", "vehicle", "rack", "wallrack", "cabinet")
 CONTAINER_KINDS = ("rack", "wallrack", "cabinet")             # nehmen Geräte auf und können eine HE-Teilung (rack_units) haben
 PORT_MEDIA = ("RJ45", "SFP", "SFP+", "SFP28", "QSFP", "LWL", "BNC", "RJ11", "RS232", "RS485",
-              "C13", "C14", "Schuko", "other")
+              "C13", "C14", "Schuko",
+              "UP0E", "S0", "S2M", "a/b", "TAE", "LSA",                # Telefonie: HiPath-Schnittstellen, TAE-Dose, LSA-Leiste (Verteiler)
+              "other")
 SOURCES = ("manual", "csv", "json", "api", "checkmk", "openplan")
 CABLE_CATEGORIES = ("copper", "fiber", "power", "coax", "serial", "telco", "other")
 
@@ -99,7 +102,8 @@ class CableIn(BaseModel):
 
 
 WORKORDER_STATUSES = ("draft", "submitted", "approved", "rejected", "in_progress", "done", "confirmed", "rework")
-WORKITEM_ACTIONS   = ("connect", "disconnect", "move", "install_device", "remove_device", "wan_activate", "wan_change", "wan_terminate", "configure")
+WORKITEM_ACTIONS   = ("connect", "disconnect", "move", "install_device", "remove_device", "wan_activate", "wan_change", "wan_terminate", "configure",
+                      "trunk_activate", "trunk_change", "trunk_terminate")
 MOUNT_SIDES        = ("front", "rear", "both")                      # Einbauseite im Rack
 ORIENTATIONS       = ("horizontal", "vertical", "din_rail")          # 19 Zoll (HE), hochkant im Seitenkanal oder Hutschiene/Montageplatte (ohne HE-Raster)
 SIDE_SLOTS         = ("", "left", "right")
@@ -127,6 +131,8 @@ class WorkItemIn(BaseModel):
     device_id:    Optional[int] = None      # bei install_device / remove_device
     wan_link_id:  Optional[int] = None      # bei wan_activate / wan_change / wan_terminate
     wan_patch:    dict = {}                 # bei wan_change: neue Werte (Bandbreite, Provider, Vertragsende …)
+    sip_trunk_id: Optional[int] = None      # bei trunk_activate / trunk_change / trunk_terminate
+    trunk_patch:  dict = {}                 # bei trunk_change: neue Werte (Kanäle, Rufnummern, SBC …)
     remove_old:   bool = False              # belegten Port: alten Patch per Rückbau-Auftrag entfernen (statt Fehler)
     port_a_id:    Optional[int] = None
     port_b_id:    Optional[int] = None
@@ -158,6 +164,7 @@ class UserCreate(BaseModel):
     password: str
     roles: list[str] = Field(default_factory=lambda: ["viewer"])   # globale Rollen (leer = nur Bereichs-Rechte)
     scopes: list[ScopeIn] = Field(default_factory=list)           # Rollen nur für bestimmte Standorte
+    areas: list[str] = Field(default_factory=list)                # Sonderbereiche: wan, telephony (nur globale Admins vergeben)
     full_name: str = ""
     email: str = ""
 
@@ -166,6 +173,7 @@ class UserUpdate(BaseModel):
     roles: Optional[list[str]] = None
     scopes: Optional[list[ScopeIn]] = None                        # gewünschte Bereichs-Rechte (manuell); ersetzt die bisherigen im eigenen Verwaltungsbereich
     active: Optional[bool] = None
+    areas: Optional[list[str]] = None                             # Sonderbereiche (nur globale Admins)
     full_name: Optional[str] = None
     email: Optional[str] = None
 
@@ -188,6 +196,7 @@ class TokenCreate(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     scope: str = "read"                          # read | write
     expires_days: Optional[int] = Field(default=None, ge=1, le=3650)
+    areas: list[str] = Field(default_factory=list)  # Sonderbereiche: wan, telephony
 
 
 class PortGroup(BaseModel):

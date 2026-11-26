@@ -18,7 +18,7 @@ def _like(q: str) -> str:
 @router.get("")
 def search(q: str = Query("", max_length=100), me: Principal = Depends(current_principal)):
     q = q.strip()
-    out: dict = {"q": q, "devices": [], "sites": [], "locations": [], "wan": [], "orders": [], "cables": []}
+    out: dict = {"q": q, "devices": [], "sites": [], "locations": [], "wan": [], "trunks": [], "orders": [], "cables": []}
     if len(q) < 2:
         return out
     pat = _like(q)
@@ -53,11 +53,19 @@ def search(q: str = Query("", max_length=100), me: Principal = Depends(current_p
         out["locations"].append({"id": r["id"], "name": r["name"], "kind": r["kind"], "ident": r["ident"], "path": masterdata.location_path(r["id"])})
 
     for r in db.rows("SELECT * FROM wan_links WHERE (name LIKE ? ESCAPE '\\' OR circuit_id LIKE ? ESCAPE '\\' OR provider LIKE ? ESCAPE '\\' "
-                     "OR contract_number LIKE ? ESCAPE '\\') ORDER BY name COLLATE NOCASE LIMIT 40", (pat, pat, pat, pat)):
+                     "OR contract_number LIKE ? ESCAPE '\\') ORDER BY name COLLATE NOCASE LIMIT 40", (pat, pat, pat, pat)) if me.can_see("wan") else []:
         if not (access.can_read_site(me, r["site_a_id"]) or access.can_read_site(me, r["site_b_id"])):
             continue
         out["wan"].append({"id": r["id"], "name": r["name"], "status": r["status"], "provider": r["provider"], "circuit_id": r["circuit_id"]})
         if len(out["wan"]) >= PER_KIND:
+            break
+
+    for r in db.rows("SELECT * FROM sip_trunks WHERE (name LIKE ? ESCAPE '\\' OR trunk_ident LIKE ? ESCAPE '\\' OR provider LIKE ? ESCAPE '\\' "
+                     "OR numbers LIKE ? ESCAPE '\\' OR contract_number LIKE ? ESCAPE '\\') ORDER BY name COLLATE NOCASE LIMIT 40", (pat,) * 5) if me.can_see("telephony") else []:
+        if not access.can_read_site(me, r["site_id"]):
+            continue
+        out["trunks"].append({"id": r["id"], "name": r["name"], "status": r["status"], "provider": r["provider"], "trunk_ident": r["trunk_ident"]})
+        if len(out["trunks"]) >= PER_KIND:
             break
 
     for w in db.rows("SELECT id, number, title, status, location_id FROM workorders WHERE (number LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\') "

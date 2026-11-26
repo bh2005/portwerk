@@ -71,6 +71,15 @@ def require_writer(p: Principal = Depends(current_principal)) -> Principal:
     raise HTTPException(403, "Nur für Administratoren, Bereichs-Administratoren oder API-Zugänge mit Umfang „write“")
 
 
+def require_area(area: str):
+    """Abhängigkeit für Sonderbereiche (WAN, Telefonie): nur ausdrücklich zugelassene Benutzer/API-Zugänge und globale Admins."""
+    def dep(p: Principal = Depends(current_principal)) -> Principal:
+        if not p.can_see(area):
+            raise HTTPException(403, "Kein Zugriff auf diesen Bereich (Freigabe durch einen Administrator nötig)")
+        return p
+    return dep
+
+
 def require_global(p: Principal = Depends(current_principal)) -> Principal:
     if not p.is_global:
         raise HTTPException(403, "Nur mit globaler Berechtigung")

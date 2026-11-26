@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from .. import access, audit, db
 from ..auth import Principal, current_principal
 
-router = APIRouter(prefix="/api/wan", tags=["wan"])
+router = APIRouter(prefix="/api/wan", tags=["wan"], dependencies=[Depends(access.require_area("wan"))])
 
 STATUSES = ("planned", "ordered", "active", "suspended", "terminated")
 STATUS_LABELS = {"planned": "geplant", "ordered": "bestellt", "active": "in Betrieb", "suspended": "ruhend", "terminated": "gekündigt"}
@@ -174,6 +174,9 @@ def get_link(lid: int, me: Principal = Depends(current_principal)):
     o["orders"] = [dict(x) for x in db.rows(
         """SELECT DISTINCT w.id, w.number, w.title, w.status, i.action FROM workitems i JOIN workorders w ON w.id = i.workorder_id
            WHERE i.wan_link_id = ? ORDER BY w.id DESC""", (lid,))]
+    o["sip_trunks"] = [{"id": t["id"], "name": t["name"], "status": t["status"], "status_label": STATUS_LABELS.get(t["status"], t["status"])}
+                       for t in db.rows("SELECT id, name, status, site_id FROM sip_trunks WHERE wan_link_id = ? ORDER BY name COLLATE NOCASE", (lid,))
+                       if me.can_see("telephony") and access.can_read_site(me, t["site_id"])]
     return o
 
 
@@ -252,6 +255,8 @@ def apply_item(item: dict) -> None:
 
 def validate_item(me: Principal, action: str, lid: Optional[int], patch: dict) -> dict:
     """Prüft eine WAN-Position beim Anlegen; liefert die bereinigten Änderungswerte (nur bei wan_change)."""
+    if not me.can_see("wan"):
+        raise HTTPException(403, "Kein Zugriff auf diesen Bereich (Freigabe durch einen Administrator nötig)")
     r = db.row("SELECT * FROM wan_links WHERE id = ?", (lid,)) if lid else None
     if not r:
         raise HTTPException(400, "Für WAN-Positionen muss eine vorhandene WAN-Verbindung gewählt werden")

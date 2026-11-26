@@ -28,6 +28,7 @@ EN = {
     "Ausgeführt": "Carried out", "Bestätigt": "Confirmed", "Nacharbeit": "Rework",
     "Verbindung herstellen": "Connect", "Verbindung trennen": "Disconnect", "Verbindung umstecken": "Re-plug connection", "Gerät einbauen": "Install device",
     "Gerät zurückbauen": "Remove device", "WAN in Betrieb nehmen": "Activate WAN", "WAN ändern": "Change WAN", "WAN kündigen": "Terminate WAN",
+    "SIP-Trunk in Betrieb nehmen": "Activate SIP trunk", "SIP-Trunk ändern": "Change SIP trunk", "SIP-Trunk kündigen": "Terminate SIP trunk",
     "Port umkonfigurieren": "Reconfigure port",
     "niedrig": "low", "normal": "normal", "hoch": "high", "kritisch": "critical",
     "offen": "open", "erledigt": "done", "Abweichung": "Deviation", "(ohne Ort)": "(no location)",

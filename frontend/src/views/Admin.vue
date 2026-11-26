@@ -30,7 +30,8 @@
                 <span v-if="u.absent" class="ml-1 text-sky-700 dark:text-sky-300">{{ $t('abwesend bis {d}', { d: u.absent.until.split('-').reverse().join('.') }) }}{{ u.absent.deputy ? ' · ' + $t('Vertretung: {name}', { name: u.absent.deputy.username }) : '' }}</span></div></td>
               <td :class="td"><div v-if="u.roles.length">{{ u.roles.map(roleLabel).join(', ') }} <span class="text-[10px] text-slate-400">{{ $t('(global)') }}</span></div>
                 <div class="flex flex-wrap gap-1 mt-0.5"><span v-for="s in u.scopes" :key="s.id" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" :title="s.source === 'ldap' ? $t('aus AD-Gruppe') : $t('manuell vergeben')">{{ scopeText(s) }}<span v-if="s.source === 'ldap'">{{ ' ' + $t('· AD') }}</span></span></div>
-                <div v-if="!u.roles.length && !u.scopes.length" class="text-xs text-slate-400">–</div></td>
+                <div v-if="!u.roles.length && !u.scopes.length" class="text-xs text-slate-400">–</div>
+                <div v-if="u.areas?.length" class="flex flex-wrap gap-1 mt-0.5"><span v-for="a in u.areas" :key="a" class="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">{{ areaLabel(a) }}</span></div></td>
               <td :class="td" class="text-slate-500">{{ fmtTime(u.last_login) }}</td>
               <td :class="td">{{ u.active ? $t('aktiv') : $t('gesperrt') }}</td>
               <td :class="td" class="text-right whitespace-nowrap">
@@ -60,7 +61,7 @@
           <tbody>
             <tr v-if="!tokens.length"><td colspan="7" class="px-3 py-6 text-center text-slate-400">{{ $t('Noch keine API-Zugänge.') }}</td></tr>
             <tr v-for="t in tokens" :key="t.id" class="border-t border-slate-100 dark:border-slate-700" :class="t.revoked ? 'opacity-50' : ''">
-              <td :class="td">{{ t.name }}</td><td :class="td" class="font-mono text-xs">{{ t.prefix }}…</td><td :class="td">{{ t.scope }}</td>
+              <td :class="td">{{ t.name }}</td><td :class="td" class="font-mono text-xs">{{ t.prefix }}…</td><td :class="td">{{ t.scope }}<span v-for="a in t.areas || []" :key="a" class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">{{ areaLabel(a) }}</span></td>
               <td :class="td" class="text-slate-500">{{ fmtTime(t.created_at) }}</td><td :class="td" class="text-slate-500">{{ t.expires_at ? fmtTime(t.expires_at) : $t('nie') }}</td>
               <td :class="td" class="text-slate-500">{{ fmtTime(t.last_used_at) }}</td>
               <td :class="td" class="text-right"><span v-if="t.revoked" class="text-xs text-slate-400">{{ $t('widerrufen') }}</span><button v-else :class="btnDanger" @click="revokeToken(t)">{{ $t('Widerrufen') }}</button></td>
@@ -126,6 +127,9 @@
         <p v-if="userForm.ldapScopes.length" class="text-xs text-slate-400 mt-2">{{ $t('Aus AD-Gruppen (nicht änderbar):') }} {{ userForm.ldapScopes.map(scopeText).join(', ') }}</p>
         <p v-if="!globalAdmin" class="text-xs text-slate-400 mt-1">{{ $t('Du kannst Rechte nur für Standorte vergeben, für die du Administrator bist.') }}</p>
       </div>
+      <div v-if="globalAdmin"><label :class="lbl">{{ $t('Zusätzliche Bereiche') + ' ' }}<span class="normal-case text-slate-300">{{ $t('– nur mit Freigabe sichtbar (Administratoren sehen sie immer)') }}</span></label>
+        <label v-for="[k, l, desc] in AREAS" :key="k" class="flex items-center gap-2 text-sm py-0.5 text-slate-700 dark:text-slate-200">
+          <input type="checkbox" :value="k" v-model="userForm.areas" class="rounded text-ks-600" />{{ ' ' + $t(l) }} <span class="text-xs text-slate-400">– {{ $t(desc) }}</span></label></div>
       <p v-if="userForm.source === 'ldap'" class="text-xs text-slate-400">{{ $t('AD-Konto: Sind unter AD / LDAP Gruppen zugeordnet, werden die Rollen bei jeder Anmeldung aus dem Verzeichnis gesetzt; ohne Gruppen-Zuordnung bleiben die hier vergebenen Rollen bestehen.') }}</p>
       <label v-if="userForm.id && !userForm.limited" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="checkbox" v-model="userForm.active" class="rounded text-ks-600" />{{ ' ' + $t('Konto aktiv') }}</label>
       <p v-if="userForm.id && userForm.limited" class="text-xs text-slate-400">{{ $t('Dieser Benutzer gehört auch zu anderen Bereichen: Du siehst und änderst nur die Rechte deiner Standorte.') }}</p>
@@ -155,6 +159,9 @@
         <div><label :class="lbl">{{ $t('Umfang') }}</label><select v-model="tokenForm.scope" :class="inp"><option value="read">{{ $t('read – nur lesen') }}</option><option value="write">{{ $t('write – lesen und schreiben') }}</option></select></div>
         <div><label :class="lbl">{{ $t('Gültig (Tage)') }}</label><input v-model.number="tokenForm.expires_days" type="number" min="1" :class="inp" :placeholder="$t('unbegrenzt')" /></div>
       </div>
+      <div><label :class="lbl">{{ $t('Zusätzliche Bereiche') }}</label>
+        <label v-for="[k, l] in AREAS" :key="k" class="flex items-center gap-2 text-sm py-0.5 text-slate-700 dark:text-slate-200">
+          <input type="checkbox" :value="k" v-model="tokenForm.areas" class="rounded text-ks-600" />{{ ' ' + $t(l) }}</label></div>
       <template #footer>
         <button @click="tokenForm = null" :class="btnGhost">{{ $t('Abbrechen') }}</button>
         <button @click="saveToken" :class="btnPrimary" :disabled="!tokenForm.name">{{ $t('Erstellen') }}</button>
@@ -187,6 +194,8 @@ const absenceFor = ref(null)
 const tabs = globalAdmin ? [['users', t('Benutzer')], ['tokens', t('API-Zugänge')], ['ldap', 'AD / LDAP'], ['tls', t('Zertifikat (ACME)')], ['backup', t('Sicherung')], ['mail', t('E-Mail')], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan'], ['audit', 'Audit-Log'], ['releases', t('Releases')]] : [['users', t('Benutzer')]]
 const sites = ref([])
 const siteChoices = () => globalAdmin ? sites.value : sites.value.filter(s => siteAdminIds().includes(s.id))
+const AREAS = [['wan', 'WAN', 'WAN-Verbindungen, Provider-Verträge'], ['telephony', 'Telefonie', 'SIP-Trunks, Rufnummern']]
+const areaLabel = a => t((AREAS.find(x => x[0] === a) || [a, a])[1])
 const scopeText = s => `${roleLabel(s.role)} @ ${s.site_code}`
 const tab = ref('users')
 const users = ref([]), tokens = ref([]), audit = ref([])
@@ -226,8 +235,8 @@ watch(tab, t => { helpContext.value = t; load() }, { immediate: true })
 function openUser(u) {
   formError.value = ''
   userForm.value = u
-    ? { ...u, roles: [...u.roles], scopes: u.scopes.filter(s => s.source === 'manual').map(s => ({ role: s.role, site_id: s.site_id, all: false })), ldapScopes: u.scopes.filter(s => s.source === 'ldap') }
-    : { username: '', password: '', full_name: '', email: '', roles: globalAdmin ? ['viewer'] : [], scopes: [], ldapScopes: [] }
+    ? { ...u, roles: [...u.roles], areas: [...(u.areas || [])], scopes: u.scopes.filter(s => s.source === 'manual').map(s => ({ role: s.role, site_id: s.site_id, all: false })), ldapScopes: u.scopes.filter(s => s.source === 'ldap') }
+    : { username: '', password: '', full_name: '', email: '', roles: globalAdmin ? ['viewer'] : [], areas: [], scopes: [], ldapScopes: [] }
 }
 function addScope() { userForm.value.scopes.push({ role: 'viewer', site_id: null, all: false }) }
 const canSave = computed(() => {
@@ -243,7 +252,7 @@ async function saveUser() {
     const f = userForm.value
     const allRoles = f.scopes.filter(s => s.all).map(s => s.role)                       // „alle Standorte“ = globale Rolle
     const roles = globalAdmin ? [...new Set([...f.roles, ...allRoles])] : f.roles
-    const body = { roles: globalAdmin ? roles : undefined, scopes: f.scopes.filter(s => s.site_id && !s.all).map(s => ({ role: s.role, site_id: s.site_id })), full_name: f.full_name, email: f.email }
+    const body = { roles: globalAdmin ? roles : undefined, scopes: f.scopes.filter(s => s.site_id && !s.all).map(s => ({ role: s.role, site_id: s.site_id })), full_name: f.full_name, email: f.email, areas: globalAdmin ? f.areas : undefined }
     f.id ? await api.updateUser(f.id, { ...body, active: f.limited ? undefined : f.active }) : await api.createUser({ ...body, roles: globalAdmin ? roles : [], username: f.username, password: f.password })
     userForm.value = null; await load()
   } catch (e) { formError.value = errText(e) }
@@ -261,7 +270,7 @@ async function removeUser(u) {
   try { await api.deleteUser(u.id); await load() } catch (e) { error.value = errText(e) }
 }
 
-function openToken() { formError.value = ''; tokenForm.value = { name: '', scope: 'read', expires_days: null } }
+function openToken() { formError.value = ''; tokenForm.value = { name: '', scope: 'read', expires_days: null, areas: [] } }
 async function saveToken() {
   try {
     newToken.value = await api.createToken({ ...tokenForm.value, expires_days: tokenForm.value.expires_days || null })

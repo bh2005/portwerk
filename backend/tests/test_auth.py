@@ -68,7 +68,7 @@ def test_api_tokens_scopes(client, admin, site):
     assert client.post("/api/sites", headers=write, json={"code": "B", "name": "B"}).status_code == 201
     assert client.get("/api/users", headers=write).status_code == 403                    # ein Token verwaltet nie Benutzer
     assert client.post("/api/tokens", headers=write, json={"name": "x"}).status_code == 403
-    assert client.get("/auth/me", headers=write).json() == {"kind": "token", "name": "schreiben", "scope": "write"}
+    assert client.get("/auth/me", headers=write).json() == {"kind": "token", "name": "schreiben", "scope": "write", "areas": []}
     assert client.get("/api/sites", headers={"X-API-Key": write["Authorization"][7:]}).status_code == 200
     assert client.get("/api/sites", headers={"Authorization": "Bearer opp_falsch"}).status_code == 401
 

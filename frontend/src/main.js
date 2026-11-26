@@ -5,6 +5,7 @@ import LoginView from './views/LoginView.vue'
 import Dashboard from './views/Dashboard.vue'
 import Sites from './views/Sites.vue'
 import Wan from './views/Wan.vue'
+import Telephony from './views/Telephony.vue'
 import Compare from './views/Compare.vue'
 import Devices from './views/Devices.vue'
 import DeviceDetail from './views/DeviceDetail.vue'
@@ -41,6 +42,7 @@ const router = createRouter({
     { path: '/devices/:id', component: DeviceDetail },
     { path: '/racks',       component: Racks },
     { path: '/wan',         component: Wan },
+    { path: '/telephony',   component: Telephony },
     { path: '/compare',     component: Compare },
     { path: '/catalog',     component: Catalog },
     { path: '/workorders',    component: WorkOrderList },

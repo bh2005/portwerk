@@ -2,6 +2,11 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.22.0 – 2026-11-26
+- Telefonie, Geräte: neue Gerätetypen TK-Anlage, Session Border Controller (SBC), Sprach-Gateway (analog/ISDN), DECT-Basisstation und Telefon; neue Port-Medien UP0E, S0, S2M und a/b (HiPath-Schnittstellen) sowie TAE und LSA, passend zur Kabelkategorie „Telefon“.
+- Telefonie, SIP-Trunks: neues Menü „Telefonie“ mit Provider, Trunk-Kennung, Registrar, Anbindung (Registrierung/statisch), Kanälen, Rufnummernblöcken und Vertrag, verknüpft mit SBC, TK-Anlage und WAN-Leitung. In Betrieb nehmen, Ändern und Kündigen laufen als Patchauftrag mit Freigabe (auch in Patchliste, PDF und mobiler Ansicht). Die WAN-Leitung zeigt ihre Trunks und warnt, dass die Telefonie betroffen ist; SBC und TK-Anlage listen ihre Trunks. Schnellsuche findet Trunks und Rufnummern, CSV-Export.
+- Sichtbarkeit WAN und Telefonie: Beide Bereiche sehen nur noch ausdrücklich freigeschaltete Benutzer und API-Zugänge (Verwaltung → Benutzer bzw. API-Zugang → „Zusätzliche Bereiche“); globale Administratoren sehen sie immer und vergeben die Freigabe. **Achtung:** Bisherige Benutzer ohne Administratorrolle sehen WAN erst nach der Freigabe.
+
 ## 0.21.1 – 2026-11-26
 - Checkmk-Anbindung ohne HTTPS: Steht in der REST-Anbindung eine `http://`-Adresse, warnt die Verwaltung deutlich, dass Automation-User und Secret im Klartext übertragen werden; auch der Verbindungstest weist darauf hin. Das Schema der Adresse darf jetzt auch groß geschrieben sein.
 - Python 3.9: Zeitpunkte mit „Z“ (UTC) in der Zeitreise funktionieren auch unter Python 3.9/3.10; im PDF ohne DejaVu-Schrift bleibt „·“ erhalten. Die CI testet jetzt mit Python 3.9 und 3.12.

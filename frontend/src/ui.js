@@ -17,7 +17,9 @@ export const DEVICE_TYPES = [
   ['timeserver', 'Zeitserver / Funkuhr'], ['media_converter', 'Medienkonverter'],
   ['cable_mgmt', 'Kabelführung'], ['blank_panel', 'Blindblende'], ['shelf', 'Fachboden'],
   ['plc', 'SPS / Steuerung'], ['hmi', 'Bedienpanel (HMI)'], ['io_module', 'I/O-Modul'], ['drive', 'Antrieb / Umrichter'], ['gateway', 'Gateway / Modem'],
-  ['power_supply', 'Netzteil'], ['other', 'Sonstiges'],
+  ['power_supply', 'Netzteil'],
+  ['pbx', 'TK-Anlage'], ['sbc', 'Session Border Controller (SBC)'], ['voice_gateway', 'Sprach-Gateway (analog/ISDN)'], ['dect_base', 'DECT-Basisstation'], ['phone', 'Telefon'],
+  ['other', 'Sonstiges'],
 ]
 export const PASSIVE_TYPES = ['cable_mgmt', 'blank_panel', 'shelf']      // Platzhalter ohne Ports: belegen nur Rackplatz
 export const MOUNT_SIDES = [['front', 'Vorderseite'], ['rear', 'Rückseite'], ['both', 'beide Seiten (durchgehend)']]
@@ -29,12 +31,12 @@ export const LOCATION_KINDS = [['building', 'Gebäude'], ['floor', 'Etage'], ['r
 export const CONTAINER_KINDS = ['rack', 'wallrack', 'cabinet']                 // nehmen Geräte auf, können eine HE-Teilung haben
 export const PLACE_KINDS = ['room', 'machine', 'vehicle', 'rack', 'wallrack', 'cabinet']   // Orte, an denen Geräte stehen können
 export const MOVABLE_KINDS = ['vehicle', 'machine', 'cabinet', 'wallrack', 'rack']        // lassen sich an einen anderen Standort verlegen
-export const PORT_MEDIA = ['RJ45', 'SFP', 'SFP+', 'SFP28', 'QSFP', 'LWL', 'BNC', 'RJ11', 'RS232', 'RS485', 'C13', 'C14', 'Schuko', 'other']
+export const PORT_MEDIA = ['RJ45', 'SFP', 'SFP+', 'SFP28', 'QSFP', 'LWL', 'BNC', 'RJ11', 'RS232', 'RS485', 'C13', 'C14', 'Schuko', 'UP0E', 'S0', 'S2M', 'a/b', 'TAE', 'LSA', 'other']
 export const CABLE_CATEGORIES = [['copper', 'Kupfer (Daten)'], ['fiber', 'Glasfaser'], ['power', 'Strom'], ['coax', 'Koax'], ['serial', 'Seriell / Signal'], ['telco', 'Telefon'], ['other', 'Sonstiges']]
 // Welche Port-Medien zu welcher Kabelkategorie passen (spiegelt den Server; „other“ passt immer, Abweichungen sind nur ein Hinweis)
 export const CATEGORY_MEDIA = {
   copper: ['RJ45', 'SFP', 'SFP+', 'SFP28', 'QSFP'], fiber: ['LWL', 'SFP', 'SFP+', 'SFP28', 'QSFP'], power: ['C13', 'C14', 'Schuko'],
-  coax: ['BNC'], serial: ['RS232', 'RS485', 'RJ45', 'RJ11'], telco: ['RJ11', 'RJ45'],
+  coax: ['BNC'], serial: ['RS232', 'RS485', 'RJ45', 'RJ11'], telco: ['RJ11', 'RJ45', 'UP0E', 'S0', 'S2M', 'a/b', 'TAE', 'LSA'],
 }
 export const SOURCES = [['manual', 'manuell'], ['csv', 'CSV'], ['json', 'JSON'], ['api', 'API'], ['checkmk', 'Checkmk'], ['openplan', 'OpenPlan']]
 export const ROLES = [
