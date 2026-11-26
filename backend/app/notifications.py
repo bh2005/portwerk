@@ -22,7 +22,7 @@ from typing import Iterable, Optional
 
 from fastapi import HTTPException
 
-from . import absences, audit, db, mailer
+from . import absences, audit, db, i18n, mailer
 from .config import settings
 
 log = logging.getLogger("opp.notifications")
@@ -55,7 +55,7 @@ def wants(user: dict, key: str) -> bool:
 def _user(username: Optional[str]) -> Optional[dict]:
     if not username:
         return None
-    return db.row("SELECT id, username, full_name, email, notify_prefs, roles FROM users WHERE username = ? COLLATE NOCASE AND active = 1", (username,))
+    return db.row("SELECT id, username, full_name, email, notify_prefs, roles, ui_prefs FROM users WHERE username = ? COLLATE NOCASE AND active = 1", (username,))
 
 
 def _allowed(emails: Iterable[str], cfg: dict) -> list[str]:
@@ -104,34 +104,43 @@ def _route(users: list, key: str, eligible) -> tuple[list[dict], dict[int, tuple
     return direct, deputies
 
 
-def _deliver(users: list, key: str, subject: str, lines: list[str], link: str, action: str, entity: str, entity_id, eligible=None, wait: bool = False) -> int:
-    """Gemeinsamer Versand: Hauptschalter, Abwesenheit/Vertretung, persönliche Einstellung, Domain-Filter, Hintergrund, Audit-Log.
+def _deliver(users: list, key: str, compose, link: str, action: str, entity: str, entity_id, eligible=None, wait: bool = False) -> int:
+    """Gemeinsamer Versand: Hauptschalter, Abwesenheit/Vertretung, persönliche Einstellung, Domain-Filter, Sprache, Hintergrund, Audit-Log.
+    ``compose(lang)`` liefert ``(Betreff, Zeilen)`` in der Sprache der Empfänger (je Sprache eine Mail; Vertretungen in ihrer eigenen).
     ``eligible(vertretung)``: darf die Vertretung diese Nachricht bekommen (Standort, Rolle)?
     ``wait``: sofort und im Aufrufer senden; geliefert wird dann die Zahl der **tatsächlich** versendeten Empfänger (sonst die der geplanten)."""
     cfg = mailer.settings()
     if not cfg["enabled"]:
         return 0
     direct, deputies = _route(users, key, eligible)
-    jobs = []                                                            # (Empfänger, Zeilen)
-    to = _allowed([u["email"] for u in direct], cfg)
-    if to:
-        jobs.append((to, lines))
+    jobs = []                                                            # (Empfänger, Sprache, Betreff, Zeilen)
+    by_lang: dict[str, list[str]] = {}
+    for u in direct:
+        by_lang.setdefault(i18n.user_lang(u), []).append(u["email"])
+    for lang, emails in sorted(by_lang.items()):
+        to = _allowed(emails, cfg)
+        if to:
+            subject, lines = compose(lang)
+            jobs.append((to, lang, subject, lines))
     direct_ids = {u["id"] for u in direct}
     for d, absent in deputies.values():
         if d["id"] in direct_ids:
             continue                                                     # Vertretung bekommt die Nachricht ohnehin selbst
         dto = _allowed([d["email"]], cfg)
         if dto:
-            who = ", ".join(f"{a['full_name'] or a['username']} (abwesend bis {absences.current(a['id'])['end_date']})" for a in absent)
-            jobs.append((dto, [f"Du erhältst diese Nachricht in Vertretung für {who}.", *lines]))
+            lang = i18n.user_lang(d)
+            who = ", ".join(i18n.t(lang, "{name} (abwesend bis {until})", name=a["full_name"] or a["username"], until=absences.current(a["id"])["end_date"])
+                            for a in absent)
+            subject, lines = compose(lang)
+            jobs.append((dto, lang, subject, [i18n.t(lang, "Du erhältst diese Nachricht in Vertretung für {who}.", who=who), *lines]))
     if not jobs:
         return 0
 
     def send() -> int:
         done = 0
-        for rcpt, ls in jobs:
+        for rcpt, lang, subject, ls in jobs:
             text = "\n".join(ls) + (f"\n\n{link}\n" if link else "\n")
-            html = "".join(f"<p>{_h.escape(x)}</p>" for x in ls if x) + (f'<p><a href="{_h.escape(link)}">In Portwerk öffnen</a></p>' if link else "")
+            html = "".join(f"<p>{_h.escape(x)}</p>" for x in ls if x) + (f'<p><a href="{_h.escape(link)}">{_h.escape(i18n.t(lang, "In Portwerk öffnen"))}</a></p>' if link else "")
             try:
                 mailer.send(cfg, rcpt, subject, text, html)
                 done += len(rcpt)
@@ -146,7 +155,7 @@ def _deliver(users: list, key: str, subject: str, lines: list[str], link: str, a
         threading.Thread(target=send, daemon=True, name=f"mail-{action}").start()
     else:
         send()
-    return sum(len(r) for r, _ in jobs)
+    return sum(len(j[0]) for j in jobs)
 
 
 # ── Freigeber: zur Bestätigung vorgeschlagen ──────────────────────────────────
@@ -155,7 +164,7 @@ def approvers(wid: int) -> list[dict]:
     w = db.row("SELECT w.finished_by, l.site_id FROM workorders w LEFT JOIN locations l ON l.id = w.location_id WHERE w.id = ?", (wid,))
     if not w:
         return []
-    rows = db.rows("""SELECT DISTINCT u.id, u.username, u.full_name, u.email, u.notify_prefs, u.roles FROM users u
+    rows = db.rows("""SELECT DISTINCT u.id, u.username, u.full_name, u.email, u.notify_prefs, u.roles, u.ui_prefs FROM users u
                       WHERE u.active = 1 AND u.email <> ''
                         AND ((',' || u.roles || ',') LIKE '%,freigeber,%'
                              OR EXISTS (SELECT 1 FROM user_scopes s WHERE s.user_id = u.id AND s.role = 'freigeber' AND s.site_id = ?))""",
@@ -172,10 +181,15 @@ def confirm_suggested(wid: int, summary: dict) -> int:
     if not w:
         return 0
     fin = (w["finished_by"] or "").casefold()
-    return _deliver(approvers(wid), "confirm_suggest", f"[Portwerk] {w['number']} zur Bestätigung vorgeschlagen – LLDP stimmt",
-                    [f"Der Patchauftrag {w['number']} „{w['title']}“ ist ausgeführt" + (f" (von {w['finished_by']})" if w["finished_by"] else "") + ".",
-                     f"Die LLDP-Prüfung nach dem letzten Checkmk-Import stimmt: {summary.get('ok', 0)} Position(en) bestätigt, keine Abweichung.",
-                     "Bitte prüfen und bestätigen – erst dann wird der Bestand fortgeschrieben."],
+
+    def compose(lang: str):
+        t = lambda s, **kw: i18n.t(lang, s, **kw)                                               # noqa: E731
+        done = (t("Der Patchauftrag {number} „{title}“ ist ausgeführt (von {by}).", number=w["number"], title=w["title"], by=w["finished_by"]) if w["finished_by"]
+                else t("Der Patchauftrag {number} „{title}“ ist ausgeführt.", number=w["number"], title=w["title"]))
+        return (t("[Portwerk] {number} zur Bestätigung vorgeschlagen – LLDP stimmt", number=w["number"]),
+                [done, t("Die LLDP-Prüfung nach dem letzten Checkmk-Import stimmt: {n} Position(en) bestätigt, keine Abweichung.", n=summary.get("ok", 0)),
+                 t("Bitte prüfen und bestätigen – erst dann wird der Bestand fortgeschrieben.")])
+    return _deliver(approvers(wid), "confirm_suggest", compose,
                     _link(cfg, f"/workorders/{wid}"), "confirm_suggest", "workorder", wid,
                     eligible=lambda d: can_approve(d, w["site_id"]) and d["username"].casefold() != fin)
 
@@ -195,15 +209,20 @@ def order_status(wid: int, action: str, actor: str) -> int:
         return 0                                                         # eigene Aktion: keine Mail an sich selbst
     word, hint = STATUS_TEXT[action]
     cfg = mailer.settings()
-    return _deliver([_user(w["created_by"])], "my_orders", f"[Portwerk] {w['number']} {word}",
-                    [f"Dein Patchauftrag {w['number']} „{w['title']}“ wurde von {actor} {word}.", hint],
+
+    def compose(lang: str):
+        wd = i18n.t(lang, word)
+        return (i18n.t(lang, "[Portwerk] {number} {word}", number=w["number"], word=wd),
+                [i18n.t(lang, "Dein Patchauftrag {number} „{title}“ wurde von {actor} {word}.", number=w["number"], title=w["title"], actor=actor, word=wd),
+                 i18n.t(lang, hint) if hint else ""])
+    return _deliver([_user(w["created_by"])], "my_orders", compose,
                     _link(cfg, f"/workorders/{wid}"), "order_status", "workorder", wid, eligible=lambda d: can_see(d, w["site_id"]))
 
 
 # ── Globale Administratoren: neuer Benutzer wartet auf Freischaltung ──────────
 
 def global_admins() -> list[dict]:
-    return db.rows("SELECT id, username, full_name, email, notify_prefs, roles FROM users WHERE active = 1 AND (',' || roles || ',') LIKE '%,admin,%'")
+    return db.rows("SELECT id, username, full_name, email, notify_prefs, roles, ui_prefs FROM users WHERE active = 1 AND (',' || roles || ',') LIKE '%,admin,%'")
 
 
 def new_user_waiting(u: dict) -> int:
@@ -212,17 +231,23 @@ def new_user_waiting(u: dict) -> int:
     name = u.get("full_name") or u["username"]
     cfg = mailer.settings()
     is_admin = lambda d: "admin" in (d.get("roles") or "").split(",")                          # noqa: E731 – Vertretung muss selbst globaler Administrator sein
-    return _deliver(global_admins(), "new_user", f"[Portwerk] Neuer Benutzer wartet auf Freischaltung: {name}",
-                    [f"{name} ({u['username']}{', ' + u['email'] if u.get('email') else ''}) hat sich bei Portwerk angemeldet und hat noch keine Rechte.",
-                     "Der Benutzer sieht nur den Hinweis, sich für Rechte an einen Administrator zu wenden.",
-                     "Bitte unter Verwaltung → Benutzer eine Rolle oder Standort-Rechte vergeben."],
+    who = u["username"] + (", " + u["email"] if u.get("email") else "")
+
+    def compose(lang: str):
+        t = lambda s, **kw: i18n.t(lang, s, **kw)                                               # noqa: E731
+        return (t("[Portwerk] Neuer Benutzer wartet auf Freischaltung: {name}", name=name),
+                [t("{name} ({who}) hat sich bei Portwerk angemeldet und hat noch keine Rechte.", name=name, who=who),
+                 t("Der Benutzer sieht nur den Hinweis, sich für Rechte an einen Administrator zu wenden."),
+                 t("Bitte unter Verwaltung → Benutzer eine Rolle oder Standort-Rechte vergeben.")])
+    return _deliver(global_admins(), "new_user", compose,
                     _link(cfg, "/admin"), "new_user", "user", u["id"], eligible=is_admin, wait=True)
 
 
-def send_cleanup_report(subject: str, lines: list[str]) -> int:
-    """Aufräumbericht (``cleanup.weekly_mail``) an die globalen Administratoren; Vertretung nur, wenn sie selbst globaler Administrator ist."""
+def send_cleanup_report(compose) -> int:
+    """Aufräumbericht (``cleanup.weekly_mail``) an die globalen Administratoren; Vertretung nur, wenn sie selbst globaler Administrator ist.
+    ``compose(lang)`` → (Betreff, Zeilen)."""
     is_admin = lambda d: "admin" in (d.get("roles") or "").split(",")                          # noqa: E731
-    return _deliver(global_admins(), "cleanup_report", subject, lines, _link(mailer.settings(), "/cleanup"), "cleanup_report", "report", "cleanup",
+    return _deliver(global_admins(), "cleanup_report", compose, _link(mailer.settings(), "/cleanup"), "cleanup_report", "report", "cleanup",
                     eligible=is_admin, wait=True)
 
 
@@ -234,9 +259,13 @@ def lldp_problem(wid: int, items: list[dict]) -> int:
         return 0
     probs = [i.get("text") or i.get("label", "") for i in items if i.get("status") == "problem"]
     cfg = mailer.settings()
-    return _deliver([_user(w["finished_by"])], "lldp_problem", f"[Portwerk] {w['number']}: LLDP meldet eine Abweichung",
-                    [f"Bei deinem ausgeführten Patchauftrag {w['number']} „{w['title']}“ passt die LLDP-Meldung nicht zur Planung:",
-                     *[f"• {p}" for p in probs[:20]], "Bitte prüfen – sonst wird der Auftrag voraussichtlich auf Nacharbeit gesetzt."],
+
+    def compose(lang: str):
+        t = lambda s, **kw: i18n.t(lang, s, **kw)                                               # noqa: E731
+        return (t("[Portwerk] {number}: LLDP meldet eine Abweichung", number=w["number"]),
+                [t("Bei deinem ausgeführten Patchauftrag {number} „{title}“ passt die LLDP-Meldung nicht zur Planung:", number=w["number"], title=w["title"]),
+                 *[f"• {i18n.api(lang, p)}" for p in probs[:20]], t("Bitte prüfen – sonst wird der Auftrag voraussichtlich auf Nacharbeit gesetzt.")])
+    return _deliver([_user(w["finished_by"])], "lldp_problem", compose,
                     _link(cfg, f"/workorders/{wid}"), "lldp_problem", "workorder", wid, eligible=lambda d: can_see(d, w["site_id"]))
 
 
@@ -256,10 +285,13 @@ def reservation_reminders(today: Optional[date] = None) -> int:
     cfg = mailer.settings()
     sent = 0
     for username, res in by_user.items():
-        lines = [f"Diese Port-Reservierungen laufen bald ab ({len(res)}):",
-                 *[f"• {r['hostname']}:{r['port']} – „{r['purpose']}“ bis {r['until']}" for r in res[:50]],
-                 "Verlängern oder freigeben unter „Reservierungen“. Abgelaufene Reservierungen blockieren nichts mehr."]
-        sent += _deliver([_user(username)], "reservation_expiry", f"[Portwerk] {len(res)} Reservierung(en) laufen bald ab", lines,
+        def compose(lang: str, res=res):
+            t = lambda s, **kw: i18n.t(lang, s, **kw)                                           # noqa: E731
+            return (t("[Portwerk] {n} Reservierung(en) laufen bald ab", n=len(res)),
+                    [t("Diese Port-Reservierungen laufen bald ab ({n}):", n=len(res)),
+                     *[t("• {port} – „{purpose}“ bis {until}", port=f"{r['hostname']}:{r['port']}", purpose=r["purpose"], until=r["until"]) for r in res[:50]],
+                     t("Verlängern oder freigeben unter „Reservierungen“. Abgelaufene Reservierungen blockieren nichts mehr.")])
+        sent += _deliver([_user(username)], "reservation_expiry", compose,
                          _link(cfg, "/reservations"), "reservation_expiry", "port", ",".join(str(r["id"]) for r in res[:50]),
                          eligible=lambda d, sites={r["site_id"] for r in res}: all(can_see(d, s) for s in sites)) > 0
     if rows:

@@ -110,17 +110,19 @@ def patchlist(ids: str, group: str = "location", only_open: bool = False, me: Pr
     return build(_ids(ids), group, only_open, me)
 
 
-def patchlist_csv(data: dict) -> str:
+def patchlist_csv(data: dict, lang: str = "de") -> str:
+    from .. import i18n
+    t = lambda s: i18n.t(lang, s)                                                               # noqa: E731
     buf = io.StringIO()
     wr = csv.writer(buf, delimiter=";")
-    wr.writerow(["Patchliste", ", ".join(o["number"] for o in data["orders"]), time.strftime("%d.%m.%Y %H:%M")])
+    wr.writerow([t("Patchliste"), ", ".join(o["number"] for o in data["orders"]), time.strftime("%d.%m.%Y %H:%M")])
     wr.writerow([])
-    wr.writerow(["Nr", "Ort", "Auftrag", "Aktion", "Gerät/Port A", "Gerät/Port B", "Ort B", "Kabelnummer", "Kabelart", "Länge (m)", "Farbe", "Konfiguration", "Notiz",
-                 "Status", "Erledigt von", "Erledigt am", "erledigt ☐"])
+    wr.writerow([t(x) for x in ("Nr", "Ort", "Auftrag", "Aktion", "Gerät/Port A", "Gerät/Port B", "Ort B", "Kabelnummer", "Kabelart", "Länge (m)", "Farbe",
+                                "Konfiguration", "Notiz", "Status", "Erledigt von", "Erledigt am", "erledigt ☐")])
     for n, x in enumerate(data["items"], 1):
         done = time.strftime("%d.%m.%Y %H:%M", time.localtime(x["executed_at"])) if x["executed_at"] else ""
-        wr.writerow([n, x["a_location"], x["order"], x["action_label"], x["a"], x["b"], x["b_location"], x["cable_label"], x["cable_type"],
-                     x["length_m"] or "", x["color"], x["cfg_text"], x["note"], ITEM_STATUS.get(x["item_status"], ""), x["executed_by"], done, ""])
+        wr.writerow([n, x["a_location"], x["order"], t(x["action_label"]), x["a"], x["b"], x["b_location"], x["cable_label"], x["cable_type"],
+                     x["length_m"] or "", x["color"], x["cfg_text"], x["note"], t(ITEM_STATUS.get(x["item_status"], "")), x["executed_by"], done, ""])
     return buf.getvalue()
 
 
@@ -129,5 +131,7 @@ def patchlist_export(ids: str, group: str = "location", only_open: bool = False,
     """Patchliste als CSV (Semikolon, UTF-8 mit BOM – öffnet direkt in Excel)."""
     data = build(_ids(ids), group, only_open, me)
     audit.log(me.name, "patchlist.export", "workorder", ",".join(str(o["id"]) for o in data["orders"]), f"{data['summary']['total']} Positionen")
-    return Response("\ufeff" + patchlist_csv(data), media_type="text/csv; charset=utf-8",
-                    headers={"Content-Disposition": 'attachment; filename="patchliste.csv"'})
+    from .. import i18n
+    lang = i18n.principal_lang(me)
+    return Response("\ufeff" + patchlist_csv(data, lang), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{i18n.t(lang, "patchliste.csv")}"'})

@@ -7,7 +7,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import absences, access, audit, auth, db, mailer, notifications
+from .. import absences, access, audit, auth, db, i18n, mailer, notifications
 from ..auth import Principal, current_principal, require_admin, require_user
 from ..schemas import AssignIn, MailSettingsIn, MailTestIn, PatchlistSendIn, SendIn
 from . import documents, masterdata, patchlists, workorders
@@ -36,7 +36,9 @@ def put_mail(body: MailSettingsIn, me: Principal = Depends(require_admin)):
 def test_mail(body: MailTestIn, me: Principal = Depends(require_admin)):
     cfg = mailer.require_enabled()
     to = mailer.check_recipients([body.to], cfg)
-    mailer.send(cfg, to, "Portwerk: Testnachricht", f"Das ist eine Testnachricht von Portwerk, gesendet von {me.name}.\n\nWenn du sie liest, funktioniert der E-Mail-Versand.")
+    lang = i18n.principal_lang(me)
+    mailer.send(cfg, to, i18n.t(lang, "Portwerk: Testnachricht"),
+                i18n.t(lang, "Das ist eine Testnachricht von Portwerk, gesendet von {name}.\n\nWenn du sie liest, funktioniert der E-Mail-Versand.", name=me.name))
     audit.log(me.name, "mail.test", "settings", "mail", body.to)
     return {"ok": True, "to": to}
 
@@ -81,34 +83,41 @@ def _row_text(n: int, a: str, b: str, action: str, label: str, ctype: str) -> st
     return f"{n:>3}. {action}: {a}" + (f" → {b}" if b else "") + (f"  [{extra}]" if extra else "")
 
 
-def _compose(me: Principal, intro: str, message: str, meta: list[tuple[str, str]], link: str, rows: list[tuple], total: int, attached: bool) -> tuple[str, str]:
-    """(Text, HTML) einer Auftrags-/Patchlisten-Mail. ``rows``: (Nr, Aktion, A, B, Kabelnummer, Kabelart, Ort)."""
+def _compose(me: Principal, intro: str, message: str, meta: list[tuple[str, str]], link: str, rows: list[tuple], total: int, attached: bool,
+             lang: str = "de", items_label: str = "Positionen ({n}):") -> tuple[str, str]:
+    """(Text, HTML) einer Auftrags-/Patchlisten-Mail in ``lang``. ``intro`` ist bereits übersetzt; Schlüssel in ``meta`` und Aktionen in ``rows``
+    werden hier übersetzt. ``rows``: (Nr, Aktion, A, B, Kabelnummer, Kabelart, Ort)."""
+    t = lambda s, **kw: i18n.t(lang, s, **kw)                                                   # noqa: E731
     sender = me.name
+    meta = [(t(k), v) for k, v in meta if v]
+    rows = [(r[0], t(r[1]), *r[2:]) for r in rows]
+    more = total - len(rows)
     lines = [f"{sender} {intro}", ""]
     if message.strip():
         lines += [message.strip(), ""]
-    lines += [f"{k}: {v}" for k, v in meta if v]
+    lines += [f"{k}: {v}" for k, v in meta]
     if link:
-        lines.append(f"Öffnen: {link}")
-    lines += ["", f"Positionen ({total}):"]
+        lines.append(t("Öffnen: {link}", link=link))
+    lines += ["", t(items_label, n=total)]
     lines += [_row_text(r[0], r[2], r[3], r[1], r[4], r[5]) for r in rows]
-    if total > len(rows):
-        lines.append(f"… und {total - len(rows)} weitere" + (" – vollständige Liste im Anhang." if attached else " – vollständige Liste im System."))
+    if more > 0:
+        lines.append(t("… und {n} weitere – vollständige Liste im Anhang." if attached else "… und {n} weitere – vollständige Liste im System.", n=more))
     elif attached:
-        lines.append("\nDie Arbeitsliste liegt im Anhang (PDF zum Drucken, CSV für Excel).")
+        lines.append("\n" + t("Die Arbeitsliste liegt im Anhang (PDF zum Drucken, CSV für Excel)."))
     esc = _html.escape
     h = [f"<p>{esc(sender)} {esc(intro)}</p>"]
     if message.strip():
         h.append(f"<p style='white-space:pre-wrap'>{esc(message.strip())}</p>")
-    h.append("<table cellpadding='3' style='border-collapse:collapse;font-size:13px'>" + "".join(f"<tr><td style='color:#64748b'>{esc(k)}</td><td>{esc(v)}</td></tr>" for k, v in meta if v) + "</table>")
+    h.append("<table cellpadding='3' style='border-collapse:collapse;font-size:13px'>" + "".join(f"<tr><td style='color:#64748b'>{esc(k)}</td><td>{esc(v)}</td></tr>" for k, v in meta) + "</table>")
     if link:
-        h.append(f"<p><a href='{esc(link)}'>Im System öffnen</a></p>")
-    h.append(f"<p><b>Positionen ({total})</b></p><table cellpadding='4' style='border-collapse:collapse;font-size:12px;border:1px solid #cbd5e1'>"
-             "<tr style='background:#f1f5f9'><th align=left>Nr</th><th align=left>Aktion</th><th align=left>Seite A</th><th align=left>Seite B</th><th align=left>Kabel</th></tr>"
+        h.append(f"<p><a href='{esc(link)}'>{esc(t('Im System öffnen'))}</a></p>")
+    h.append(f"<p><b>{esc(t('Positionen ({n})', n=total))}</b></p><table cellpadding='4' style='border-collapse:collapse;font-size:12px;border:1px solid #cbd5e1'>"
+             f"<tr style='background:#f1f5f9'><th align=left>{esc(t('Nr'))}</th><th align=left>{esc(t('Aktion'))}</th><th align=left>{esc(t('Seite A'))}</th>"
+             f"<th align=left>{esc(t('Seite B'))}</th><th align=left>{esc(t('Kabel'))}</th></tr>"
              + "".join(f"<tr style='border-top:1px solid #e2e8f0'><td>{r[0]}</td><td>{esc(r[1])}</td><td>{esc(r[2])}</td><td>{esc(r[3])}</td><td>{esc(' '.join(x for x in (r[4], r[5]) if x))}</td></tr>" for r in rows)
              + "</table>")
-    if total > len(rows):
-        h.append(f"<p>… und {total - len(rows)} weitere{' – vollständige Liste im Anhang.' if attached else '.'}</p>")
+    if more > 0:
+        h.append(f"<p>{esc(t('… und {n} weitere – vollständige Liste im Anhang.' if attached else '… und {n} weitere – vollständige Liste im System.', n=more))}</p>")
     return "\n".join(lines), "".join(h)
 
 
@@ -145,15 +154,17 @@ def send_workorder(wid: int, body: SendIn, me: Principal = Depends(current_princ
         b = f"{o['port_b']['device_hostname']}:{o['port_b']['name']}" if o["port_b"] else ""
         rows.append((n, o["action_label"], a, b, o["cable_label"], o["cable_type"] if o["cable_type"] != "other" else "", ""))
     loc = db.row("SELECT id FROM locations WHERE id = ?", (w["location_id"],))
-    meta = [("Auftrag", f"{w['number']} – {w['title']}"), ("Status", workorders.STATUS_LABELS.get(w["status"], w["status"])),
-            ("Priorität", w["priority"]), ("Ort", masterdata.location_path(loc["id"]) if loc else ""),
+    lang = i18n.principal_lang(me)                                         # Versand an mehrere (auch freie) Adressen: Sprache des Absenders
+    t = lambda s, **kw: i18n.t(lang, s, **kw)                               # noqa: E731
+    meta = [("Auftrag", f"{w['number']} – {w['title']}"), ("Status", t(workorders.STATUS_LABELS.get(w["status"], w["status"]))),
+            ("Priorität", t(documents.PRIORITY_LABELS.get(w["priority"], w["priority"]))), ("Ort", masterdata.location_path(loc["id"]) if loc else ""),
             ("Zeitraum", " – ".join(x for x in (w["planned_from"], w["planned_to"]) if x))]
-    text, html = _compose(me, f"hat dir den Patchauftrag {w['number']} gesendet.", body.message, meta, _link(cfg, f"/workorders/{wid}"), rows, len(items),
-                          body.attach_csv or body.attach_pdf)
-    att = [(f"{w['number']}-arbeitsliste.csv", ("﻿" + workorders.worklist_csv(w)).encode("utf-8"), "text/csv")] if body.attach_csv else []
+    text, html = _compose(me, t("hat dir den Patchauftrag {number} gesendet.", number=w["number"]), body.message, meta, _link(cfg, f"/workorders/{wid}"), rows, len(items),
+                          body.attach_csv or body.attach_pdf, lang)
+    att = [(t("{number}-arbeitsliste.csv", number=w["number"]), ("﻿" + workorders.worklist_csv(w, lang)).encode("utf-8"), "text/csv")] if body.attach_csv else []
     if body.attach_pdf:
-        att.append((f"{w['number']}-arbeitsanweisung.pdf", documents.workorder_pdf(w, me, documents.public_base(None, None)), "application/pdf"))
-    mailer.send(cfg, to, f"[Portwerk] {w['number']} {w['title']} ({len(items)} Positionen)", text, html, att)
+        att.append((t("{number}-arbeitsanweisung.pdf", number=w["number"]), documents.workorder_pdf(w, me, documents.public_base(None, None), lang), "application/pdf"))
+    mailer.send(cfg, to, t("[Portwerk] {number} {title} ({n} Positionen)", number=w["number"], title=w["title"], n=len(items)), text, html, att)
     audit.log(me.name, "workorder.send", "workorder", wid, f"{w['number']} an {', '.join(to)}")
     return {"sent_to": to, "skipped_no_email": skipped, "items": len(items)}
 
@@ -173,15 +184,18 @@ def send_patchlist(body: PatchlistSendIn, me: Principal = Depends(current_princi
     mailer.rate_check(me.name)
     items = data["items"]
     rows = [(n, x["action_label"], x["a"], x["b"], x["cable_label"], x["cable_type"], x["a_location"]) for n, x in enumerate(items[:MAX_LISTED] if body.include_list else [], 1)]
-    meta = [("Aufträge", ", ".join(f"{o['number']} {o['title']}" for o in data["orders"])), ("Sortierung", {"location": "nach Ort", "order": "nach Auftrag", "none": "Auftragsreihenfolge"}[body.group]),
-            ("Fortschritt", f"{data['summary']['done']} von {data['summary']['total']} erledigt")]
+    lang = i18n.principal_lang(me)
+    t = lambda s, **kw: i18n.t(lang, s, **kw)                               # noqa: E731
+    meta = [("Aufträge", ", ".join(f"{o['number']} {o['title']}" for o in data["orders"])),
+            ("Sortierung", t({"location": "nach Ort", "order": "nach Auftrag", "none": "Auftragsreihenfolge"}[body.group])),
+            ("Fortschritt", t("{a} von {b} erledigt", a=data["summary"]["done"], b=data["summary"]["total"]))]
     link = _link(cfg, f"/patchlist?ids={','.join(str(i) for i in ids)}")
-    text, html = _compose(me, f"hat dir eine Patchliste mit {len(data['orders'])} Auftrag/Aufträgen gesendet.", body.message, meta, link, rows, len(items),
-                          body.attach_csv or body.attach_pdf)
-    att = [("patchliste.csv", ("﻿" + patchlists.patchlist_csv(data)).encode("utf-8"), "text/csv")] if body.attach_csv else []
+    text, html = _compose(me, t("hat dir eine Patchliste mit {n} Auftrag/Aufträgen gesendet.", n=len(data["orders"])), body.message, meta, link, rows, len(items),
+                          body.attach_csv or body.attach_pdf, lang)
+    att = [(t("patchliste.csv"), ("﻿" + patchlists.patchlist_csv(data, lang)).encode("utf-8"), "text/csv")] if body.attach_csv else []
     if body.attach_pdf:
-        att.append(("patchliste.pdf", documents.patchlist_pdf(ids, body.group, body.only_open, me)[0], "application/pdf"))
-    mailer.send(cfg, to, f"[Portwerk] Patchliste {', '.join(o['number'] for o in data['orders'])} ({len(items)} Positionen)", text, html, att)
+        att.append((t("patchliste.pdf"), documents.patchlist_pdf(ids, body.group, body.only_open, me, lang)[0], "application/pdf"))
+    mailer.send(cfg, to, t("[Portwerk] Patchliste {numbers} ({n} Positionen)", numbers=", ".join(o["number"] for o in data["orders"]), n=len(items)), text, html, att)
     audit.log(me.name, "patchlist.send", "workorder", ",".join(str(i) for i in ids), f"{len(items)} Positionen an {', '.join(to)}")
     return {"sent_to": to, "skipped_no_email": skipped, "items": len(items)}
 
@@ -217,11 +231,15 @@ def assign_workorder(wid: int, body: AssignIn, me: Principal = Depends(current_p
                 mailer.rate_check(me.name)
                 n = db.row("SELECT COUNT(*) AS n FROM workitems WHERE workorder_id = ?", (wid,))["n"]
                 until = absences.current(u["id"])["end_date"]
-                meta = [("Auftrag", f"{w['number']} – {w['title']}"), ("Zugewiesen an", f"{u['full_name'] or u['username']} (abwesend bis {until})"), ("Positionen", str(n))]
-                text, html = _compose(me, f"hat den Patchauftrag {w['number']} {u['full_name'] or u['username']} zugewiesen – du erhältst die Nachricht in Vertretung.",
-                                      body.message, meta, _link(cfg, f"/workorders/{wid}"), [], n, False)
+                lang = i18n.user_lang(dep)                                 # Sprache der Vertretung
+                t = lambda s, **kw: i18n.t(lang, s, **kw)                   # noqa: E731
+                meta = [("Auftrag", f"{w['number']} – {w['title']}"),
+                        ("Zugewiesen an", t("{name} (abwesend bis {until})", name=u["full_name"] or u["username"], until=until)), ("Positionen", str(n))]
+                text, html = _compose(me, t("hat den Patchauftrag {number} {name} zugewiesen – du erhältst die Nachricht in Vertretung.", number=w["number"],
+                                            name=u["full_name"] or u["username"]),
+                                      body.message, meta, _link(cfg, f"/workorders/{wid}"), [], n, False, lang)
                 if notifications.wants(dep, "assigned"):
-                    mailer.send(cfg, [dep["email"]], f"[Portwerk] In Vertretung: {w['number']} {w['title']}", text, html)
+                    mailer.send(cfg, [dep["email"]], t("[Portwerk] In Vertretung: {number} {title}", number=w["number"], title=w["title"]), text, html)
                     out["notified"] = True
                 out["notify_note"] = f"{u['username']} ist abwesend bis {until} – " + (f"E-Mail an die Vertretung {dep['username']} gesendet" if out["notified"]
                                                                                        else f"die Vertretung {dep['username']} hat diese E-Mails abbestellt")
@@ -234,9 +252,12 @@ def assign_workorder(wid: int, body: AssignIn, me: Principal = Depends(current_p
                 mailer.check_recipients([u["email"]], cfg)
                 mailer.rate_check(me.name)
                 n = db.row("SELECT COUNT(*) AS n FROM workitems WHERE workorder_id = ?", (wid,))["n"]
-                meta = [("Auftrag", f"{w['number']} – {w['title']}"), ("Status", workorders.STATUS_LABELS.get(w["status"], w["status"])), ("Positionen", str(n))]
-                text, html = _compose(me, f"hat dir den Patchauftrag {w['number']} zugewiesen.", body.message, meta, _link(cfg, f"/workorders/{wid}"), [], n, False)
-                mailer.send(cfg, [u["email"]], f"[Portwerk] Dir zugewiesen: {w['number']} {w['title']}", text.replace("\nPositionen (", "\nPositionen im System (", 1), html)
+                lang = i18n.user_lang(u)                                   # Sprache des Empfängers
+                t = lambda s, **kw: i18n.t(lang, s, **kw)                   # noqa: E731
+                meta = [("Auftrag", f"{w['number']} – {w['title']}"), ("Status", t(workorders.STATUS_LABELS.get(w["status"], w["status"]))), ("Positionen", str(n))]
+                text, html = _compose(me, t("hat dir den Patchauftrag {number} zugewiesen.", number=w["number"]), body.message, meta,
+                                      _link(cfg, f"/workorders/{wid}"), [], n, False, lang, items_label="Positionen im System ({n}):")
+                mailer.send(cfg, [u["email"]], t("[Portwerk] Dir zugewiesen: {number} {title}", number=w["number"], title=w["title"]), text, html)
                 out["notified"] = True
             except HTTPException as e:                                    # die Zuweisung bleibt bestehen, nur die Mail ging nicht
                 out["notify_note"] = f"Zugewiesen, aber E-Mail nicht gesendet: {e.detail}"

@@ -12,7 +12,7 @@
 
       <div :class="card" class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div class="md:col-span-2"><label :class="lbl">{{ $t('Format') }}</label>
-          <select v-model="fmtKey" :class="inp"><option v-for="(f, k) in FORMATS" :key="k" :value="k">{{ f.name }}</option></select></div>
+          <select v-model="fmtKey" :class="inp"><option v-for="(f, k) in FORMATS" :key="k" :value="k">{{ $t(f.name) }}</option></select></div>
         <div v-if="fmt.sheet"><label :class="lbl">{{ $t('Startposition auf dem Bogen') }}</label>
           <input v-model.number="skip" type="number" min="1" :max="fmt.cols * fmt.rows" :class="inp" /></div>
         <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input v-model="perEnd" type="checkbox" />{{ ' ' + $t('je Kabelende ein Etikett') }}</label>

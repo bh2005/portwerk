@@ -828,22 +828,25 @@ def bulk_items(wid: int, body: BulkItemAction, me: Principal = Depends(current_p
     return _wo_out(db.row("SELECT * FROM workorders WHERE id = ?", (wid,)), with_items=True)
 
 
-def worklist_csv(w: dict) -> str:
-    """Arbeitsliste eines Auftrags als CSV-Text (Semikolon): eine Zeile je Position mit Spalte zum Abhaken."""
+def worklist_csv(w: dict, lang: str = "de") -> str:
+    """Arbeitsliste eines Auftrags als CSV-Text (Semikolon) in ``lang``: eine Zeile je Position mit Spalte zum Abhaken."""
     import csv as _csv
     import io as _io
+    from .. import i18n
+    t = lambda s: i18n.t(lang, s)                                                               # noqa: E731
     buf = _io.StringIO()
     wr = _csv.writer(buf, delimiter=";")
-    wr.writerow(["Auftrag", w["number"], w["title"], STATUS_LABELS.get(w["status"], w["status"])])
+    wr.writerow([t("Auftrag"), w["number"], w["title"], t(STATUS_LABELS.get(w["status"], w["status"]))])
     wr.writerow([])
-    wr.writerow(["Nr", "Aktion", "Gerät/Port A", "Gerät/Port B", "Kabelnummer", "Kabelart", "Länge (m)", "Farbe", "Konfiguration", "Notiz", "Status", "Erledigt von", "Erledigt am", "erledigt ☐"])
+    wr.writerow([t(x) for x in ("Nr", "Aktion", "Gerät/Port A", "Gerät/Port B", "Kabelnummer", "Kabelart", "Länge (m)", "Farbe", "Konfiguration", "Notiz", "Status",
+                                "Erledigt von", "Erledigt am", "erledigt ☐")])
     for n, it in enumerate(db.rows("SELECT * FROM workitems WHERE workorder_id = ? ORDER BY idx, id", (w["id"],)), 1):
         o = _item_out(it)
         a = f"{o['port_a']['device_hostname']}:{o['port_a']['name']}" if o["port_a"] else (o["device"]["hostname"] if o["device"] else "")
         b = f"{o['port_b']['device_hostname']}:{o['port_b']['name']}" if o["port_b"] else ""
         done = time.strftime("%d.%m.%Y %H:%M", time.localtime(it["executed_at"])) if it["executed_at"] else ""
-        wr.writerow([n, o["action_label"], a, b, it["cable_label"], it["cable_type"] if it["cable_type"] != "other" else "", it["length_m"] or "",
-                     it["color"], o["cfg_text"], it["note"], {"open": "offen", "done": "erledigt", "deviation": "Abweichung"}.get(it["item_status"], ""), it["executed_by"], done, ""])
+        wr.writerow([n, t(o["action_label"]), a, b, it["cable_label"], it["cable_type"] if it["cable_type"] != "other" else "", it["length_m"] or "",
+                     it["color"], o["cfg_text"], it["note"], t({"open": "offen", "done": "erledigt", "deviation": "Abweichung"}.get(it["item_status"], "")), it["executed_by"], done, ""])
     return buf.getvalue()
 
 
@@ -853,5 +856,7 @@ def export_workorder(wid: int, me: Principal = Depends(current_principal)):
     from fastapi.responses import Response
     w = _wo_or_404(wid, me)
     audit.log(me.name, "workorder.export", "workorder", wid, w["number"])
-    return Response("\ufeff" + worklist_csv(w), media_type="text/csv; charset=utf-8",
-                    headers={"Content-Disposition": f'attachment; filename="{w["number"]}-arbeitsliste.csv"'})
+    from .. import i18n
+    lang = i18n.principal_lang(me)
+    return Response("\ufeff" + worklist_csv(w, lang), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{i18n.t(lang, "{number}-arbeitsliste.csv", number=w["number"])}"'})

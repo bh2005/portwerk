@@ -12,7 +12,7 @@ export const sectionsEn = [
 <ul><li><b>Help:</b> F1 or ? opens the help for the current page. The question-mark icon next to fields shows a short tip.</li>
 <li><b>Dark mode</b> and <b>profile</b> (change password, language, notifications) are at the bottom of the sidebar.</li>
 <li>The sidebar can be collapsed via the menu icon.</li>
-<li><b>Language:</b> German or English, per user under “My profile → Personal settings”; before logging in via the switch on the login page.</li>
+<li><b>Language:</b> German or English, per user under “My profile → Personal settings”; before logging in via the switch on the login page. Notifications are sent in the recipient’s language; PDFs and CSV lists are created in the language of whoever downloads or sends them.</li>
 <li><b>Changes by others:</b> if someone else changes data (or an API token, e.g. the Checkmk import), the notice “… changed data” appears at the top. <b>Reload</b> shows the current state, <b>Hide</b> remembers it until the next change. Nothing is overwritten and no form is changed; only the overview reloads by itself. Your own changes do not trigger a notice.</li></ul>` },
 
   { id: 'standorte', title: 'Sites and racks', html: `
@@ -36,7 +36,7 @@ export const sectionsEn = [
 <li><b>Time travel:</b> “Comparison” shows what changed in the cabling between two points in time – new, removed, re-plugged (a port with A before, with B after), only plugged in between – each with who or which order. “As of” lists all connections at a point in time. In the path dialog “As of” shows the route as it was then. Connections are historised; locations and patch panel counterparts are the current state.</li>
 <li><b>Clean-up:</b> collects places that should be updated: provisional cables from the target/actual comparison (add outlets/patch panels in the path editor and choose “Path complete”), documented connections that LLDP does not see (possible dead patch; with “missing since” from the first import without the connection and “last seen”, oldest first), expired reservations (deletable together), open orders without changes for X days and planned devices without an order. Global administrators receive a summary by email on Mondays (can be turned off in the profile).</li>
 <li><b>Capacity:</b> free, used, planned (open orders) and reserved ports per category (switch ports, patch panel, outlets, PDU) summed up across the locations, plus the free rack units per rack and the largest contiguous free block. Areas below the threshold (default 10 % free) appear as a bottleneck – also as a card on the overview.</li>
-<li><b>Work instruction as PDF:</b> “Work instruction (PDF)” in the patch order, “PDF” in the patch list – grouped by location, with check boxes, a field for deviations and a signature as well as a QR code to the order. Orders not yet approved carry the note “do not carry out”. The PDF can be attached when sending by email. (The PDF is currently in German.)</li>
+<li><b>Work instruction as PDF:</b> “Work instruction (PDF)” in the patch order, “PDF” in the patch list – grouped by location, with check boxes, a field for deviations and a signature as well as a QR code to the order. Orders not yet approved carry the note “do not carry out”. The PDF can be attached when sending by email. It is created in the language of whoever downloads or sends it.</li>
 <li><b>Cable labels:</b> “Labels” on the device page or “Cable labels” in the patch order (also before confirmation) – formats for tape (12/19/24 mm) and A4 sheets, optionally one label per cable end. The QR code contains the cable number: after scanning, Portwerk shows where the cable is plugged, whether it is planned and where it was plugged before. Without a cable number there is no QR code for planned items.</li>
 <li><b>Connection history</b> (at the bottom of the device page): all current and earlier connections with period, who or which order made and disconnected them. With <b>As of</b> it shows what was plugged at a certain point in time; <b>History</b> in the port row filters on one port. Deleted ports and devices remain with their name of the time.</li></ul>` },
 
@@ -95,6 +95,5 @@ export const sectionsEn = [
   { id: 'ausblick', title: 'Outlook', html: `
 <ul><li>Webhooks to other systems (e.g. “order confirmed”, “LLDP deviation”)</li>
 <li>VLAN target/actual for trunks, voice VLANs and other vendors</li>
-<li>History for device locations and patch panel pairs (time travel with the locations of the time)</li>
-<li>English for emails, work instruction (PDF) and labels</li></ul>` },
+<li>History for device locations and patch panel pairs (time travel with the locations of the time)</li></ul>` },
 ]
