@@ -20,6 +20,8 @@ def _parse_at(at: Optional[str]) -> Optional[float]:
     try:
         if len(at) == 10:
             return datetime.fromisoformat(at + "T23:59:59").timestamp()
+        if at.endswith(("Z", "z")):                       # „Z“ versteht fromisoformat erst ab Python 3.11
+            at = at[:-1] + "+00:00"
         return datetime.fromisoformat(at).timestamp()
     except ValueError:
         raise HTTPException(400, "Zeitpunkt ungültig (erwartet JJJJ-MM-TT oder JJJJ-MM-TTThh:mm)")

@@ -21,6 +21,17 @@ jobs:
       - run: python -m pytest -q
         working-directory: backend
 
+  backend-tests-py39:
+    # Ältestes unterstütztes Python; setup-python hat 3.9 für aktuelle Runner nicht mehr, daher im offiziellen Image
+    runs-on: ubuntu-latest
+    container: python:3.9-slim
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q -r requirements-dev.txt
+        working-directory: backend
+      - run: python -m pytest -q
+        working-directory: backend
+
   frontend-build:
     runs-on: ubuntu-latest
     steps:

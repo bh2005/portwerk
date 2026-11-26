@@ -263,9 +263,11 @@ def test_checkmk_api(client, admin, monkeypatch):
     assert r.status_code == 200, r.text
     d = r.json()
     assert d["secret_set"] is True and "secret" not in d and d["api_url"] == "http://cmk.example.test/site" and d["default_folder"] == "/eu/de_germany"
+    assert d["plain_http"] is True                                                                                # Warnung: Secret im Klartext
     assert client.put("/api/admin/checkmk-api", headers=admin, json={"user": "neu"}).json()["secret_set"] is True      # Secret bleibt erhalten
     assert client.put("/api/admin/checkmk-api", headers=admin, json={"api_url": "ftp://x"}).status_code == 422
-    assert client.post("/api/admin/checkmk-api/test", headers=admin).json() == {"version": "2.5.0p18", "edition": "pro", "folders": 2}
+    assert client.post("/api/admin/checkmk-api/test", headers=admin).json() == {"version": "2.5.0p18", "edition": "pro", "folders": 2, "plain_http": True}
+    assert client.put("/api/admin/checkmk-api", headers=admin, json={"api_url": "HTTPS://cmk.example.test/site"}).json()["plain_http"] is False
     assert client.get("/api/checkmk/status", headers=admin).json() == {"enabled": True, "default_folder": "/eu/de_germany"}
 
     h = client.get("/api/checkmk/host", headers=admin, params={"name": "vorhanden"}).json()

@@ -23,8 +23,10 @@
     <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('Mit einem Automation-User kann Portwerk prüfen, ob ein Gerät in Checkmk existiert, und es als Host mit reinem Host-Check (Ping) anlegen. Hosts werden nur als') + ' ' }}<b>{{ $t('ausstehende Änderung') }}</b>{{ ' ' + $t('angelegt, die Aktivierung erfolgt in Checkmk. Der User braucht Rechte zum Lesen und Anlegen von Hosts, aber keine zum Aktivieren.') }}</p>
     <div class="max-w-xl space-y-3">
       <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" v-model="a.enabled" />{{ ' ' + $t('Anbindung aktiv') }}</label>
-      <div><label :class="lbl">{{ $t('Adresse der Site (API)') }}</label><input v-model="a.api_url" :class="inp" :placeholder="$t('http://checkmk.example.test/site')" />
-        <p class="text-xs text-slate-400 mt-1">{{ $t('Ohne') + ' ' }}<code>{{ $t('/check_mk/api') }}</code>{{ $t('. Die Anmeldedaten gehen mit jeder Anfrage mit – nach Möglichkeit https verwenden.') }}</p></div>
+      <div><label :class="lbl">{{ $t('Adresse der Site (API)') }}</label><input v-model="a.api_url" :class="inp" :placeholder="$t('https://checkmk.example.test/site')" />
+        <p class="text-xs text-slate-400 mt-1">{{ $t('Ohne') + ' ' }}<code>{{ $t('/check_mk/api') }}</code>{{ $t('. Die Anmeldedaten gehen mit jeder Anfrage mit – nach Möglichkeit https verwenden.') }}</p>
+        <p v-if="plainHttp" class="mt-2 text-sm rounded-md px-3 py-2 bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800">
+          ⚠ {{ $t('Unverschlüsselt: Automation-User und Secret gehen bei jeder Anfrage im Klartext über das Netz. Die Checkmk-Site auf HTTPS umstellen und hier https:// eintragen.') }}</p></div>
       <div class="grid grid-cols-2 gap-3">
         <div><label :class="lbl">{{ $t('Automation-User') }}</label><input v-model="a.user" :class="inp" autocomplete="off" /></div>
         <div><label :class="lbl">{{ $t('Secret') }}</label><input v-model="a.secret" type="password" :class="inp" autocomplete="new-password" :placeholder="a.secret_set ? $t('(gesetzt – leer lassen = unverändert)') : ''" /></div>
@@ -50,7 +52,7 @@
 
 <script setup>
 import { t } from '../i18n.js'
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { api, errText } from '../api.js'
 import CheckmkActivate from './CheckmkActivate.vue'
 import { loadCheckmk } from '../checkmk.js'
@@ -60,6 +62,7 @@ const f = reactive({ base_url: '', link_all: true })
 const busy = ref(false), msg = ref(''), err = ref('')
 const a = reactive({ enabled: false, api_url: '', user: '', secret: '', secret_set: false, default_folder: '/', verify_tls: true, ca_pem: '' })
 const busyApi = ref(false), msgApi = ref(''), errApi = ref('')
+const plainHttp = computed(() => /^\s*http:\/\//i.test(a.api_url))
 async function loadApi() { try { Object.assign(a, await api.checkmkApi(), { secret: '' }) } catch (e) { errApi.value = errText(e) } }
 async function saveApi() {
   busyApi.value = true; msgApi.value = errApi.value = ''
@@ -69,7 +72,7 @@ async function saveApi() {
 }
 async function testApi() {
   busyApi.value = true; msgApi.value = errApi.value = ''
-  try { const r = await api.testCheckmkApi(); msgApi.value = t('Verbunden: Checkmk {v}, {n} Ordner sichtbar', { v: r.version + (r.edition ? ' (' + r.edition + ')' : ''), n: r.folders }) }
+  try { const r = await api.testCheckmkApi(); msgApi.value = t('Verbunden: Checkmk {v}, {n} Ordner sichtbar', { v: r.version + (r.edition ? ' (' + r.edition + ')' : ''), n: r.folders }) + (r.plain_http ? ' – ' + t('unverschlüsselt (http)') : '') }
   catch (e) { errApi.value = errText(e) } finally { busyApi.value = false }
 }
 onMounted(async () => { loadApi(); try { const c = await api.checkmkLink(); f.base_url = c.base_url; f.link_all = c.link_all } catch (e) { err.value = errText(e) } })
