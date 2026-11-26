@@ -66,6 +66,7 @@ export const T_EN = {
 <ul><li><b>SBC:</b> the device where the trunk terminates (type SBC, voice gateway, gateway, router or firewall) – at the same site. <b>PBX:</b> a device of type PBX, e.g. the HiPath. <b>WAN line:</b> a line of this site.</li>
 <li><b>Changes run as orders:</b> “Activate”, “Change via order” and “Terminate” create a patch order; status and new values only apply once it is confirmed.</li>
 <li><b>Edit directly</b> (administrators): for recording existing trunks. Numbers one block per line, e.g. <code>+49 6181 1234-0…99</code>; the search also finds single numbers.</li>
+<li><b>Number plan</b> (second tab): blocks with prefix and extension range; each extension free, reserved (with deadline) or assigned to a person, function, hunt group, fax or special line, optionally with an end device. “Assign next free …” takes the first free extension. Planners and administrators of the site assign extensions; administrators create blocks.</li>
 <li>Visible only with the “Telephony” grant (Administration → Users → Additional areas); administrators always see this area.</li></ul>`,
 
   '/workorders': `<h2>Patch orders</h2>

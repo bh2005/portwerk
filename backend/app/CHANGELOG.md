@@ -2,6 +2,9 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.23.0 – 2026-11-26
+- Telefonie, Rufnummernplan: neuer Reiter „Rufnummernplan“ unter Telefonie. Rufnummernblöcke (Präfix, Durchwahlbereich, optional feste Stellenzahl; je Standort, wahlweise zu einem SIP-Trunk, ohne Überschneidungen). Je Durchwahl frei, reserviert (mit Frist, abgelaufene markiert) oder vergeben an Person, Funktion, Sammelruf, Fax oder Sonderanschluss, optional mit Endgerät; „Nächste freie vergeben …“. Vergabe durch Planer und Administratoren des Standorts mit Audit-Log, Blöcke durch Administratoren. Schnellsuche nach Rufnummer (auch national geschrieben) und Inhaber, Rufnummern auf der Geräteseite des Telefons, Blöcke beim SIP-Trunk, CSV-Export (gesamt oder je Block mit freien Nummern).
+
 ## 0.22.0 – 2026-11-26
 - Telefonie, Geräte: neue Gerätetypen TK-Anlage, Session Border Controller (SBC), Sprach-Gateway (analog/ISDN), DECT-Basisstation und Telefon; neue Port-Medien UP0E, S0, S2M und a/b (HiPath-Schnittstellen) sowie TAE und LSA, passend zur Kabelkategorie „Telefon“.
 - Telefonie, SIP-Trunks: neues Menü „Telefonie“ mit Provider, Trunk-Kennung, Registrar, Anbindung (Registrierung/statisch), Kanälen, Rufnummernblöcken und Vertrag, verknüpft mit SBC, TK-Anlage und WAN-Leitung. In Betrieb nehmen, Ändern und Kündigen laufen als Patchauftrag mit Freigabe (auch in Patchliste, PDF und mobiler Ansicht). Die WAN-Leitung zeigt ihre Trunks und warnt, dass die Telefonie betroffen ist; SBC und TK-Anlage listen ihre Trunks. Schnellsuche findet Trunks und Rufnummern, CSV-Export.

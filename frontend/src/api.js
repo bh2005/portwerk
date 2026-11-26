@@ -202,6 +202,16 @@ export const api = {
   createSipTrunk: b => post('/api/sip-trunks', b),
   updateSipTrunk: (id, b) => put(`/api/sip-trunks/${id}`, b),
   deleteSipTrunk: id => del(`/api/sip-trunks/${id}`),
+  numberMeta:     () => get('/api/numbers/meta'),
+  numberBlocks:   params => get('/api/numbers/blocks', params),
+  numberBlock:    id => get(`/api/numbers/blocks/${id}`),
+  createNumberBlock: b => post('/api/numbers/blocks', b),
+  updateNumberBlock: (id, b) => put(`/api/numbers/blocks/${id}`, b),
+  deleteNumberBlock: id => del(`/api/numbers/blocks/${id}`),
+  nextFreeNumber: (id, after) => get(`/api/numbers/blocks/${id}/next-free`, after != null ? { after } : {}),
+  setNumber:      (id, ext, b) => put(`/api/numbers/blocks/${id}/ext/${ext}`, b),
+  freeNumber:     (id, ext) => del(`/api/numbers/blocks/${id}/ext/${ext}`),
+  numbersOfDevice: id => get(`/api/numbers/by-device/${id}`),
 
   // Patchaufträge
   workorders:        params => get('/api/workorders', params),

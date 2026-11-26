@@ -1,7 +1,15 @@
 <template>
   <div class="max-w-7xl space-y-4">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Telefonie') }}</h1>
+      <div class="flex bg-white dark:bg-slate-800 rounded-lg p-1 shadow-sm text-sm">
+        <button v-for="[k, l] in TABS" :key="k" class="px-3 py-1.5 rounded-md" :class="tab === k ? 'bg-ks-600 text-white' : 'text-slate-600 dark:text-slate-300'" @click="setTab(k)">{{ $t(l) }}</button>
+      </div>
+    </div>
+    <NumberPlan v-if="tab === 'numbers'" />
+    <template v-else>
     <div class="flex items-center justify-between flex-wrap gap-2">
-      <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ $t('Telefonie: SIP-Trunks') }}</h1>
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('SIP-Trunks') }}</h2>
       <div class="flex gap-2">
         <a :class="btnGhost" :href="csvUrl" @click.prevent="downloadCsv">{{ $t('CSV-Export') }}</a>
         <button v-if="canWrite" :class="btnPrimary" @click="openForm()">{{ $t('+ SIP-Trunk') }}</button>
@@ -41,6 +49,8 @@
       </table>
     </div>
 
+    </template>
+
     <!-- Details -->
     <SidePanel :open="!!sel" :close-on-esc="!form" @close="sel = null">
       <template #title>
@@ -57,6 +67,13 @@
             <span v-if="sel.wan" class="text-xs text-slate-400"> · {{ [sel.wan.provider, sel.wan.circuit_id].filter(Boolean).join(' · ') }}</span><span v-else>–</span></dd></div>
           <div v-for="[k, v] in details" :key="k" :class="WIDE.includes(k) ? 'sm:col-span-2' : ''"><dt :class="lbl">{{ $t(k) }}</dt><dd class="text-slate-700 dark:text-slate-200 break-words whitespace-pre-line">{{ v || '–' }}</dd></div>
         </dl>
+        <div v-if="sel.number_blocks?.length || canWrite">
+          <h3 :class="lbl">{{ $t('Rufnummernblöcke') }}</h3>
+          <ul class="text-sm space-y-1"><li v-for="b in sel.number_blocks" :key="b.id">
+            <router-link :to="`/telephony?tab=numbers&block=${b.id}`" class="font-mono text-ks-600 dark:text-ks-400 hover:underline" @click="tab = 'numbers'; sel = null">{{ b.first }} … {{ b.last.split('-').pop() }}</router-link>
+            <span class="text-xs text-slate-400"> · {{ $t('{a} vergeben, {r} reserviert, {f} frei', { a: b.counts.assigned, r: b.counts.reserved, f: b.counts.free }) }}</span></li></ul>
+          <p v-if="!sel.number_blocks?.length" class="text-xs text-slate-400">{{ $t('Noch kein Rufnummernblock – im Reiter „Rufnummernplan“ anlegen.') }}</p>
+        </div>
         <div v-if="sel.orders?.length">
           <h3 :class="lbl">{{ $t('Aufträge') }}</h3>
           <ul class="text-sm space-y-1"><li v-for="o in sel.orders" :key="o.id + o.action">
@@ -114,10 +131,15 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
 import SidePanel from '../components/SidePanel.vue'
+import NumberPlan from '../components/NumberPlan.vue'
 import { api, errText, canWriteMaster, getToken, isGlobal, scopesOf, siteAdminIds } from '../api.js'
 import { inp, lbl, card, btnPrimary, btnGhost, btnDanger, btnLink, th, td, typeLabel } from '../ui.js'
 
 const route = useRoute(), router = useRouter()
+const TABS = [['trunks', 'SIP-Trunks'], ['numbers', 'Rufnummernplan']]
+const tab = ref(route.query.tab === 'numbers' ? 'numbers' : 'trunks')
+function setTab(k) { tab.value = k; sel.value = null; router.replace({ query: k === 'numbers' ? { tab: k } : {} }) }
+watch(() => route.query.tab, v => { tab.value = v === 'numbers' ? 'numbers' : 'trunks' })
 const canWrite = canWriteMaster()
 const trunks = ref([]), sites = ref([]), meta = ref({ statuses: [], modes: [], sbc_types: [], pbx_types: [] }), sel = ref(null)
 const q = ref(''), fStatus = ref(''), fSite = ref(''), expiring = ref(false)
