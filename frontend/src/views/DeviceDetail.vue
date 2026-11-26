@@ -110,6 +110,13 @@
         </div>
       </div>
 
+      <div v-if="numbers.length" :class="card" class="px-4 py-3">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">{{ $t('Rufnummern') }}</h2>
+        <ul class="text-sm space-y-1"><li v-for="n in numbers" :key="n.id">
+          <router-link :to="`/telephony?tab=numbers&block=${n.block_id}&ext=${n.extension}`" class="font-mono text-ks-600 dark:text-ks-400 hover:underline">☎ {{ n.number }}</router-link>
+          <span class="text-xs text-slate-400"> · {{ n.holder }} · {{ $t(n.status_label) }}</span></li></ul>
+      </div>
+
       <div v-if="trunks.length" :class="card" class="px-4 py-3">
         <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">{{ $t('SIP-Trunks') }}</h2>
         <ul class="text-sm space-y-1"><li v-for="x in trunks" :key="x.id">
@@ -316,7 +323,7 @@ async function cableDone(r) { cableWiz.value = null; msgErr.value = false; msg.v
 const FIELDS = ['hostname', 'type', 'vendor', 'model', 'serial', 'mgmt_ip', 'location_id', 'rack_position', 'height_u', 'status', 'note', 'mount_side', 'orientation', 'side_slot']
 
 const TRUNK_TYPES = ['pbx', 'sbc', 'voice_gateway', 'gateway', 'router', 'firewall']       // Geräte, an denen SIP-Trunks hängen können
-const trunks = ref([])
+const trunks = ref([]), numbers = ref([])
 async function load() {
   try {
     d.value = await api.device(route.params.id)
@@ -324,6 +331,7 @@ async function load() {
     error.value = ''
     if (hist.port && !d.value.ports.some(p => p.id === hist.port.id)) hist.port = null
     trunks.value = TRUNK_TYPES.includes(d.value.type) && canSee('telephony') ? await api.sipTrunks({ device_id: d.value.id }).catch(() => []) : []
+    numbers.value = canSee('telephony') ? await api.numbersOfDevice(d.value.id).catch(() => []) : []
   } catch (e) { error.value = errText(e, 'Gerät nicht gefunden'); d.value = null }
 }
 

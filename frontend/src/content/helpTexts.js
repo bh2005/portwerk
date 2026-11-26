@@ -70,6 +70,7 @@ const T = {
 <ul><li><b>SBC:</b> das Gerät, an dem der Trunk ankommt (Typ SBC, Sprach-Gateway, Gateway, Router oder Firewall) – am selben Standort. <b>TK-Anlage:</b> Gerät vom Typ TK-Anlage, z. B. die HiPath. <b>WAN-Leitung:</b> eine Leitung dieses Standorts.</li>
 <li><b>Änderungen laufen als Auftrag:</b> „In Betrieb nehmen“, „Ändern per Auftrag“ und „Kündigen“ legen einen Patchauftrag an; Status und neue Werte gelten erst nach der Bestätigung.</li>
 <li><b>Direkt bearbeiten</b> (Administratoren): zum Erfassen vorhandener Trunks. Rufnummern je Zeile ein Block, z. B. <code>+49 6181 1234-0…99</code>; die Suche findet auch einzelne Rufnummern.</li>
+<li><b>Rufnummernplan</b> (zweiter Reiter): Blöcke mit Präfix und Durchwahlbereich; je Durchwahl frei, reserviert (mit Frist) oder vergeben an Person, Funktion, Sammelruf, Fax oder Sonderanschluss, optional mit Endgerät. „Nächste freie vergeben …“ nimmt die erste freie Durchwahl. Vergeben dürfen Planer und Administratoren des Standorts; Blöcke legen Administratoren an.</li>
 <li>Sichtbar nur mit Freigabe „Telefonie“ (Verwaltung → Benutzer → Zusätzliche Bereiche); Administratoren sehen den Bereich immer.</li></ul>`,
 
   '/workorders': `<h2>Patchaufträge</h2>

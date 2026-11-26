@@ -174,6 +174,8 @@ def get_trunk(tid: int, me: Principal = Depends(current_principal)):
     o["orders"] = [dict(x) for x in db.rows(
         """SELECT DISTINCT w.id, w.number, w.title, w.status, i.action FROM workitems i JOIN workorders w ON w.id = i.workorder_id
            WHERE i.sip_trunk_id = ? ORDER BY w.id DESC""", (tid,))]
+    from .numbers import block_out
+    o["number_blocks"] = [block_out(b) for b in db.rows("SELECT * FROM number_blocks WHERE sip_trunk_id = ? ORDER BY prefix, range_from", (tid,))]
     return o
 
 

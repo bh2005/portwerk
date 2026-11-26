@@ -18,7 +18,7 @@ def _like(q: str) -> str:
 @router.get("")
 def search(q: str = Query("", max_length=100), me: Principal = Depends(current_principal)):
     q = q.strip()
-    out: dict = {"q": q, "devices": [], "sites": [], "locations": [], "wan": [], "trunks": [], "orders": [], "cables": []}
+    out: dict = {"q": q, "devices": [], "sites": [], "locations": [], "wan": [], "trunks": [], "numbers": [], "orders": [], "cables": []}
     if len(q) < 2:
         return out
     pat = _like(q)
@@ -67,6 +67,11 @@ def search(q: str = Query("", max_length=100), me: Principal = Depends(current_p
         out["trunks"].append({"id": r["id"], "name": r["name"], "status": r["status"], "provider": r["provider"], "trunk_ident": r["trunk_ident"]})
         if len(out["trunks"]) >= PER_KIND:
             break
+
+    if me.can_see("telephony"):
+        from .numbers import find as find_numbers
+        out["numbers"] = [{"block_id": a["block_id"], "extension": a["extension"], "number": a["number"], "holder": a["holder"],
+                           "status": a["status"], "kind_label": a["kind_label"]} for a in find_numbers(me, q, PER_KIND)]
 
     for w in db.rows("SELECT id, number, title, status, location_id FROM workorders WHERE (number LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\') "
                      "ORDER BY id DESC LIMIT 40", (pat, pat)):
