@@ -40,6 +40,11 @@ class Principal:
     scope: str = ""                   # nur Tokens: read | write
     user_id: Optional[int] = None
     scopes: dict = field(default_factory=dict)   # Standort-ID -> Rollen nur an diesem Standort
+    areas: set = field(default_factory=set)      # freigeschaltete Sonderbereiche (AREAS)
+
+    def can_see(self, area: str) -> bool:
+        """Sonderbereich (WAN, Telefonie): nur globale Admins und ausdrücklich zugelassene Benutzer/API-Zugänge."""
+        return self.is_admin or area in self.areas
 
     def has(self, *roles: str) -> bool:
         """Globale Rolle (gilt überall)."""
@@ -83,6 +88,21 @@ class Principal:
 
 # ── Benutzer ──────────────────────────────────────────────────────────────────
 
+AREAS = ("wan", "telephony")                    # Sonderbereiche mit ausdrücklicher Freigabe
+
+
+def parse_areas(value: str) -> list[str]:
+    return [a for a in (x.strip() for x in (value or "").split(",")) if a in AREAS]
+
+
+def check_areas(areas) -> list[str]:
+    bad = [a for a in areas if a not in AREAS]
+    if bad:
+        from fastapi import HTTPException
+        raise HTTPException(400, f"Unbekannter Bereich: {', '.join(bad)} (erlaubt: {', '.join(AREAS)})")
+    return [a for a in AREAS if a in areas]
+
+
 def parse_roles(value: str) -> list[str]:
     return [r for r in (value or "").split(",") if r]
 
@@ -103,7 +123,7 @@ def scope_map(user_id: int) -> dict:
 def public_user(u: dict) -> dict:
     return {
         "id": u["id"], "username": u["username"], "full_name": u["full_name"], "email": u["email"],
-        "roles": parse_roles(u["roles"]), "scopes": user_scopes(u["id"]), "source": u["source"], "active": bool(u["active"]),
+        "roles": parse_roles(u["roles"]), "scopes": user_scopes(u["id"]), "areas": parse_areas(u.get("areas") or ""), "source": u["source"], "active": bool(u["active"]),
         "created_at": u["created_at"], "last_login": u["last_login"],
         "notify": _notify_prefs(u),
         "prefs": ui_prefs(u.get("ui_prefs") or ""),
@@ -285,7 +305,7 @@ def _principal_from_session(token: str) -> Principal:
     if not u or not u["active"] or u["token_version"] != s["tv"]:
         _sessions.pop(token, None)
         raise HTTPException(401, "Sitzung nicht mehr gültig")
-    return Principal("user", u["username"], set(parse_roles(u["roles"])), user_id=u["id"], scopes=scope_map(u["id"]))
+    return Principal("user", u["username"], set(parse_roles(u["roles"])), user_id=u["id"], scopes=scope_map(u["id"]), areas=set(parse_areas(u["areas"])))
 
 
 def _principal_from_api_token(raw: str) -> Principal:
@@ -294,7 +314,7 @@ def _principal_from_api_token(raw: str) -> Principal:
     if not t or t["revoked"] or (t["expires_at"] and t["expires_at"] < now):
         raise HTTPException(401, "Ungültiger oder abgelaufener API-Zugang")
     db.execute("UPDATE api_tokens SET last_used_at = ? WHERE id = ?", (now, t["id"]))
-    return Principal("token", t["name"], set(), scope=t["scope"])
+    return Principal("token", t["name"], set(), scope=t["scope"], areas=set(parse_areas(t["areas"])))
 
 
 def current_principal(

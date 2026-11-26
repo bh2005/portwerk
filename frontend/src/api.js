@@ -27,6 +27,8 @@ export function scopesOf()   { return getUser().scopes || [] }                  
 export function isSiteAdmin() { return scopesOf().some(s => s.role === 'admin') }                       // Bereichs-Administrator irgendeines Standorts
 export function siteAdminIds() { return scopesOf().filter(s => s.role === 'admin').map(s => s.site_id) }
 export function canWriteMaster() { return isAdmin() || isSiteAdmin() }                                  // Stammdaten ändern (Server prüft den Standort)
+/** Sonderbereich (wan, telephony): globale Admins und ausdrücklich freigeschaltete Benutzer. */
+export function canSee(area) { return isAdmin() || (getUser().areas || []).includes(area) }
 export function canAdministerUsers() { return isAdmin() || isSiteAdmin() }
 /** Rolle global oder an irgendeinem Standort – nur für Menüs und Schaltflächen, die Rechte prüft immer der Server. */
 export function hasRole(...roles) {
@@ -194,6 +196,12 @@ export const api = {
   createWan:      b => post('/api/wan', b),
   updateWan:      (id, b) => put(`/api/wan/${id}`, b),
   deleteWan:      id => del(`/api/wan/${id}`),
+  sipTrunkMeta:   () => get('/api/sip-trunks/meta'),
+  sipTrunks:      params => get('/api/sip-trunks', params),
+  sipTrunk:       id => get(`/api/sip-trunks/${id}`),
+  createSipTrunk: b => post('/api/sip-trunks', b),
+  updateSipTrunk: (id, b) => put(`/api/sip-trunks/${id}`, b),
+  deleteSipTrunk: id => del(`/api/sip-trunks/${id}`),
 
   // Patchaufträge
   workorders:        params => get('/api/workorders', params),

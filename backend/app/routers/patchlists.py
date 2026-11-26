@@ -41,6 +41,11 @@ def _end(o: dict, which: str) -> tuple[str, str]:
         return f"WAN {o['wan']['name']}" + (f" ({o['wan']['circuit_id']})" if o["wan"]["circuit_id"] else ""), o["wan"]["site_a"]
     if which == "b" and o.get("wan"):
         return o["wan"]["site_b"], ""
+    if which == "a" and o.get("trunk"):
+        tr = o["trunk"]
+        return f"SIP-Trunk {tr['name']}" + (f" ({tr['trunk_ident']})" if tr["trunk_ident"] else ""), tr["site"]
+    if which == "b" and o.get("trunk"):
+        return " / ".join(x for x in (o["trunk"]["sbc"], o["trunk"]["pbx"]) if x) or o["trunk"]["provider"], ""
     if which == "a" and o["device"]:
         d = db.row("SELECT location_id FROM devices WHERE id = ?", (o["device"]["id"],))
         return o["device"]["hostname"], masterdata.location_path(d["location_id"]) if d else ""

@@ -37,7 +37,7 @@ def auth_logout(token: Optional[str] = Security(session_header), _: Principal = 
 @router.get("/auth/me")
 def auth_me(p: Principal = Depends(current_principal)):
     if p.kind == "token":
-        return {"kind": "token", "name": p.name, "scope": p.scope}
+        return {"kind": "token", "name": p.name, "scope": p.scope, "areas": sorted(p.areas)}
     u = db.row("SELECT * FROM users WHERE id = ?", (p.user_id,))
     return {"kind": "user", **auth.public_user(u)}
 
@@ -301,17 +301,20 @@ def create_user(body: UserCreate, me: Principal = Depends(require_user_admin)):
     if body.roles and not me.is_admin:
         raise HTTPException(403, "Globale Rollen vergeben nur globale Administratoren – bitte Rechte für einen Standort wählen")
     roles = auth.check_roles(body.roles, allow_empty=True)
+    if body.areas and not me.is_admin:
+        raise HTTPException(403, "Bereiche (WAN, Telefonie) geben nur globale Administratoren frei")
+    areas = auth.check_areas(body.areas)
     scopes = _clean_scopes(me, body.scopes)
     if not roles and not scopes:
         raise HTTPException(400, "Mindestens eine globale Rolle oder eine Berechtigung für einen Standort ist erforderlich")
     auth.check_password_policy(body.password)
     try:
-        uid = db.execute("INSERT INTO users(username, full_name, email, roles, source, password_hash, created_at) VALUES (?,?,?,?,?,?,?)",
-                         (name, body.full_name.strip(), body.email.strip(), ",".join(roles), "local", hash_password(body.password), time.time()))
+        uid = db.execute("INSERT INTO users(username, full_name, email, roles, source, password_hash, created_at, areas) VALUES (?,?,?,?,?,?,?,?)",
+                         (name, body.full_name.strip(), body.email.strip(), ",".join(roles), "local", hash_password(body.password), time.time(), ",".join(areas)))
     except sqlite3.IntegrityError:
         raise HTTPException(409, "Benutzername existiert bereits")
     _set_manual_scopes(me, uid, scopes)
-    audit.log(me.name, "user.create", "user", uid, f"{name} [{','.join(roles) or '-'}] Standorte: {_scope_text(scopes)}")
+    audit.log(me.name, "user.create", "user", uid, f"{name} [{','.join(roles) or '-'}] Standorte: {_scope_text(scopes)}" + (f" Bereiche: {','.join(areas)}" if areas else ""))
     return _user_out(me, _get_user(uid))
 
 
@@ -330,9 +333,13 @@ def update_user(uid: int, body: UserUpdate, me: Principal = Depends(require_user
     if active != bool(u["active"]) and not _fully_mine(me, u):
         raise HTTPException(403, "Dieser Benutzer gehört auch zu anderen Bereichen – Sperren nur durch globale Administratoren")
     _last_admin_guard(u, roles, active)
+    old_areas = auth.parse_areas(u.get("areas") or "")
+    areas = auth.check_areas(body.areas) if body.areas is not None else old_areas
+    if areas != old_areas and not me.is_admin:
+        raise HTTPException(403, "Bereiche (WAN, Telefonie) geben nur globale Administratoren frei")
     wanted = _clean_scopes(me, body.scopes) if body.scopes is not None else None
-    db.execute("UPDATE users SET roles=?, active=?, full_name=?, email=? WHERE id=?",
-               (",".join(roles), 1 if active else 0, body.full_name.strip() if body.full_name is not None else u["full_name"],
+    db.execute("UPDATE users SET roles=?, active=?, areas=?, full_name=?, email=? WHERE id=?",
+               (",".join(roles), 1 if active else 0, ",".join(areas), body.full_name.strip() if body.full_name is not None else u["full_name"],
                 body.email.strip() if body.email is not None else u["email"], uid))
     if wanted is not None:
         _set_manual_scopes(me, uid, wanted)
@@ -341,7 +348,8 @@ def update_user(uid: int, body: UserUpdate, me: Principal = Depends(require_user
     if not active or roles != old_roles:
         auth.revoke_sessions(uid)                                # neue Rechte gelten sofort
     audit.log(me.name, "user.update", "user", uid,
-              f"{u['username']} [{','.join(roles) or '-'}] aktiv={active}" + (f" Standorte: {_scope_text(wanted)}" if wanted is not None else ""))
+              f"{u['username']} [{','.join(roles) or '-'}] aktiv={active}" + (f" Standorte: {_scope_text(wanted)}" if wanted is not None else "")
+              + (f" Bereiche: {','.join(areas) or '-'}" if areas != old_areas else ""))
     return _user_out(me, _get_user(uid))
 
 
@@ -386,7 +394,7 @@ def delete_user(uid: int, me: Principal = Depends(require_user_admin)):
 # ── API-Zugänge (Admin) ───────────────────────────────────────────────────────
 
 def _token_out(t: dict) -> dict:
-    return {k: t[k] for k in ("id", "name", "prefix", "scope", "created_by", "created_at", "expires_at", "last_used_at")} | {"revoked": bool(t["revoked"])}
+    return {k: t[k] for k in ("id", "name", "prefix", "scope", "created_by", "created_at", "expires_at", "last_used_at")} | {"revoked": bool(t["revoked"]), "areas": auth.parse_areas(t["areas"])}
 
 
 @router.get("/api/tokens")
@@ -398,12 +406,13 @@ def list_tokens(_: Principal = Depends(require_admin)):
 def create_token(body: TokenCreate, me: Principal = Depends(require_admin)):
     if body.scope not in ("read", "write"):
         raise HTTPException(400, "Umfang muss 'read' oder 'write' sein")
+    areas = auth.check_areas(body.areas)
     raw = new_api_token()
     now = time.time()
-    tid = db.execute("INSERT INTO api_tokens(name, prefix, token_hash, scope, created_by, created_at, expires_at) VALUES (?,?,?,?,?,?,?)",
+    tid = db.execute("INSERT INTO api_tokens(name, prefix, token_hash, scope, created_by, created_at, expires_at, areas) VALUES (?,?,?,?,?,?,?,?)",
                      (body.name.strip(), raw[:10], token_hash(raw), body.scope, me.name, now,
-                      now + body.expires_days * 86400 if body.expires_days else None))
-    audit.log(me.name, "token.create", "token", tid, f"{body.name} ({body.scope})")
+                      now + body.expires_days * 86400 if body.expires_days else None, ",".join(areas)))
+    audit.log(me.name, "token.create", "token", tid, f"{body.name} ({body.scope})" + (f" Bereiche: {','.join(areas)}" if areas else ""))
     return {**_token_out(db.row("SELECT * FROM api_tokens WHERE id = ?", (tid,))), "token": raw,
             "hinweis": "Das Token wird nur jetzt angezeigt und kann nicht erneut abgerufen werden."}
 

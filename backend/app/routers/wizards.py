@@ -439,7 +439,7 @@ CATEGORY_MEDIA = {
     "power":  {"C13", "C14", "Schuko"},
     "coax":   {"BNC"},
     "serial": {"RS232", "RS485", "RJ45", "RJ11"},
-    "telco":  {"RJ11", "RJ45"},
+    "telco":  {"RJ11", "RJ45", "UP0E", "S0", "S2M", "a/b", "TAE", "LSA"},
 }
 
 

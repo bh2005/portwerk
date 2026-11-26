@@ -82,7 +82,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import NavLink from './SidebarNavLink.vue'
-import { api, clearToken, isAdmin, hasRole, canAdministerUsers, getUser } from '../api.js'
+import { canSee, api, clearToken, isAdmin, hasRole, canAdministerUsers, getUser } from '../api.js'
 import { roleLabel } from '../ui.js'
 import { t } from '../i18n.js'
 
@@ -104,6 +104,7 @@ const IC = {
   catalog: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
   cleanup: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
   compare: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  phone:  'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z',
   wan:    'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
   reserve: 'M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z',
   order:  'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
@@ -121,7 +122,8 @@ const allLinks = [
   { to: '/timetravel',  label: 'Zeitreise',   icon: IC.clock, desc: 'Verkabelung zu einem Zeitpunkt, Änderungen zwischen zwei Zeitpunkten' },
   { to: '/compare',     label: 'Soll/Ist',    icon: IC.compare, desc: 'Dokumentierte Verkabelung gegen LLDP/CDP-Nachbarn abgleichen' },
   { to: '/cleanup',     label: 'Aufräumen',   icon: IC.cleanup, desc: 'Vorläufige Kabel, tote Patchungen, abgelaufene Reservierungen, liegengebliebene Aufträge' },
-  { to: '/wan',         label: 'WAN',         icon: IC.wan,    desc: 'WAN-Verbindungen: Provider, Leitungen, Verträge' },
+  { to: '/wan',         label: 'WAN',         icon: IC.wan,    desc: 'WAN-Verbindungen: Provider, Leitungen, Verträge', area: 'wan' },
+  { to: '/telephony',   label: 'Telefonie',   icon: IC.phone,  desc: 'SIP-Trunks: Provider, Kanäle, Rufnummern, SBC und TK-Anlage', area: 'telephony' },
   { to: '/catalog',     label: 'Katalog',     icon: IC.catalog, desc: 'Gerätemodelle mit Port-Vorlagen und Kabelarten' },
   { to: '/reservations', label: 'Reservierungen', icon: IC.reserve, desc: 'Ports für Projekte freihalten', roleAny: ['planer','freigeber','techniker','viewer','admin'] },
   { to: '/workorders',  label: 'Patchaufträge', icon: IC.order, desc: 'Patchaufträge planen, freigeben und ausführen', roleAny: ['planer','freigeber','techniker','viewer','admin'] },
@@ -129,6 +131,7 @@ const allLinks = [
   { to: '/admin',       label: 'Verwaltung',  icon: IC.admin,  desc: 'Benutzer und Rechte, API-Zugänge, AD-Anmeldung, Zertifikat und Audit-Log', userAdmin: true },
 ]
 const visibleLinks = computed(() => allLinks.filter(l => {
+  if (l.area && !canSee(l.area)) return false
   if (l.adminOnly) return isAdmin()
   if (l.userAdmin) return canAdministerUsers()
   if (l.roleAny)   return isAdmin() || hasRole(...l.roleAny)

@@ -130,7 +130,7 @@ def test_item_validation(client, admin, world):
 def test_scopes(client, admin, world):
     a = mk(client, admin, world)                                                                   # A ↔ B
     c = mk(client, admin, world, name="nur C", site_a_id=world["C"]["site"], site_b_id=None)
-    client.post("/api/users", headers=admin, json={"username": "pa", "password": "Passwort-123", "roles": [],
+    client.post("/api/users", headers=admin, json={"username": "pa", "password": "Passwort-123", "roles": [], "areas": ["wan"],
                                                    "scopes": [{"role": "planer", "site_id": world["A"]["site"]}]})
     h = login(client, "pa", "Passwort-123")
     assert [x["name"] for x in client.get("/api/wan", headers=h).json()] == ["MPLS A-B"]            # sieht auch Verbindungen mit A als Gegenstelle

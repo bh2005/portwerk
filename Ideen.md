@@ -4,6 +4,9 @@ Stand: 2026-11-26. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 
 ## Offen
 
+- **Telefonie, weitere Schritte**
+  Rufnummernplan (Blöcke, Durchwahlen frei/reserviert/vergeben, Zuordnung zu Teilnehmer/Arbeitsplatz), Telefone am Arbeitsplatz (Dose ↔ Switchport, Voice-VLAN, PoE),
+  kritische Sonderanschlüsse (Aufzugnotruf, BMA, EMA, Fax) mit Warnung beim Trennen, SBC-Zonen und TLS-Zertifikatsablauf, Import der Nebenstellen aus der HiPath.
 - **VLAN-Soll/Ist für Trunks, Voice-VLANs und andere Hersteller**
   Checkmk liefert VLANs nur für Cisco und nur Access-VLANs (Plugin `inv_cisco_vlans`). Für Trunks/Voice bräuchte es eigene Daten
   (z. B. CISCO-VTP-MIB oder ein eigenes Inventar-Plugin).
@@ -62,4 +65,5 @@ Stand: 2026-11-26. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Englisch, Etappe 5: Verwaltung und Import (Oberfläche vollständig) | #38 |
 | Handbuch und Hilfe auf Englisch; Handbuch aktualisiert | #39 |
 | Englisch für Mails (Sprache des Empfängers), PDF, CSV und Etikettenformate – Portwerk vollständig zweisprachig | #40 |
-| Tests unter Python 3.9 (CI prüft 3.9 und 3.12); Warnung bei Checkmk-Anbindung ohne HTTPS | (dieser PR) |
+| Tests unter Python 3.9 (CI prüft 3.9 und 3.12); Warnung bei Checkmk-Anbindung ohne HTTPS | #41 |
+| Telefonie: Gerätetypen und Port-Medien (HiPath), SIP-Trunks mit SBC/TK-Anlage/WAN, Aufträge; WAN und Telefonie nur mit Freigabe | (dieser PR) |

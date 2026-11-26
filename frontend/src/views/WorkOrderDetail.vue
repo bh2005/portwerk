@@ -165,13 +165,16 @@
             <td :class="td"><span :class="actionClass(item.action)" class="text-xs font-medium">{{ actionLabel(item.action) }}</span>
               <span v-if="item.cfg_text" class="block text-[11px] text-indigo-600 dark:text-indigo-400">{{ $t('VLAN:') }} {{ item.cfg_text }}</span></td>
             <td :class="td" class="font-mono text-xs">
-              <router-link v-if="item.wan" :to="`/wan?id=${item.wan.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ $t('WAN') }} {{ item.wan.name }}</router-link>
+              <router-link v-if="item.wan" :to="canSee('wan') ? `/wan?id=${item.wan.id}` : ''" class="text-ks-600 dark:text-ks-400 hover:underline">{{ $t('WAN') }} {{ item.wan.name }}</router-link>
+              <router-link v-else-if="item.trunk" :to="canSee('telephony') ? `/telephony?id=${item.trunk.id}` : ''" class="text-ks-600 dark:text-ks-400 hover:underline">{{ $t('SIP-Trunk') }} {{ item.trunk.name }}</router-link>
               <router-link v-else-if="item.device" :to="`/devices/${item.device.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">{{ item.device.hostname }}</router-link>
               <span v-else-if="item.port_a" class="text-slate-700 dark:text-slate-200">{{ item.port_a.device_hostname }}:{{ item.port_a.name }}</span>
               <span v-else class="text-slate-400">–</span>
             </td>
             <td :class="td" class="font-mono text-xs">
               <template v-if="item.wan"><span class="text-slate-500">{{ item.wan.site_b || '–' }}</span>
+                <span v-if="Object.keys(item.wan_patch || {}).length" class="block text-amber-600 dark:text-amber-400">→ {{ patchText(item.wan_patch) }}</span></template>
+              <template v-else-if="item.trunk"><span class="text-slate-500">{{ [item.trunk.sbc, item.trunk.pbx].filter(Boolean).join(' / ') || item.trunk.provider || '–' }}</span>
                 <span v-if="Object.keys(item.wan_patch || {}).length" class="block text-amber-600 dark:text-amber-400">→ {{ patchText(item.wan_patch) }}</span></template>
               <span v-else-if="item.port_b" class="text-slate-700 dark:text-slate-200">{{ item.port_b.device_hostname }}:{{ item.port_b.name }}</span>
               <span v-else class="text-slate-400">–</span>
@@ -257,8 +260,10 @@
               <option value="configure">{{ $t('Port umkonfigurieren (VLAN/Profil)') }}</option>
               <option value="install_device">{{ $t('Gerät einbauen (vorhandenes, geplantes Gerät)') }}</option>
               <option value="remove_device">{{ $t('Gerät zurückbauen') }}</option>
-              <option value="wan_activate">{{ $t('WAN-Verbindung in Betrieb nehmen') }}</option>
-              <option value="wan_terminate">{{ $t('WAN-Verbindung kündigen') }}</option>
+              <template v-if="canSee('wan')"><option value="wan_activate">{{ $t('WAN-Verbindung in Betrieb nehmen') }}</option>
+              <option value="wan_terminate">{{ $t('WAN-Verbindung kündigen') }}</option></template>
+              <template v-if="canSee('telephony')"><option value="trunk_activate">{{ $t('SIP-Trunk in Betrieb nehmen') }}</option>
+              <option value="trunk_terminate">{{ $t('SIP-Trunk kündigen') }}</option></template>
             </select>
           </div>
           <div v-if="isWanAction(itemForm.action)">
@@ -266,6 +271,12 @@
             <select v-model="itemForm.wan_link_id" :class="inp"><option :value="null" disabled>{{ $t('wählen …') }}</option>
               <option v-for="l in wanChoices" :key="l.id" :value="l.id">{{ l.name }} · {{ l.site_a }} ↔ {{ l.site_b || '–' }} ({{ $t(l.status_label) }})</option></select>
             <p class="text-xs text-slate-400 mt-1">{{ $t('Der Status der Verbindung ändert sich beim Bestätigen des Auftrags. Änderungen (z. B. Bandbreite) legst du im Menü „WAN“ über „Ändern per Auftrag“ an.') }}</p>
+          </div>
+          <div v-else-if="isTrunkAction(itemForm.action)">
+            <label :class="lbl">{{ $t('SIP-Trunk') }}</label>
+            <select v-model="itemForm.sip_trunk_id" :class="inp"><option :value="null" disabled>{{ $t('wählen …') }}</option>
+              <option v-for="l in trunkChoices" :key="l.id" :value="l.id">{{ l.name }} · {{ l.site }} ({{ $t(l.status_label) }})</option></select>
+            <p class="text-xs text-slate-400 mt-1">{{ $t('Der Status des Trunks ändert sich beim Bestätigen des Auftrags. Änderungen (z. B. Kanäle, Rufnummern) legst du im Menü „Telefonie“ über „Ändern per Auftrag“ an.') }}</p>
           </div>
           <div v-else-if="isDeviceAction(itemForm.action)">
             <label :class="lbl">{{ $t('Gerät') }}</label>
@@ -331,6 +342,7 @@
           <h2 class="font-semibold text-slate-800 dark:text-slate-100">{{ $t('Position abhaken') }}</h2>
           <p class="text-sm text-slate-600 dark:text-slate-300">
             <template v-if="execItem?.wan"><span class="font-mono">{{ execItem.wan.name }}</span> {{ actionLabel(execItem.action) }}</template>
+            <template v-else-if="execItem?.trunk"><span class="font-mono">{{ execItem.trunk.name }}</span> {{ actionLabel(execItem.action) }}</template>
             <template v-else-if="execItem?.device"><span class="font-mono">{{ execItem.device.hostname }}</span> {{ actionLabel(execItem.action) }}</template>
             <template v-else>
               <span class="font-mono">{{ execItem?.port_a?.device_hostname }}:{{ execItem?.port_a?.name }}</span>
@@ -370,7 +382,7 @@ import { useRoute } from 'vue-router'
 import ModalDialog from '../components/ModalDialog.vue'
 import SendDialog from '../components/SendDialog.vue'
 import OpenPlanDialog from '../components/OpenPlanDialog.vue'
-import { api, errText, conflictOf, hasRole, isAdmin } from '../api.js'
+import { canSee, api, errText, conflictOf, hasRole, isAdmin } from '../api.js'
 import PortConfigFields from '../components/PortConfigFields.vue'
 import { card, inp, lbl, th, td, btnPrimary, btnGhost, btnDanger, btnLink, fmtTime } from '../ui.js'
 import { cableTypes, countLabel, loadCableTypes } from '../catalog.js'
@@ -440,16 +452,22 @@ const prioClass = p => ({ low:'text-slate-400', normal:'text-slate-600 dark:text
   high:'text-amber-600 dark:text-amber-400', critical:'text-red-600 dark:text-red-400 font-semibold' }[p] || '')
 const prioLabel = p => ({ low:t('Niedrig'), normal:t('Normal'), high:t('Hoch'), critical:t('Kritisch') }[p] || p)
 const actionLabel = a => ({ connect:t('→ herstellen'), disconnect:t('✕ trennen'), move:t('↔ umstecken'), install_device:t('＋ Gerät einbauen'), remove_device:t('✕ Gerät zurückbauen'),
-  wan_activate:t('🌐 WAN in Betrieb nehmen'), wan_change:t('🌐 WAN ändern'), wan_terminate:t('🌐 WAN kündigen'), configure:t('⚙ umkonfigurieren') }[a] || a)
+  wan_activate:t('🌐 WAN in Betrieb nehmen'), wan_change:t('🌐 WAN ändern'), wan_terminate:t('🌐 WAN kündigen'), configure:t('⚙ umkonfigurieren'),
+  trunk_activate:t('☎ SIP-Trunk in Betrieb nehmen'), trunk_change:t('☎ SIP-Trunk ändern'), trunk_terminate:t('☎ SIP-Trunk kündigen') }[a] || a)
 const WAN_LABELS = { name: t('Name'), technology: t('Technik'), provider: t('Provider'), circuit_id: t('Leitungs-ID'), bandwidth_down: t('Down Mbit/s'), bandwidth_up: t('Up Mbit/s'),
   contract_number: t('Vertrag'), contract_start: t('Vertragsbeginn'), contract_end: t('Vertragsende'), notice_days: t('Kündigungsfrist (Tage)'), monthly_cost: t('Kosten/Monat'),
-  contact: 'Kontakt', note: 'Notiz', remote_label: 'Gegenstelle', site_b_id: 'Standort B', port_a_id: 'Port A', port_b_id: 'Port B' }
+  contact: t('Kontakt'), note: t('Notiz'), remote_label: t('Gegenstelle'), site_b_id: t('Standort B'), port_a_id: t('Port A'), port_b_id: t('Port B'),
+  mode: t('Anbindung'), trunk_ident: t('Trunk-Kennung'), registrar: t('Registrar / Proxy'), channels: t('Kanäle'), numbers: t('Rufnummern'),
+  sbc_device_id: t('SBC'), pbx_device_id: t('TK-Anlage'), wan_link_id: t('WAN-Leitung') }
 const patchText = p => Object.entries(p).map(([k, v]) => `${WAN_LABELS[k] || k}: ${v ?? '–'}`).join(', ')
 const actionClass = a => ({ connect:'text-green-700 dark:text-green-400', disconnect:'text-red-600 dark:text-red-400',
   move:'text-blue-600 dark:text-blue-400', install_device:'text-green-700 dark:text-green-400', remove_device:'text-red-600 dark:text-red-400',
-  wan_activate:'text-green-700 dark:text-green-400', wan_change:'text-blue-600 dark:text-blue-400', wan_terminate:'text-red-600 dark:text-red-400', configure:'text-indigo-600 dark:text-indigo-400' }[a] || '')
+  wan_activate:'text-green-700 dark:text-green-400', wan_change:'text-blue-600 dark:text-blue-400', wan_terminate:'text-red-600 dark:text-red-400', configure:'text-indigo-600 dark:text-indigo-400',
+  trunk_activate:'text-green-700 dark:text-green-400', trunk_change:'text-blue-600 dark:text-blue-400', trunk_terminate:'text-red-600 dark:text-red-400' }[a] || '')
 const isWanAction = a => a.startsWith('wan_')
 const wanChoices = ref([])
+const isTrunkAction = a => a.startsWith('trunk_')
+const trunkChoices = ref([])
 const isDeviceAction = a => a === 'install_device' || a === 'remove_device'
 const deviceChoices = ref([])
 const ops = ref({ enabled: false }), opDialog = ref(false), opBusy = ref(false)
@@ -580,8 +598,9 @@ async function saveEdit() {
 
 function openAddItem() {
   editingItemId.value = null
-  api.wanLinks().then(l => { wanChoices.value = l.filter(x => x.status !== 'terminated') }).catch(() => {})
-  itemForm.value = { action:'connect', device_id: null, wan_link_id: null, remove_old: false, use_reserved: false, port_a_id: null, port_b_id: null, old_port_b_id: null,
+  if (canSee('wan')) api.wanLinks().then(l => { wanChoices.value = l.filter(x => x.status !== 'terminated') }).catch(() => {})
+  if (canSee('telephony')) api.sipTrunks().then(l => { trunkChoices.value = l.filter(x => x.status !== 'terminated') }).catch(() => {})
+  itemForm.value = { action:'connect', device_id: null, wan_link_id: null, sip_trunk_id: null, remove_old: false, use_reserved: false, port_a_id: null, port_b_id: null, old_port_b_id: null,
     cable_label:'', cable_type:'Cat6', fiber_count: null, length_m: null, color:'', note:'', idx: wo.value.items.length,
     withCfg: false, cfg_port_id: null, cfgForm: { port_mode: '', access_vid: null, voice_vid: null, native_vid: null, allowed_vids: '', profile_id: null } }
   api.portProfiles().then(p => { cfgProfiles.value = p }).catch(() => {})

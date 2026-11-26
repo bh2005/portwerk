@@ -110,6 +110,13 @@
         </div>
       </div>
 
+      <div v-if="trunks.length" :class="card" class="px-4 py-3">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">{{ $t('SIP-Trunks') }}</h2>
+        <ul class="text-sm space-y-1"><li v-for="x in trunks" :key="x.id">
+          <router-link :to="`/telephony?id=${x.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">☎ {{ x.name }}</router-link>
+          <span class="text-xs text-slate-400"> · {{ $t(x.status_label) }}{{ x.channels != null ? ' · ' + $t('{n} Kanäle', { n: x.channels }) : '' }}{{ x.provider ? ' · ' + x.provider : '' }}</span></li></ul>
+      </div>
+
       <div :class="card" class="px-4 py-3 flex items-center justify-between gap-3">
         <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ $t('Verbindungs-Historie') }}</h2>
         <button :class="btnLink" @click="hist.port = null; hist.open = true">{{ $t('alle Ports anzeigen') }}</button>
@@ -234,7 +241,7 @@ import PortConfigFields from '../components/PortConfigFields.vue'
 import WorkplaceWizard from '../components/WorkplaceWizard.vue'
 import HelpHint from '../components/HelpHint.vue'
 import { cableTypes, countLabel, loadCableTypes } from '../catalog.js'
-import { api, errText, conflictOf, canWriteMaster, hasRole } from '../api.js'
+import { canSee, api, errText, conflictOf, canWriteMaster, hasRole } from '../api.js'
 import { checkmkUrl, loadCheckmk } from '../checkmk.js'
 import { inp, lbl, card, th, td, btnPrimary, btnGhost, btnDanger, btnLink, DEVICE_TYPES, DEVICE_STATUS, PORT_MEDIA,
          typeLabel, sourceLabel, fmtSpeed, fmtTime, linkClass } from '../ui.js'
@@ -308,12 +315,15 @@ async function cableDone(r) { cableWiz.value = null; msgErr.value = false; msg.v
 
 const FIELDS = ['hostname', 'type', 'vendor', 'model', 'serial', 'mgmt_ip', 'location_id', 'rack_position', 'height_u', 'status', 'note', 'mount_side', 'orientation', 'side_slot']
 
+const TRUNK_TYPES = ['pbx', 'sbc', 'voice_gateway', 'gateway', 'router', 'firewall']       // Geräte, an denen SIP-Trunks hängen können
+const trunks = ref([])
 async function load() {
   try {
     d.value = await api.device(route.params.id)
     for (const k of FIELDS) form[k] = d.value[k]
     error.value = ''
     if (hist.port && !d.value.ports.some(p => p.id === hist.port.id)) hist.port = null
+    trunks.value = TRUNK_TYPES.includes(d.value.type) && canSee('telephony') ? await api.sipTrunks({ device_id: d.value.id }).catch(() => []) : []
   } catch (e) { error.value = errText(e, 'Gerät nicht gefunden'); d.value = null }
 }
 

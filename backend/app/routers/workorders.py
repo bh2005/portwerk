@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from .. import absences, access, audit, cablelog, db, notifications, openplan, portcfg, reservations, verify
-from . import wan
+from . import siptrunks, wan
 from ..auth import Principal, current_principal
 from .catalog import check_cable_type
 from ..schemas import (PRIORITIES, WORKITEM_ACTIONS, WORKITEM_STATUSES,
@@ -46,7 +46,8 @@ STATUS_LABELS = {
 ACTION_LABELS = {"connect": "Verbindung herstellen", "disconnect": "Verbindung trennen", "move": "Verbindung umstecken",
                  "install_device": "Gerät einbauen", "remove_device": "Gerät zurückbauen",
                  "wan_activate": "WAN in Betrieb nehmen", "wan_change": "WAN ändern", "wan_terminate": "WAN kündigen",
-                 "configure": "Port umkonfigurieren"}
+                 "configure": "Port umkonfigurieren",
+                 "trunk_activate": "SIP-Trunk in Betrieb nehmen", "trunk_change": "SIP-Trunk ändern", "trunk_terminate": "SIP-Trunk kündigen"}
 # Vier-Augen-Prinzip: Aktion -> Spalten der Personen, die diese Aktion nicht selbst ausführen dürfen
 FOUR_EYES: dict[str, tuple[str, ...]] = {"approve": ("created_by", "submitted_by"), "confirm": ("finished_by",)}
 ACTOR_COLUMNS = {"submit": "submitted_by", "approve": "approved_by", "finish": "finished_by", "confirm": "confirmed_by"}
@@ -253,7 +254,9 @@ def _resolve_item_conflicts(me: Principal, w: dict, body) -> None:
 
 
 def _check_item_wan(me: Principal, body) -> dict:
-    """WAN-Positionen: Verbindung/Rechte/Zustand prüfen; liefert die bereinigten Änderungswerte."""
+    """WAN- und Trunk-Positionen: Verbindung/Rechte/Zustand prüfen; liefert die bereinigten Änderungswerte."""
+    if body.action.startswith("trunk_"):
+        return siptrunks.validate_item(me, body.action, body.sip_trunk_id, body.trunk_patch)
     if not body.action.startswith("wan_"):
         return {}
     return wan.validate_item(me, body.action, body.wan_link_id, body.wan_patch)
@@ -335,6 +338,15 @@ def _wan_info(lid: Optional[int]) -> Optional[dict]:
                                                           "bandwidth_down", "bandwidth_up", "technology_label")} if r else None
 
 
+def _trunk_info(tid: Optional[int]) -> Optional[dict]:
+    r = db.row("SELECT * FROM sip_trunks WHERE id = ?", (tid,)) if tid else None
+    if not r:
+        return None
+    o = siptrunks.out(r)
+    return {**{k: o[k] for k in ("id", "name", "status", "status_label", "provider", "trunk_ident", "site", "channels")},
+            "sbc": (o["sbc"] or {}).get("hostname", ""), "pbx": (o["pbx"] or {}).get("hostname", "")}
+
+
 def _wan_patch(raw) -> dict:
     try:
         return json.loads(raw) if raw else {}
@@ -351,6 +363,7 @@ def _item_out(item: dict) -> dict:
         "device":       _device_info(item.get("device_id")),
         "wan":          _wan_info(item.get("wan_link_id")),
         "wan_patch":    _wan_patch(item.get("wan_patch")),
+        "trunk":        _trunk_info(item.get("sip_trunk_id")),
         "port_a":       _port_info(item["port_a_id"]),
         "port_b":       _port_info(item["port_b_id"]),
         "old_port_b":   _port_info(item["old_port_b_id"]),
@@ -483,6 +496,9 @@ def _apply_workorder(w: dict, me: Principal) -> None:
 
         elif action.startswith("wan_"):
             wan.apply_item(item)
+
+        elif action.startswith("trunk_"):
+            siptrunks.apply_item(item)
 
         elif action == "install_device" and item["device_id"]:
             db.execute("UPDATE devices SET status = 'active', updated_at = ? WHERE id = ? AND status = 'planned'", (time.time(), item["device_id"]))
@@ -689,17 +705,19 @@ def add_item(wid: int, body: WorkItemIn, me: Principal = Depends(current_princip
         raise HTTPException(400, f"Ungültige Aktion: {body.action}")
     _check_item_device(me, body)
     checked = _check_item_wan(me, body)
-    wan_patch = json.dumps(checked, ensure_ascii=False) if body.action == "wan_change" else ""
+    wan_patch = json.dumps(checked, ensure_ascii=False) if body.action in ("wan_change", "trunk_change") else ""
     body.cable_type = check_cable_type(body.cable_type)
     cfg, cfg_port = _check_item_cfg(me, body)
     _resolve_item_conflicts(me, w, body)
     iid = db.execute(
         """INSERT INTO workitems(workorder_id, action, device_id, port_a_id, port_b_id, old_port_b_id,
-                                  cable_label, cable_type, fiber_count, length_m, color, note, idx, wan_link_id, wan_patch, cfg, cfg_port_id)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                                  cable_label, cable_type, fiber_count, length_m, color, note, idx, wan_link_id, wan_patch, cfg, cfg_port_id,
+                                  sip_trunk_id)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (wid, body.action, body.device_id, body.port_a_id, body.port_b_id, body.old_port_b_id,
          body.cable_label.strip(), body.cable_type, body.fiber_count, body.length_m,
-         body.color.strip(), body.note.strip(), body.idx, body.wan_link_id if body.action.startswith("wan_") else None, wan_patch, cfg, cfg_port),
+         body.color.strip(), body.note.strip(), body.idx, body.wan_link_id if body.action.startswith("wan_") else None, wan_patch, cfg, cfg_port,
+         body.sip_trunk_id if body.action.startswith("trunk_") else None),
     )
     db.execute("UPDATE workorders SET updated_at = ? WHERE id = ?", (time.time(), wid))
     audit.log(me.name, "workitem.add", "workorder", wid, f"item {iid}")
@@ -718,17 +736,18 @@ def update_item(wid: int, iid: int, body: WorkItemIn, me: Principal = Depends(cu
         raise HTTPException(400, f"Ungültige Aktion: {body.action}")
     _check_item_device(me, body)
     checked = _check_item_wan(me, body)
-    wan_patch = json.dumps(checked, ensure_ascii=False) if body.action == "wan_change" else ""
+    wan_patch = json.dumps(checked, ensure_ascii=False) if body.action in ("wan_change", "trunk_change") else ""
     body.cable_type = check_cable_type(body.cable_type)
     cfg, cfg_port = _check_item_cfg(me, body)
     _resolve_item_conflicts(me, w, body)
     db.execute(
         """UPDATE workitems SET action=?, device_id=?, port_a_id=?, port_b_id=?, old_port_b_id=?,
                                 cable_label=?, cable_type=?, fiber_count=?, length_m=?,
-                                color=?, note=?, idx=?, wan_link_id=?, wan_patch=?, cfg=?, cfg_port_id=? WHERE id=?""",
+                                color=?, note=?, idx=?, wan_link_id=?, wan_patch=?, cfg=?, cfg_port_id=?, sip_trunk_id=? WHERE id=?""",
         (body.action, body.device_id, body.port_a_id, body.port_b_id, body.old_port_b_id,
          body.cable_label.strip(), body.cable_type, body.fiber_count, body.length_m,
-         body.color.strip(), body.note.strip(), body.idx, body.wan_link_id if body.action.startswith("wan_") else None, wan_patch, cfg, cfg_port, iid),
+         body.color.strip(), body.note.strip(), body.idx, body.wan_link_id if body.action.startswith("wan_") else None, wan_patch, cfg, cfg_port,
+         body.sip_trunk_id if body.action.startswith("trunk_") else None, iid),
     )
     db.execute("UPDATE workorders SET updated_at = ? WHERE id = ?", (time.time(), wid))
     audit.log(me.name, "workitem.update", "workorder", wid, f"item {iid}")

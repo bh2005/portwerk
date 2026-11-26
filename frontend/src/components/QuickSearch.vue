@@ -60,6 +60,7 @@ const groups = computed(() => {
     mk('sites', t('Standorte'), r.sites.map(s => ({ key: 's' + s.id, title: `${s.code} – ${s.name}`, sub: s.address, to: '/sites', query: { site: s.id } }))),
     mk('locations', t('Orte'), r.locations.map(l => ({ key: 'l' + l.id, title: l.name, badge: kindLabel(l.kind), sub: l.path, to: `/racks?location=${l.id}` }))),
     mk('wan', t('WAN-Verbindungen'), r.wan.map(w => ({ key: 'w' + w.id, title: w.name, sub: [w.provider, w.circuit_id].filter(Boolean).join(' · '), to: `/wan?id=${w.id}` }))),
+    mk('trunks', t('SIP-Trunks'), (r.trunks || []).map(x => ({ key: 't' + x.id, title: x.name, sub: [x.provider, x.trunk_ident].filter(Boolean).join(' · '), to: `/telephony?id=${x.id}` }))),
     mk('orders', t('Patchaufträge'), r.orders.map(o => ({ key: 'o' + o.id, title: `${o.number} ${o.title}`, badge: o.status, to: `/workorders/${o.id}` }))),
     mk('cables', t('Kabel'), r.cables.map(c => ({ key: 'c' + c.id, title: c.label, mono: true, sub: `${c.a} ↔ ${c.b}`, to: `/devices/${c.device_id}` }))),
   ]

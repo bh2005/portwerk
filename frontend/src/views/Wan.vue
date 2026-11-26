@@ -49,6 +49,12 @@
         <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <div v-for="[k, v] in details" :key="k" :class="WIDE.includes(k) ? 'sm:col-span-2' : ''"><dt :class="lbl">{{ $t(k) }}</dt><dd class="text-slate-700 dark:text-slate-200 break-words whitespace-pre-line">{{ v || '–' }}</dd></div>
         </dl>
+        <div v-if="sel.sip_trunks?.length">
+          <h3 :class="lbl">{{ $t('SIP-Trunks über diese Leitung') }}</h3>
+          <ul class="text-sm space-y-1"><li v-for="x in sel.sip_trunks" :key="x.id">
+            <router-link :to="`/telephony?id=${x.id}`" class="text-ks-600 dark:text-ks-400 hover:underline">☎ {{ x.name }}</router-link> <span class="text-xs text-slate-400">· {{ $t(x.status_label) }}</span></li></ul>
+          <p v-if="sel.status !== 'terminated' && sel.sip_trunks.some(x => x.status === 'active')" class="text-xs text-amber-600 dark:text-amber-400 mt-1">{{ $t('Beim Kündigen oder Ändern der Leitung ist die Telefonie betroffen.') }}</p>
+        </div>
         <div v-if="sel.orders?.length">
           <h3 :class="lbl">{{ $t('Aufträge') }}</h3>
           <ul class="text-sm space-y-1"><li v-for="o in sel.orders" :key="o.id + o.action">
@@ -157,7 +163,7 @@ async function portsOf(siteId) {
   const devs = (await api.devices({ site_id: siteId, limit: 500 })).items || []
   const out = []
   for (const d of devs) {
-    if (!['router', 'firewall', 'switch', 'gateway', 'media_converter'].includes(d.type)) continue
+    if (!['router', 'firewall', 'switch', 'gateway', 'media_converter', 'sbc', 'voice_gateway'].includes(d.type)) continue
     for (const p of await api.devicePorts(d.id)) out.push({ id: p.id, label: `${d.hostname}:${p.name}` })
   }
   return out
