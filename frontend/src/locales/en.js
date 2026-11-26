@@ -1421,6 +1421,8 @@ export const en = {
   "ungespeicherte Änderungen": "unsaved changes",
   "Unter": "Under",
   "Unter Abschnitt": "Under section",
+  "unverschlüsselt (http)": "unencrypted (http)",
+  "Unverschlüsselt: Automation-User und Secret gehen bei jeder Anfrage im Klartext über das Netz. Die Checkmk-Site auf HTTPS umstellen und hier https:// eintragen.": "Unencrypted: the automation user and secret travel across the network in plain text with every request. Switch the Checkmk site to HTTPS and enter https:// here.",
   "unvollständig": "incomplete",
   "Up Mbit/s": "Up Mbit/s",
   "Urlaub, Schulung usw. aus „Mein Profil“ in OpenPlan gelten dann auch in Portwerk: Benachrichtigungen gehen an die": "Holidays, training etc. from “My profile” in OpenPlan then also apply in Portwerk: notifications go to the",

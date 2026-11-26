@@ -1,6 +1,6 @@
 # Portwerk – Ideen und offene Punkte
 
-Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept.md) mit dem Code (22.11.2026); die Punkte sind seitdem großteils umgesetzt.
+Stand: 2026-11-26. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept.md) mit dem Code (22.11.2026); die Punkte sind seitdem großteils umgesetzt.
 
 ## Offen
 
@@ -12,12 +12,8 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
   (signiert, mit Wiederholung) – nach dem Muster von OpenPlan.
 - **Historie für Geräte-Orte und Patchfeld-Paare**
   Historisiert sind nur Verbindungen; Zeitreise und „Pfad am Datum“ zeigen Orte und Durchschleifungen mit dem heutigen Stand.
-- **Checkmk-Anbindung über HTTPS**
-  Die REST-Anbindung funktioniert mit jeder Adresse; sie sollte nach Möglichkeit über HTTPS laufen (Secret im Klartext vermeiden).
 - **Sicherungsziel SFTP**
   Externe Ziele gibt es für Verzeichnis (NAS), S3 und WebDAV; SFTP bräuchte ein zusätzliches Paket (`paramiko`).
-- **Tests unter Python 3.9**
-  Zwei Tests (`test_timezone_offset_is_respected`, `test_workorder_pdf_content`) schlagen in der lokalen Python-3.9-Umgebung fehl; in der CI (3.12) ungeprüft.
 
 ## Umgesetzt
 
@@ -65,4 +61,5 @@ Stand: 2026-11-24. Ursprünglich ein Abgleich von [docs/konzept.md](docs/konzept
 | Englisch, Etappe 4: Analyse (Soll/Ist, Kapazität, Zeitreise, Aufräumen, VLANs, WAN, Katalog) | #37 |
 | Englisch, Etappe 5: Verwaltung und Import (Oberfläche vollständig) | #38 |
 | Handbuch und Hilfe auf Englisch; Handbuch aktualisiert | #39 |
-| Englisch für Mails (Sprache des Empfängers), PDF, CSV und Etikettenformate – Portwerk vollständig zweisprachig | (dieser PR) |
+| Englisch für Mails (Sprache des Empfängers), PDF, CSV und Etikettenformate – Portwerk vollständig zweisprachig | #40 |
+| Tests unter Python 3.9 (CI prüft 3.9 und 3.12); Warnung bei Checkmk-Anbindung ohne HTTPS | (dieser PR) |

@@ -17,7 +17,7 @@ from fpdf.fonts import FontFace
 from . import i18n
 
 FONT_DIRS = ("/usr/share/fonts/truetype/dejavu", "/usr/share/fonts/dejavu", "/usr/share/fonts/TTF")
-FALLBACK = {"→": "->", "↔": "<->", "☐": "[ ]", "☑": "[x]", "☒": "[!]", "–": "-", "…": "...", "„": '"', "“": '"', "·": "-"}
+FALLBACK = {"→": "->", "↔": "<->", "☐": "[ ]", "☑": "[x]", "☒": "[!]", "–": "-", "…": "...", "„": '"', "“": '"'}  # „·“ gehört zu Latin-1, bleibt
 STATUS_BOX = {"open": "☐", "done": "☑", "deviation": "☒"}
 GREY = (241, 245, 249)
 

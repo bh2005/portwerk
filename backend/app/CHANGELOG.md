@@ -2,6 +2,10 @@
 
 Format: `## <Version> – <Datum>`, darunter je Änderung eine Zeile `- Titel: Beschreibung`. Neueste Version zuerst. Wird in der Verwaltung unter „Releases“ angezeigt.
 
+## 0.21.1 – 2026-11-26
+- Checkmk-Anbindung ohne HTTPS: Steht in der REST-Anbindung eine `http://`-Adresse, warnt die Verwaltung deutlich, dass Automation-User und Secret im Klartext übertragen werden; auch der Verbindungstest weist darauf hin. Das Schema der Adresse darf jetzt auch groß geschrieben sein.
+- Python 3.9: Zeitpunkte mit „Z“ (UTC) in der Zeitreise funktionieren auch unter Python 3.9/3.10; im PDF ohne DejaVu-Schrift bleibt „·“ erhalten. Die CI testet jetzt mit Python 3.9 und 3.12.
+
 ## 0.21.0 – 2026-11-26
 - Englisch für Mails, PDF und CSV: Automatische Benachrichtigungen (Zuweisung, Statusänderungen, Bestätigungsvorschlag, LLDP-Abweichung, Reservierungen, neuer Benutzer, Aufräumbericht) kommen in der Sprache des Empfängers, bei Vertretung in der der Vertretung; bei unterschiedlichen Sprachen geht je Sprache eine eigene Mail raus. „Senden …“ (Auftrag oder Patchliste, auch an freie Adressen) und die Testmail schreiben in der Sprache des Absenders. Arbeitsanweisung und Patchliste als PDF sowie die CSV-Arbeitslisten entstehen in der Sprache dessen, der sie abruft oder versendet (auch Dateinamen). Die Etikettenformate sind übersetzt. Damit ist Portwerk vollständig zweisprachig.
 

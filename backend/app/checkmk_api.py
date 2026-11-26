@@ -38,7 +38,13 @@ def public() -> dict:
     s = settings()
     out = {k: v for k, v in s.items() if k != "secret"}
     out["secret_set"] = bool(s["secret"])
+    out["plain_http"] = plain_http(s)
     return out
+
+
+def plain_http(cfg: Optional[dict] = None) -> bool:
+    """Adresse ohne TLS: Automation-User und Secret gingen im Klartext über das Netz."""
+    return (cfg or settings())["api_url"].lower().startswith("http://")
 
 
 def save(body: dict) -> dict:
@@ -50,7 +56,7 @@ def save(body: dict) -> dict:
     if body.get("secret"):                                      # leer = unverändert
         new["secret"] = body["secret"]
     new["api_url"] = str(new["api_url"]).strip().rstrip("/")
-    if new["api_url"] and not re.match(r"^https?://[^\s/]+(/[^\s?#]*)?$", new["api_url"]):
+    if new["api_url"] and not re.match(r"^https?://[^\s/]+(/[^\s?#]*)?$", new["api_url"], re.I):
         raise HTTPException(422, "Adresse im Format http(s)://host/site erwartet (ohne /check_mk/api)")
     new["default_folder"] = normalize_folder(new["default_folder"])
     db.put_settings({SETTING_KEY: json.dumps(new)})
@@ -127,7 +133,8 @@ def check_connection() -> dict:
     st2, fl = request(cfg, "GET", "/domain-types/folder_config/collections/all?recursive=true&show_hosts=false")
     if st2 != 200:
         raise _fail(st2, fl)
-    return {"version": (js or {}).get("versions", {}).get("checkmk", ""), "edition": (js or {}).get("edition", ""), "folders": len((fl or {}).get("value", []))}
+    return {"version": (js or {}).get("versions", {}).get("checkmk", ""), "edition": (js or {}).get("edition", ""),
+            "folders": len((fl or {}).get("value", [])), "plain_http": plain_http(cfg)}
 
 
 def folders() -> list[dict]:
